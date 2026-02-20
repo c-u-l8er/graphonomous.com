@@ -1,443 +1,966 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Graphonomous - Learn, Adapt, and Decide.</title>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Libre+Baskerville:wght@400;700&display=swap" rel="stylesheet">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Graphonomous — Intelligence That Grows</title>
+        <link
+            href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=JetBrains+Mono:wght@300;400;500;700&display=swap"
+            rel="stylesheet"
+        />
+        <style>
+            :root {
+                --bg: #0a0b0f;
+                --surface: #12131a;
+                --text: #e8e6e1;
+                --dim: #5a5867;
+                --accent-episodic: #4af5c6;
+                --accent-semantic: #7b8cff;
+                --accent-procedural: #ff6b8a;
+                --accent-temporal: #ffc46b;
+                --glow-episodic: rgba(74, 245, 198, 0.15);
+                --glow-semantic: rgba(123, 140, 255, 0.15);
+                --glow-procedural: rgba(255, 107, 138, 0.15);
+            }
 
-        body {
-            font-family: 'Space Mono', monospace;
-            background: #fafafa;
-            color: #1a1a1a;
-            overflow: hidden;
-            cursor: crosshair;
-        }
+            * {
+                margin: 0;
+                padding: 0;
+                box-sizing: border-box;
+            }
 
-        #canvas {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 1;
-        }
+            body {
+                font-family: "JetBrains Mono", monospace;
+                background: var(--bg);
+                color: var(--text);
+                overflow: hidden;
+                cursor: none;
+            }
 
-        .content {
-            position: relative;
-            z-index: 10;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-            padding: 2rem;
-            text-align: center;
-            pointer-events: none;
-        }
+            #cursor {
+                position: fixed;
+                width: 20px;
+                height: 20px;
+                border: 1.5px solid var(--accent-episodic);
+                border-radius: 50%;
+                pointer-events: none;
+                z-index: 9999;
+                transition:
+                    transform 0.15s ease,
+                    border-color 0.3s ease,
+                    width 0.2s,
+                    height 0.2s;
+                transform: translate(-50%, -50%);
+                mix-blend-mode: difference;
+            }
 
-        .logo {
-            font-family: 'Libre Baskerville', serif;
-            font-size: clamp(2.5rem, 6vw, 4rem);
-            font-weight: 700;
-            letter-spacing: -0.02em;
-            color: #1a1a1a;
-            margin-bottom: 2rem;
-            opacity: 0;
-            animation: fadeUp 1.2s cubic-bezier(0.16, 1, 0.3, 1) 0.3s forwards;
-        }
+            #cursor.hovering {
+                width: 48px;
+                height: 48px;
+                border-color: var(--accent-semantic);
+            }
 
-        @keyframes fadeUp {
-            from {
+            #cursor-dot {
+                position: fixed;
+                width: 4px;
+                height: 4px;
+                background: var(--accent-episodic);
+                border-radius: 50%;
+                pointer-events: none;
+                z-index: 9999;
+                transform: translate(-50%, -50%);
+            }
+
+            canvas {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                z-index: 1;
+            }
+
+            /* Grain overlay */
+            body::after {
+                content: "";
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+                pointer-events: none;
+                z-index: 2;
+                opacity: 0.5;
+            }
+
+            .content {
+                position: relative;
+                z-index: 10;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                min-height: 100vh;
+                padding: 2rem;
+                pointer-events: none;
+            }
+
+            .logo-mark {
+                display: flex;
+                align-items: center;
+                gap: 1rem;
+                margin-bottom: 1.5rem;
                 opacity: 0;
-                transform: translateY(30px);
+                animation: revealUp 1s cubic-bezier(0.16, 1, 0.3, 1) 0.4s
+                    forwards;
             }
-            to {
+
+            .logo-icon {
+                width: 48px;
+                height: 48px;
+                position: relative;
+            }
+
+            .logo-icon svg {
+                width: 100%;
+                height: 100%;
+            }
+
+            .logo-icon .ring {
+                fill: none;
+                stroke: var(--accent-episodic);
+                stroke-width: 1.5;
+                opacity: 0.6;
+                animation: spinSlow 20s linear infinite;
+                transform-origin: center;
+            }
+
+            .logo-icon .ring2 {
+                fill: none;
+                stroke: var(--accent-semantic);
+                stroke-width: 1;
+                opacity: 0.4;
+                animation: spinSlow 30s linear infinite reverse;
+                transform-origin: center;
+            }
+
+            .logo-icon .core {
+                fill: var(--accent-episodic);
+                opacity: 0.9;
+            }
+
+            @keyframes spinSlow {
+                to {
+                    transform: rotate(360deg);
+                }
+            }
+
+            h1 {
+                font-family: "DM Serif Display", serif;
+                font-size: clamp(3rem, 7vw, 5.5rem);
+                font-weight: 400;
+                letter-spacing: -0.03em;
+                line-height: 1;
+                color: var(--text);
+                opacity: 0;
+                animation: revealUp 1s cubic-bezier(0.16, 1, 0.3, 1) 0.6s
+                    forwards;
+            }
+
+            @keyframes revealUp {
+                from {
+                    opacity: 0;
+                    transform: translateY(40px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+
+            .tagline {
+                font-size: clamp(0.85rem, 1.5vw, 1.05rem);
+                font-weight: 300;
+                letter-spacing: 0.15em;
+                text-transform: uppercase;
+                color: var(--dim);
+                margin-top: 1.25rem;
+                margin-bottom: 3rem;
+                opacity: 0;
+                animation: revealUp 1s cubic-bezier(0.16, 1, 0.3, 1) 0.85s
+                    forwards;
+            }
+
+            .tagline span {
+                transition: color 0.4s ease;
+            }
+
+            .tagline .t-learn {
+                color: var(--accent-episodic);
+            }
+            .tagline .t-adapt {
+                color: var(--accent-semantic);
+            }
+            .tagline .t-decide {
+                color: var(--accent-procedural);
+            }
+
+            .description {
+                max-width: 560px;
+                font-size: clamp(0.8rem, 1.1vw, 0.95rem);
+                font-weight: 300;
+                line-height: 1.9;
+                color: var(--dim);
+                text-align: center;
+                margin-bottom: 3rem;
+                opacity: 0;
+                animation: revealUp 1s cubic-bezier(0.16, 1, 0.3, 1) 1.1s
+                    forwards;
+            }
+
+            .memory-legend {
+                display: flex;
+                gap: 2rem;
+                margin-bottom: 3rem;
+                opacity: 0;
+                animation: revealUp 1s cubic-bezier(0.16, 1, 0.3, 1) 1.3s
+                    forwards;
+            }
+
+            .legend-item {
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                font-size: 0.7rem;
+                font-weight: 400;
+                letter-spacing: 0.08em;
+                text-transform: uppercase;
+                color: var(--dim);
+            }
+
+            .legend-dot {
+                width: 8px;
+                height: 8px;
+                border-radius: 50%;
+                animation: pulse 3s ease-in-out infinite;
+            }
+
+            .legend-dot.episodic {
+                background: var(--accent-episodic);
+                box-shadow: 0 0 8px var(--glow-episodic);
+            }
+            .legend-dot.semantic {
+                background: var(--accent-semantic);
+                box-shadow: 0 0 8px var(--glow-semantic);
+                animation-delay: 1s;
+            }
+            .legend-dot.procedural {
+                background: var(--accent-procedural);
+                box-shadow: 0 0 8px var(--glow-procedural);
+                animation-delay: 2s;
+            }
+
+            @keyframes pulse {
+                0%,
+                100% {
+                    opacity: 0.6;
+                    transform: scale(1);
+                }
+                50% {
+                    opacity: 1;
+                    transform: scale(1.3);
+                }
+            }
+
+            .cta {
+                pointer-events: auto;
+                display: inline-flex;
+                align-items: center;
+                gap: 0.75rem;
+                font-family: "JetBrains Mono", monospace;
+                font-size: 0.8rem;
+                font-weight: 500;
+                letter-spacing: 0.08em;
+                text-transform: uppercase;
+                color: var(--bg);
+                background: var(--accent-episodic);
+                text-decoration: none;
+                padding: 1rem 2.25rem;
+                border: none;
+                position: relative;
+                overflow: hidden;
+                transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+                opacity: 0;
+                animation: revealUp 1s cubic-bezier(0.16, 1, 0.3, 1) 1.5s
+                    forwards;
+                cursor: none;
+            }
+
+            .cta::before {
+                content: "";
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background: linear-gradient(
+                    135deg,
+                    var(--accent-semantic),
+                    var(--accent-episodic)
+                );
+                opacity: 0;
+                transition: opacity 0.4s ease;
+            }
+
+            .cta:hover::before {
                 opacity: 1;
-                transform: translateY(0);
             }
-        }
-
-        .description {
-            font-size: clamp(1.5rem, 2vw, 1.75rem);
-            line-height: 1.8;
-            color: #000;
-            margin-bottom: 3rem;
-            opacity: 0;
-            animation: fadeUp 1.2s cubic-bezier(0.16, 1, 0.3, 1) 0.6s forwards;
-            max-width: 750px;
-        }
-
-        .cta-link {
-            pointer-events: auto;
-            display: inline-block;
-            font-size: 0.9rem;
-            font-weight: 700;
-            letter-spacing: 0.05em;
-            color: #1a1a1a;
-            text-decoration: none;
-            padding: 1rem 2rem;
-            border: 2px solid #1a1a1a;
-            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-            opacity: 0;
-            animation: fadeUp 1.2s cubic-bezier(0.16, 1, 0.3, 1) 0.9s forwards;
-            position: relative;
-            overflow: hidden;
-            cursor: pointer;
-        }
-
-        .cta-link::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 0;
-            height: 100%;
-            background: #1a1a1a;
-            transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-            z-index: -1;
-        }
-
-        .cta-link:hover::before {
-            width: 100%;
-        }
-
-        .cta-link:hover {
-            color: #fafafa;
-            transform: translateY(-2px);
-        }
-
-        .footnote {
-            position: fixed;
-            bottom: 2rem;
-            width: 100%;
-            text-align: center;
-            transform: translateX(-50%);
-            font-size: 0.75rem;
-            color: #000;
-            opacity: 0;
-            animation: fadeUp 1.2s cubic-bezier(0.16, 1, 0.3, 1) 1.2s forwards;
-            z-index: 10;
-        }
-    </style>
-</head>
-<body>
-    <canvas id="canvas"></canvas>
-
-    <div class="content">
-        <h1 class="logo">Graphonomous</h1>
-        <p class="description">
-            Self-governing intelligence infrastructure.<br>
-            The graph that learns, adapts, decides.
-        </p>
-        <a href="https://app.fleetprompt.com/marketplace?q=Graphonomous" class="cta-link">Discover on FleetPrompt →</a>
-    </div>
-
-    <div class="footnote">
-        © <span id="year"></span> Graphonomous.com ... Powered by <a href="https://ampersandboxdesign.com" target="_blank">[&amp;]</a>
-    </div>
-
-    <script>
-        document.getElementById("year").textContent = new Date().getFullYear();
-
-        const canvas = document.getElementById('canvas');
-        const ctx = canvas.getContext('2d');
-
-        let width, height;
-        let time = 0;
-        let mouseX = width / 2;
-        let mouseY = height / 2;
-        let targetMouseX = width / 2;
-        let targetMouseY = height / 2;
-
-        // Three tessellation grids
-        let squareGrid = { nodes: [], tiles: [] };
-        let triangleGrid = { nodes: [], tiles: [] };
-        let hexGrid = { nodes: [], tiles: [] };
-
-        function resize() {
-            width = canvas.width = window.innerWidth;
-            height = canvas.height = window.innerHeight;
-            mouseX = width / 2;
-            mouseY = height / 2;
-            targetMouseX = width / 2;
-            targetMouseY = height / 2;
-        }
-
-        class Node {
-            constructor(x, y) {
-                this.x = x;
-                this.y = y;
+            .cta:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 8px 32px rgba(74, 245, 198, 0.25);
+            }
+            .cta span {
+                position: relative;
+                z-index: 1;
+            }
+            .cta svg {
+                position: relative;
+                z-index: 1;
+                transition: transform 0.3s ease;
+            }
+            .cta:hover svg {
+                transform: translateX(4px);
             }
 
-            getDistFromMouse() {
-                return Math.sqrt(
-                    Math.pow(this.x - mouseX, 2) + 
-                    Math.pow(this.y - mouseY, 2)
+            .stats-bar {
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 1rem 2.5rem;
+                font-size: 0.65rem;
+                font-weight: 400;
+                letter-spacing: 0.1em;
+                text-transform: uppercase;
+                color: var(--dim);
+                border-top: 1px solid rgba(255, 255, 255, 0.04);
+                background: rgba(10, 11, 15, 0.8);
+                backdrop-filter: blur(12px);
+                z-index: 10;
+                opacity: 0;
+                animation: revealUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 1.8s
+                    forwards;
+            }
+
+            .stats-bar a {
+                color: var(--dim);
+                text-decoration: none;
+                transition: color 0.3s ease;
+                pointer-events: auto;
+                cursor: none;
+            }
+            .stats-bar a:hover {
+                color: var(--accent-episodic);
+            }
+
+            .stat-group {
+                display: flex;
+                gap: 2rem;
+            }
+
+            .stat {
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+            }
+
+            .stat-value {
+                color: var(--accent-episodic);
+                font-weight: 700;
+                font-variant-numeric: tabular-nums;
+            }
+
+            /* Mobile */
+            @media (max-width: 768px) {
+                .memory-legend {
+                    gap: 1rem;
+                    flex-wrap: wrap;
+                    justify-content: center;
+                }
+                .stats-bar {
+                    padding: 0.75rem 1.25rem;
+                    flex-direction: column;
+                    gap: 0.5rem;
+                }
+                .stat-group {
+                    gap: 1rem;
+                    flex-wrap: wrap;
+                    justify-content: center;
+                }
+                #cursor,
+                #cursor-dot {
+                    display: none;
+                }
+                body {
+                    cursor: auto;
+                }
+                .cta {
+                    cursor: pointer;
+                }
+                .stats-bar a {
+                    cursor: pointer;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div id="cursor"></div>
+        <div id="cursor-dot"></div>
+
+        <canvas id="graph"></canvas>
+
+        <div class="content">
+            <div class="logo-mark">
+                <div class="logo-icon">
+                    <svg viewBox="0 0 48 48">
+                        <ellipse class="ring" cx="24" cy="24" rx="20" ry="12" />
+                        <ellipse
+                            class="ring2"
+                            cx="24"
+                            cy="24"
+                            rx="12"
+                            ry="20"
+                        />
+                        <circle class="core" cx="24" cy="24" r="3" />
+                        <circle
+                            fill="var(--accent-semantic)"
+                            cx="24"
+                            cy="8"
+                            r="1.5"
+                            opacity="0.6"
+                        />
+                        <circle
+                            fill="var(--accent-procedural)"
+                            cx="40"
+                            cy="24"
+                            r="1.5"
+                            opacity="0.6"
+                        />
+                        <circle
+                            fill="var(--accent-temporal)"
+                            cx="24"
+                            cy="40"
+                            r="1.5"
+                            opacity="0.6"
+                        />
+                        <circle
+                            fill="var(--accent-episodic)"
+                            cx="8"
+                            cy="24"
+                            r="1.5"
+                            opacity="0.6"
+                        />
+                    </svg>
+                </div>
+            </div>
+
+            <h1>Graphonomous</h1>
+
+            <p class="tagline">
+                <span class="t-learn">Learn</span>
+                <span>&nbsp;·&nbsp;</span>
+                <span class="t-adapt">Adapt</span>
+                <span>&nbsp;·&nbsp;</span>
+                <span class="t-decide">Decide</span>
+            </p>
+
+            <p class="description">
+                A continual learning engine for edge&nbsp;AI.<br />
+                Self-evolving knowledge graphs that make small models<br />
+                brilliant — no retraining, no cloud, no&nbsp;forgetting.
+            </p>
+
+            <div class="memory-legend">
+                <div class="legend-item">
+                    <div class="legend-dot episodic"></div>
+                    Episodic
+                </div>
+                <div class="legend-item">
+                    <div class="legend-dot semantic"></div>
+                    Semantic
+                </div>
+                <div class="legend-item">
+                    <div class="legend-dot procedural"></div>
+                    Procedural
+                </div>
+            </div>
+
+            <a
+                href="https://github.com/c-u-l8er/graphonomous.com"
+                class="cta"
+                id="ctaBtn"
+            >
+                <span>View on GitHub</span>
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                    <path
+                        d="M3 8h10M9 4l4 4-4 4"
+                        stroke="currentColor"
+                        stroke-width="1.5"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                    />
+                </svg>
+            </a>
+        </div>
+
+        <div class="stats-bar">
+            <div class="stat-group">
+                <div class="stat">
+                    Nodes <span class="stat-value" id="nodeCount">0</span>
+                </div>
+                <div class="stat">
+                    Edges <span class="stat-value" id="edgeCount">0</span>
+                </div>
+                <div class="stat">
+                    Learning
+                    <span class="stat-value" id="learningRate">0.00</span>
+                </div>
+            </div>
+            <div>
+                &copy; <span id="year"></span> Graphonomous &middot; Powered by
+                <a href="https://ampersandboxdesign.com" target="_blank"
+                    >[&amp;]</a
+                >
+            </div>
+        </div>
+
+        <script>
+            document.getElementById("year").textContent =
+                new Date().getFullYear();
+
+            // ─── Custom cursor ───
+            const cursor = document.getElementById("cursor");
+            const cursorDot = document.getElementById("cursor-dot");
+            let cx = window.innerWidth / 2,
+                cy = window.innerHeight / 2;
+            let dcx = cx,
+                dcy = cy;
+
+            document.addEventListener("mousemove", (e) => {
+                dcx = e.clientX;
+                dcy = e.clientY;
+                cursorDot.style.left = e.clientX + "px";
+                cursorDot.style.top = e.clientY + "px";
+            });
+
+            const ctaBtn = document.getElementById("ctaBtn");
+            ctaBtn.addEventListener("mouseenter", () =>
+                cursor.classList.add("hovering"),
+            );
+            ctaBtn.addEventListener("mouseleave", () =>
+                cursor.classList.remove("hovering"),
+            );
+            document.querySelectorAll(".stats-bar a").forEach((a) => {
+                a.addEventListener("mouseenter", () =>
+                    cursor.classList.add("hovering"),
                 );
-            }
-
-            getWave(time) {
-                const distFromMouse = this.getDistFromMouse();
-                return (Math.sin(time * 0.008 - distFromMouse * 0.005) + 1) / 2;
-            }
-        }
-
-        class Tile {
-            constructor(nodes) {
-                this.nodes = nodes;
-                this.centerX = nodes.reduce((sum, n) => sum + n.x, 0) / nodes.length;
-                this.centerY = nodes.reduce((sum, n) => sum + n.y, 0) / nodes.length;
-            }
-
-            getDistFromMouse() {
-                return Math.sqrt(
-                    Math.pow(this.centerX - mouseX, 2) + 
-                    Math.pow(this.centerY - mouseY, 2)
+                a.addEventListener("mouseleave", () =>
+                    cursor.classList.remove("hovering"),
                 );
+            });
+
+            function updateCursor() {
+                cx += (dcx - cx) * 0.12;
+                cy += (dcy - cy) * 0.12;
+                cursor.style.left = cx + "px";
+                cursor.style.top = cy + "px";
+                requestAnimationFrame(updateCursor);
+            }
+            updateCursor();
+
+            // ─── Living Graph Visualization ───
+            const canvas = document.getElementById("graph");
+            const ctx = canvas.getContext("2d");
+            let W, H;
+
+            const MEMORY_TYPES = [
+                {
+                    name: "episodic",
+                    color: "#4af5c6",
+                    glow: "rgba(74,245,198,",
+                    prob: 0.4,
+                },
+                {
+                    name: "semantic",
+                    color: "#7b8cff",
+                    glow: "rgba(123,140,255,",
+                    prob: 0.35,
+                },
+                {
+                    name: "procedural",
+                    color: "#ff6b8a",
+                    glow: "rgba(255,107,138,",
+                    prob: 0.25,
+                },
+            ];
+
+            function pickType() {
+                const r = Math.random();
+                if (r < MEMORY_TYPES[0].prob) return MEMORY_TYPES[0];
+                if (r < MEMORY_TYPES[0].prob + MEMORY_TYPES[1].prob)
+                    return MEMORY_TYPES[1];
+                return MEMORY_TYPES[2];
             }
 
-            getWave(time) {
-                const distFromMouse = this.getDistFromMouse();
-                return (Math.sin(time * 0.008 - distFromMouse * 0.005) + 1) / 2;
+            class GraphNode {
+                constructor(x, y, type) {
+                    this.x = x;
+                    this.y = y;
+                    this.vx = (Math.random() - 0.5) * 0.15;
+                    this.vy = (Math.random() - 0.5) * 0.15;
+                    this.type = type || pickType();
+                    this.radius = 2 + Math.random() * 2.5;
+                    this.targetRadius = this.radius;
+                    this.connections = [];
+                    this.birth = performance.now();
+                    this.accessCount = 0;
+                    this.confidence = 0.3 + Math.random() * 0.7;
+                    this.pulsePhase = Math.random() * Math.PI * 2;
+                    this.alive = true;
+                    this.fadeIn = 0;
+                }
+
+                update(time, mouseX, mouseY) {
+                    // Fade in
+                    if (this.fadeIn < 1)
+                        this.fadeIn = Math.min(1, this.fadeIn + 0.02);
+
+                    // Gentle drift
+                    this.x += this.vx;
+                    this.y += this.vy;
+
+                    // Mouse attraction (subtle)
+                    const dx = mouseX - this.x;
+                    const dy = mouseY - this.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    if (dist < 250 && dist > 10) {
+                        const force = 0.00015 * (250 - dist);
+                        this.vx += (dx / dist) * force;
+                        this.vy += (dy / dist) * force;
+                    }
+
+                    // Damping
+                    this.vx *= 0.995;
+                    this.vy *= 0.995;
+
+                    // Boundary wrapping with margin
+                    const margin = 60;
+                    if (this.x < -margin) this.x = W + margin;
+                    if (this.x > W + margin) this.x = -margin;
+                    if (this.y < -margin) this.y = H + margin;
+                    if (this.y > H + margin) this.y = -margin;
+
+                    // Pulse
+                    this.pulsePhase += 0.02;
+
+                    // Smooth radius
+                    this.radius += (this.targetRadius - this.radius) * 0.05;
+                }
+
+                draw(ctx, time) {
+                    const pulse = 0.7 + 0.3 * Math.sin(this.pulsePhase);
+                    const alpha = this.fadeIn * this.confidence * pulse;
+                    const r =
+                        this.radius * (0.9 + 0.1 * Math.sin(this.pulsePhase));
+
+                    // Outer glow
+                    const grad = ctx.createRadialGradient(
+                        this.x,
+                        this.y,
+                        0,
+                        this.x,
+                        this.y,
+                        r * 6,
+                    );
+                    grad.addColorStop(0, this.type.glow + alpha * 0.2 + ")");
+                    grad.addColorStop(1, this.type.glow + "0)");
+                    ctx.fillStyle = grad;
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, r * 6, 0, Math.PI * 2);
+                    ctx.fill();
+
+                    // Core
+                    ctx.fillStyle = this.type.color;
+                    ctx.globalAlpha = alpha;
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, r, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.globalAlpha = 1;
+                }
             }
 
-            draw(opacity) {
-                const distFromMouse = this.getDistFromMouse();
-                const proximity = Math.max(0, 1 - distFromMouse / 300);
-                
-                // Highlight tiles near cursor
-                const fillAlpha = opacity * 0.08 + proximity * 0.15;
-                const strokeAlpha = opacity * 0.6 + proximity * 0.3;
+            class Edge {
+                constructor(a, b) {
+                    this.a = a;
+                    this.b = b;
+                    this.strength = 0.1;
+                    this.targetStrength = 0.3 + Math.random() * 0.5;
+                    this.coActivations = 0;
+                    this.birth = performance.now();
+                }
 
-                ctx.fillStyle = `rgba(26, 26, 26, ${fillAlpha})`;
-                ctx.strokeStyle = `rgba(26, 26, 26, ${strokeAlpha})`;
-                ctx.lineWidth = 1.5 + proximity * 1;
+                update() {
+                    this.strength +=
+                        (this.targetStrength - this.strength) * 0.01;
+                    // Decay
+                    this.targetStrength *= 0.9999;
+                }
 
-                ctx.beginPath();
-                this.nodes.forEach((node, i) => {
-                    if (i === 0) ctx.moveTo(node.x, node.y);
-                    else ctx.lineTo(node.x, node.y);
-                });
-                ctx.closePath();
-                ctx.fill();
-                ctx.stroke();
+                draw(ctx) {
+                    const dx = this.b.x - this.a.x;
+                    const dy = this.b.y - this.a.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    if (dist > 300) return;
 
-                // Draw glow near cursor
-                if (proximity > 0.7) {
-                    ctx.strokeStyle = `rgba(26, 26, 26, ${proximity * 0.2})`;
-                    ctx.lineWidth = 3;
+                    const fadeA = this.a.fadeIn;
+                    const fadeB = this.b.fadeIn;
+                    const alpha =
+                        this.strength *
+                        0.35 *
+                        fadeA *
+                        fadeB *
+                        Math.max(0, 1 - dist / 300);
+
+                    // Gradient edge between two node types
+                    const grad = ctx.createLinearGradient(
+                        this.a.x,
+                        this.a.y,
+                        this.b.x,
+                        this.b.y,
+                    );
+                    grad.addColorStop(0, this.a.type.glow + alpha + ")");
+                    grad.addColorStop(1, this.b.type.glow + alpha + ")");
+
+                    ctx.strokeStyle = grad;
+                    ctx.lineWidth = 0.5 + this.strength * 1.5;
+                    ctx.beginPath();
+                    ctx.moveTo(this.a.x, this.a.y);
+                    ctx.lineTo(this.b.x, this.b.y);
                     ctx.stroke();
                 }
             }
-        }
 
-        function initSquareGrid() {
-            const spacing = 90;
-            const cols = Math.ceil(width / spacing) + 1;
-            const rows = Math.ceil(height / spacing) + 1;
-            const offsetX = (width - (cols - 1) * spacing) / 2;
-            const offsetY = (height - (rows - 1) * spacing) / 2;
+            let nodes = [];
+            let edges = [];
+            let mouseX = 0,
+                mouseY = 0;
+            let targetMX = 0,
+                targetMY = 0;
+            let frame = 0;
 
-            squareGrid.nodes = [];
-            squareGrid.tiles = [];
+            function resize() {
+                W = canvas.width = window.innerWidth;
+                H = canvas.height = window.innerHeight;
+                mouseX = targetMX = W / 2;
+                mouseY = targetMY = H / 2;
+            }
 
-            const nodeGrid = [];
-            for (let i = 0; i < rows; i++) {
-                nodeGrid[i] = [];
-                for (let j = 0; j < cols; j++) {
-                    const node = new Node(
-                        offsetX + j * spacing,
-                        offsetY + i * spacing
+            function spawnNode() {
+                // Spawn near existing cluster or random
+                let x, y;
+                if (nodes.length > 5 && Math.random() < 0.7) {
+                    const parent =
+                        nodes[Math.floor(Math.random() * nodes.length)];
+                    const angle = Math.random() * Math.PI * 2;
+                    const dist = 40 + Math.random() * 100;
+                    x = parent.x + Math.cos(angle) * dist;
+                    y = parent.y + Math.sin(angle) * dist;
+                } else {
+                    x = Math.random() * W;
+                    y = Math.random() * H;
+                }
+                const node = new GraphNode(x, y);
+                nodes.push(node);
+
+                // Connect to nearby nodes
+                nodes.forEach((other) => {
+                    if (other === node) return;
+                    const dx = other.x - node.x;
+                    const dy = other.y - node.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    if (dist < 180 && Math.random() < 0.4) {
+                        const edge = new Edge(node, other);
+                        edges.push(edge);
+                        node.connections.push(edge);
+                        other.connections.push(edge);
+                    }
+                });
+
+                return node;
+            }
+
+            function consolidate() {
+                // Prune weak edges
+                edges = edges.filter((e) => {
+                    if (e.strength < 0.05) {
+                        e.a.connections = e.a.connections.filter(
+                            (c) => c !== e,
+                        );
+                        e.b.connections = e.b.connections.filter(
+                            (c) => c !== e,
+                        );
+                        return false;
+                    }
+                    return true;
+                });
+
+                // Prune isolated, old nodes (keep minimum)
+                if (nodes.length > 80) {
+                    const now = performance.now();
+                    nodes = nodes.filter((n) => {
+                        if (
+                            n.connections.length === 0 &&
+                            now - n.birth > 15000 &&
+                            Math.random() < 0.1
+                        ) {
+                            n.alive = false;
+                            return false;
+                        }
+                        return true;
+                    });
+                }
+
+                // Strengthen frequently co-accessed edges
+                edges.forEach((e) => {
+                    if (Math.random() < 0.05) {
+                        e.targetStrength = Math.min(1, e.targetStrength + 0.05);
+                        e.a.targetRadius = Math.min(5, e.a.targetRadius + 0.1);
+                        e.b.targetRadius = Math.min(5, e.b.targetRadius + 0.1);
+                    }
+                });
+            }
+
+            function init() {
+                resize();
+                nodes = [];
+                edges = [];
+                // Seed initial cluster
+                for (let i = 0; i < 35; i++) {
+                    spawnNode();
+                }
+            }
+
+            function animate() {
+                frame++;
+                const time = performance.now();
+
+                mouseX += (targetMX - mouseX) * 0.06;
+                mouseY += (targetMY - mouseY) * 0.06;
+
+                // Background
+                ctx.fillStyle = "rgba(10, 11, 15, 0.15)";
+                ctx.fillRect(0, 0, W, H);
+
+                // Subtle radial glow at center
+                if (frame % 3 === 0) {
+                    const cGrad = ctx.createRadialGradient(
+                        W / 2,
+                        H / 2,
+                        0,
+                        W / 2,
+                        H / 2,
+                        Math.min(W, H) * 0.5,
                     );
-                    squareGrid.nodes.push(node);
-                    nodeGrid[i][j] = node;
+                    cGrad.addColorStop(0, "rgba(74, 245, 198, 0.008)");
+                    cGrad.addColorStop(0.5, "rgba(123, 140, 255, 0.004)");
+                    cGrad.addColorStop(1, "rgba(10, 11, 15, 0)");
+                    ctx.fillStyle = cGrad;
+                    ctx.fillRect(0, 0, W, H);
                 }
+
+                // Grow
+                if (frame % 60 === 0 && nodes.length < 120) {
+                    spawnNode();
+                }
+
+                // Consolidation cycle every ~5 seconds
+                if (frame % 300 === 0) {
+                    consolidate();
+                }
+
+                // Update & draw edges
+                edges.forEach((e) => {
+                    e.update();
+                    e.draw(ctx);
+                });
+
+                // Update & draw nodes
+                nodes.forEach((n) => {
+                    n.update(time, mouseX, mouseY);
+                    n.draw(ctx, time);
+                });
+
+                // Stats
+                document.getElementById("nodeCount").textContent = nodes.length;
+                document.getElementById("edgeCount").textContent = edges.length;
+                const lr = (0.01 + Math.sin(time * 0.0003) * 0.005).toFixed(4);
+                document.getElementById("learningRate").textContent = lr;
+
+                requestAnimationFrame(animate);
             }
 
-            for (let i = 0; i < rows - 1; i++) {
-                for (let j = 0; j < cols - 1; j++) {
-                    squareGrid.tiles.push(new Tile([
-                        nodeGrid[i][j],
-                        nodeGrid[i][j + 1],
-                        nodeGrid[i + 1][j + 1],
-                        nodeGrid[i + 1][j]
-                    ]));
-                }
-            }
-        }
+            document.addEventListener("mousemove", (e) => {
+                targetMX = e.clientX;
+                targetMY = e.clientY;
+            });
+            document.addEventListener(
+                "touchmove",
+                (e) => {
+                    e.preventDefault();
+                    targetMX = e.touches[0].clientX;
+                    targetMY = e.touches[0].clientY;
+                },
+                { passive: false },
+            );
+            document.addEventListener("touchstart", (e) => {
+                targetMX = e.touches[0].clientX;
+                targetMY = e.touches[0].clientY;
+            });
 
-        function initTriangleGrid() {
-            const spacing = 90;
-            const height_spacing = spacing * Math.sqrt(3) / 2;
-            const cols = Math.ceil(width / spacing) + 2;
-            const rows = Math.ceil(height / height_spacing) + 1;
-            const offsetX = (width - (cols - 1) * spacing) / 2;
-            const offsetY = (height - (rows - 1) * height_spacing) / 2;
-
-            triangleGrid.nodes = [];
-            triangleGrid.tiles = [];
-
-            const nodeGrid = [];
-            for (let i = 0; i < rows; i++) {
-                nodeGrid[i] = [];
-                for (let j = 0; j < cols; j++) {
-                    const x = offsetX + j * spacing + (i % 2) * (spacing / 2);
-                    const y = offsetY + i * height_spacing;
-                    const node = new Node(x, y);
-                    triangleGrid.nodes.push(node);
-                    nodeGrid[i][j] = node;
-                }
-            }
-
-            for (let i = 0; i < rows - 1; i++) {
-                for (let j = 0; j < cols - 1; j++) {
-                    if (i % 2 === 0) {
-                        triangleGrid.tiles.push(new Tile([
-                            nodeGrid[i][j],
-                            nodeGrid[i][j + 1],
-                            nodeGrid[i + 1][j]
-                        ]));
-                        if (j < cols - 1) {
-                            triangleGrid.tiles.push(new Tile([
-                                nodeGrid[i][j + 1],
-                                nodeGrid[i + 1][j + 1],
-                                nodeGrid[i + 1][j]
-                            ]));
+            // Click to spawn burst of nodes at cursor
+            document.addEventListener("click", (e) => {
+                if (e.target.closest("a")) return;
+                for (let i = 0; i < 3; i++) {
+                    const angle = Math.random() * Math.PI * 2;
+                    const dist = 20 + Math.random() * 60;
+                    const node = new GraphNode(
+                        e.clientX + Math.cos(angle) * dist,
+                        e.clientY + Math.sin(angle) * dist,
+                    );
+                    nodes.push(node);
+                    // Connect to nearby
+                    nodes.forEach((other) => {
+                        if (other === node) return;
+                        const dx = other.x - node.x;
+                        const dy = other.y - node.y;
+                        const d = Math.sqrt(dx * dx + dy * dy);
+                        if (d < 140 && Math.random() < 0.5) {
+                            const edge = new Edge(node, other);
+                            edges.push(edge);
+                            node.connections.push(edge);
+                            other.connections.push(edge);
                         }
-                    } else {
-                        triangleGrid.tiles.push(new Tile([
-                            nodeGrid[i][j],
-                            nodeGrid[i + 1][j + 1],
-                            nodeGrid[i + 1][j]
-                        ]));
-                        if (j < cols - 1) {
-                            triangleGrid.tiles.push(new Tile([
-                                nodeGrid[i][j],
-                                nodeGrid[i][j + 1],
-                                nodeGrid[i + 1][j + 1]
-                            ]));
-                        }
-                    }
-                }
-            }
-        }
-
-        function initHexGrid() {
-            const size = 52;
-            const width_spacing = size * Math.sqrt(3);
-            const height_spacing = size * 1.5;
-            const cols = Math.ceil(width / width_spacing) + 2;
-            const rows = Math.ceil(height / height_spacing) + 1;
-            const offsetX = (width - (cols - 1) * width_spacing) / 2;
-            const offsetY = (height - (rows - 1) * height_spacing) / 2;
-
-            hexGrid.nodes = [];
-            hexGrid.tiles = [];
-
-            for (let i = 0; i < rows; i++) {
-                for (let j = 0; j < cols; j++) {
-                    const x = offsetX + j * width_spacing + (i % 2) * (width_spacing / 2);
-                    const y = offsetY + i * height_spacing;
-
-                    const hexNodes = [];
-                    for (let k = 0; k < 6; k++) {
-                        const angle = (k / 6) * Math.PI * 2;
-                        hexNodes.push(new Node(
-                            x + Math.cos(angle) * size,
-                            y + Math.sin(angle) * size
-                        ));
-                    }
-
-                    hexGrid.tiles.push(new Tile(hexNodes));
-                }
-            }
-        }
-
-        function init() {
-            resize();
-            initSquareGrid();
-            initTriangleGrid();
-            initHexGrid();
-        }
-
-        function animate() {
-            time++;
-
-            // Smooth mouse following
-            mouseX += (targetMouseX - mouseX) * 0.05;
-            mouseY += (targetMouseY - mouseY) * 0.05;
-
-            ctx.fillStyle = '#fafafa';
-            ctx.fillRect(0, 0, width, height);
-
-            // Draw cursor indicator
-            const gradient = ctx.createRadialGradient(mouseX, mouseY, 0, mouseX, mouseY, 100);
-            gradient.addColorStop(0, 'rgba(26, 26, 26, 0.03)');
-            gradient.addColorStop(1, 'rgba(26, 26, 26, 0)');
-            ctx.fillStyle = gradient;
-            ctx.fillRect(0, 0, width, height);
-
-            // Draw tiles based on wave
-            squareGrid.tiles.forEach(tile => {
-                const wave = tile.getWave(time);
-                if (wave < 0.4) {
-                    const opacity = 1 - (wave / 0.4);
-                    tile.draw(opacity);
+                    });
                 }
             });
 
-            triangleGrid.tiles.forEach(tile => {
-                const wave = tile.getWave(time);
-                if (wave >= 0.27 && wave < 0.73) {
-                    const opacity = wave < 0.5 
-                        ? (wave - 0.27) / 0.23
-                        : 1 - ((wave - 0.5) / 0.23);
-                    tile.draw(opacity);
-                }
-            });
-
-            hexGrid.tiles.forEach(tile => {
-                const wave = tile.getWave(time);
-                if (wave >= 0.6) {
-                    const opacity = (wave - 0.6) / 0.4;
-                    tile.draw(opacity);
-                }
-            });
-
-            requestAnimationFrame(animate);
-        }
-
-        // Mouse tracking
-        document.addEventListener('mousemove', (e) => {
-            targetMouseX = e.clientX;
-            targetMouseY = e.clientY;
-        });
-
-        // Touch support
-        document.addEventListener('touchmove', (e) => {
-            e.preventDefault();
-            targetMouseX = e.touches[0].clientX;
-            targetMouseY = e.touches[0].clientY;
-        });
-
-        document.addEventListener('touchstart', (e) => {
-            targetMouseX = e.touches[0].clientX;
-            targetMouseY = e.touches[0].clientY;
-        });
-
-        window.addEventListener('resize', () => {
+            window.addEventListener("resize", init);
             init();
-        });
-
-        init();
-        animate();
-    </script>
-</body>
+            animate();
+        </script>
+    </body>
 </html>

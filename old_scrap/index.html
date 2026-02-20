@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Graphonomous - Learn, Adapt, and Decide.</title>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Libre+Baskerville:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Space Mono', monospace;
+            background: #fafafa;
+            color: #1a1a1a;
+            overflow: hidden;
+            cursor: crosshair;
+        }
+
+        #canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+        }
+
+        .content {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 2rem;
+            text-align: center;
+            pointer-events: none;
+        }
+
+        .logo {
+            font-family: 'Libre Baskerville', serif;
+            font-size: clamp(2.5rem, 6vw, 4rem);
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            color: #1a1a1a;
+            margin-bottom: 2rem;
+            opacity: 0;
+            animation: fadeUp 1.2s cubic-bezier(0.16, 1, 0.3, 1) 0.3s forwards;
+        }
+
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .description {
+            font-size: clamp(1.5rem, 2vw, 1.75rem);
+            line-height: 1.8;
+            color: #000;
+            margin-bottom: 3rem;
+            opacity: 0;
+            animation: fadeUp 1.2s cubic-bezier(0.16, 1, 0.3, 1) 0.6s forwards;
+            max-width: 750px;
+        }
+
+        .cta-link {
+            pointer-events: auto;
+            display: inline-block;
+            font-size: 0.9rem;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            color: #1a1a1a;
+            text-decoration: none;
+            padding: 1rem 2rem;
+            border: 2px solid #1a1a1a;
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            opacity: 0;
+            animation: fadeUp 1.2s cubic-bezier(0.16, 1, 0.3, 1) 0.9s forwards;
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .cta-link::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 0;
+            height: 100%;
+            background: #1a1a1a;
+            transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            z-index: -1;
+        }
+
+        .cta-link:hover::before {
+            width: 100%;
+        }
+
+        .cta-link:hover {
+            color: #fafafa;
+            transform: translateY(-2px);
+        }
+
+        .footnote {
+            position: fixed;
+            bottom: 2rem;
+            width: 100%;
+            text-align: center;
+            transform: translateX(-50%);
+            font-size: 0.75rem;
+            color: #000;
+            opacity: 0;
+            animation: fadeUp 1.2s cubic-bezier(0.16, 1, 0.3, 1) 1.2s forwards;
+            z-index: 10;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+
+    <div class="content">
+        <h1 class="logo">Graphonomous</h1>
+        <p class="description">
+            Self-governing intelligence infrastructure.<br>
+            The graph that learns, adapts, decides.
+        </p>
+        <a href="https://app.fleetprompt.com/marketplace?q=Graphonomous" class="cta-link">Discover on FleetPrompt →</a>
+    </div>
+
+    <div class="footnote">
+        © <span id="year"></span> Graphonomous.com ... Powered by <a href="https://ampersandboxdesign.com" target="_blank">[&amp;]</a>
+    </div>
+
+    <script>
+        document.getElementById("year").textContent = new Date().getFullYear();
+
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        let width, height;
+        let time = 0;
+        let mouseX = width / 2;
+        let mouseY = height / 2;
+        let targetMouseX = width / 2;
+        let targetMouseY = height / 2;
+
+        // Three tessellation grids
+        let squareGrid = { nodes: [], tiles: [] };
+        let triangleGrid = { nodes: [], tiles: [] };
+        let hexGrid = { nodes: [], tiles: [] };
+
+        function resize() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+            mouseX = width / 2;
+            mouseY = height / 2;
+            targetMouseX = width / 2;
+            targetMouseY = height / 2;
+        }
+
+        class Node {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+            }
+
+            getDistFromMouse() {
+                return Math.sqrt(
+                    Math.pow(this.x - mouseX, 2) + 
+                    Math.pow(this.y - mouseY, 2)
+                );
+            }
+
+            getWave(time) {
+                const distFromMouse = this.getDistFromMouse();
+                return (Math.sin(time * 0.008 - distFromMouse * 0.005) + 1) / 2;
+            }
+        }
+
+        class Tile {
+            constructor(nodes) {
+                this.nodes = nodes;
+                this.centerX = nodes.reduce((sum, n) => sum + n.x, 0) / nodes.length;
+                this.centerY = nodes.reduce((sum, n) => sum + n.y, 0) / nodes.length;
+            }
+
+            getDistFromMouse() {
+                return Math.sqrt(
+                    Math.pow(this.centerX - mouseX, 2) + 
+                    Math.pow(this.centerY - mouseY, 2)
+                );
+            }
+
+            getWave(time) {
+                const distFromMouse = this.getDistFromMouse();
+                return (Math.sin(time * 0.008 - distFromMouse * 0.005) + 1) / 2;
+            }
+
+            draw(opacity) {
+                const distFromMouse = this.getDistFromMouse();
+                const proximity = Math.max(0, 1 - distFromMouse / 300);
+                
+                // Highlight tiles near cursor
+                const fillAlpha = opacity * 0.08 + proximity * 0.15;
+                const strokeAlpha = opacity * 0.6 + proximity * 0.3;
+
+                ctx.fillStyle = `rgba(26, 26, 26, ${fillAlpha})`;
+                ctx.strokeStyle = `rgba(26, 26, 26, ${strokeAlpha})`;
+                ctx.lineWidth = 1.5 + proximity * 1;
+
+                ctx.beginPath();
+                this.nodes.forEach((node, i) => {
+                    if (i === 0) ctx.moveTo(node.x, node.y);
+                    else ctx.lineTo(node.x, node.y);
+                });
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+
+                // Draw glow near cursor
+                if (proximity > 0.7) {
+                    ctx.strokeStyle = `rgba(26, 26, 26, ${proximity * 0.2})`;
+                    ctx.lineWidth = 3;
+                    ctx.stroke();
+                }
+            }
+        }
+
+        function initSquareGrid() {
+            const spacing = 90;
+            const cols = Math.ceil(width / spacing) + 1;
+            const rows = Math.ceil(height / spacing) + 1;
+            const offsetX = (width - (cols - 1) * spacing) / 2;
+            const offsetY = (height - (rows - 1) * spacing) / 2;
+
+            squareGrid.nodes = [];
+            squareGrid.tiles = [];
+
+            const nodeGrid = [];
+            for (let i = 0; i < rows; i++) {
+                nodeGrid[i] = [];
+                for (let j = 0; j < cols; j++) {
+                    const node = new Node(
+                        offsetX + j * spacing,
+                        offsetY + i * spacing
+                    );
+                    squareGrid.nodes.push(node);
+                    nodeGrid[i][j] = node;
+                }
+            }
+
+            for (let i = 0; i < rows - 1; i++) {
+                for (let j = 0; j < cols - 1; j++) {
+                    squareGrid.tiles.push(new Tile([
+                        nodeGrid[i][j],
+                        nodeGrid[i][j + 1],
+                        nodeGrid[i + 1][j + 1],
+                        nodeGrid[i + 1][j]
+                    ]));
+                }
+            }
+        }
+
+        function initTriangleGrid() {
+            const spacing = 90;
+            const height_spacing = spacing * Math.sqrt(3) / 2;
+            const cols = Math.ceil(width / spacing) + 2;
+            const rows = Math.ceil(height / height_spacing) + 1;
+            const offsetX = (width - (cols - 1) * spacing) / 2;
+            const offsetY = (height - (rows - 1) * height_spacing) / 2;
+
+            triangleGrid.nodes = [];
+            triangleGrid.tiles = [];
+
+            const nodeGrid = [];
+            for (let i = 0; i < rows; i++) {
+                nodeGrid[i] = [];
+                for (let j = 0; j < cols; j++) {
+                    const x = offsetX + j * spacing + (i % 2) * (spacing / 2);
+                    const y = offsetY + i * height_spacing;
+                    const node = new Node(x, y);
+                    triangleGrid.nodes.push(node);
+                    nodeGrid[i][j] = node;
+                }
+            }
+
+            for (let i = 0; i < rows - 1; i++) {
+                for (let j = 0; j < cols - 1; j++) {
+                    if (i % 2 === 0) {
+                        triangleGrid.tiles.push(new Tile([
+                            nodeGrid[i][j],
+                            nodeGrid[i][j + 1],
+                            nodeGrid[i + 1][j]
+                        ]));
+                        if (j < cols - 1) {
+                            triangleGrid.tiles.push(new Tile([
+                                nodeGrid[i][j + 1],
+                                nodeGrid[i + 1][j + 1],
+                                nodeGrid[i + 1][j]
+                            ]));
+                        }
+                    } else {
+                        triangleGrid.tiles.push(new Tile([
+                            nodeGrid[i][j],
+                            nodeGrid[i + 1][j + 1],
+                            nodeGrid[i + 1][j]
+                        ]));
+                        if (j < cols - 1) {
+                            triangleGrid.tiles.push(new Tile([
+                                nodeGrid[i][j],
+                                nodeGrid[i][j + 1],
+                                nodeGrid[i + 1][j + 1]
+                            ]));
+                        }
+                    }
+                }
+            }
+        }
+
+        function initHexGrid() {
+            const size = 52;
+            const width_spacing = size * Math.sqrt(3);
+            const height_spacing = size * 1.5;
+            const cols = Math.ceil(width / width_spacing) + 2;
+            const rows = Math.ceil(height / height_spacing) + 1;
+            const offsetX = (width - (cols - 1) * width_spacing) / 2;
+            const offsetY = (height - (rows - 1) * height_spacing) / 2;
+
+            hexGrid.nodes = [];
+            hexGrid.tiles = [];
+
+            for (let i = 0; i < rows; i++) {
+                for (let j = 0; j < cols; j++) {
+                    const x = offsetX + j * width_spacing + (i % 2) * (width_spacing / 2);
+                    const y = offsetY + i * height_spacing;
+
+                    const hexNodes = [];
+                    for (let k = 0; k < 6; k++) {
+                        const angle = (k / 6) * Math.PI * 2;
+                        hexNodes.push(new Node(
+                            x + Math.cos(angle) * size,
+                            y + Math.sin(angle) * size
+                        ));
+                    }
+
+                    hexGrid.tiles.push(new Tile(hexNodes));
+                }
+            }
+        }
+
+        function init() {
+            resize();
+            initSquareGrid();
+            initTriangleGrid();
+            initHexGrid();
+        }
+
+        function animate() {
+            time++;
+
+            // Smooth mouse following
+            mouseX += (targetMouseX - mouseX) * 0.05;
+            mouseY += (targetMouseY - mouseY) * 0.05;
+
+            ctx.fillStyle = '#fafafa';
+            ctx.fillRect(0, 0, width, height);
+
+            // Draw cursor indicator
+            const gradient = ctx.createRadialGradient(mouseX, mouseY, 0, mouseX, mouseY, 100);
+            gradient.addColorStop(0, 'rgba(26, 26, 26, 0.03)');
+            gradient.addColorStop(1, 'rgba(26, 26, 26, 0)');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, width, height);
+
+            // Draw tiles based on wave
+            squareGrid.tiles.forEach(tile => {
+                const wave = tile.getWave(time);
+                if (wave < 0.4) {
+                    const opacity = 1 - (wave / 0.4);
+                    tile.draw(opacity);
+                }
+            });
+
+            triangleGrid.tiles.forEach(tile => {
+                const wave = tile.getWave(time);
+                if (wave >= 0.27 && wave < 0.73) {
+                    const opacity = wave < 0.5 
+                        ? (wave - 0.27) / 0.23
+                        : 1 - ((wave - 0.5) / 0.23);
+                    tile.draw(opacity);
+                }
+            });
+
+            hexGrid.tiles.forEach(tile => {
+                const wave = tile.getWave(time);
+                if (wave >= 0.6) {
+                    const opacity = (wave - 0.6) / 0.4;
+                    tile.draw(opacity);
+                }
+            });
+
+            requestAnimationFrame(animate);
+        }
+
+        // Mouse tracking
+        document.addEventListener('mousemove', (e) => {
+            targetMouseX = e.clientX;
+            targetMouseY = e.clientY;
+        });
+
+        // Touch support
+        document.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            targetMouseX = e.touches[0].clientX;
+            targetMouseY = e.touches[0].clientY;
+        });
+
+        document.addEventListener('touchstart', (e) => {
+            targetMouseX = e.touches[0].clientX;
+            targetMouseY = e.touches[0].clientY;
+        });
+
+        window.addEventListener('resize', () => {
+            init();
+        });
+
+        init();
+        animate();
+    </script>
+</body>
+</html>

@@ -3,7 +3,7 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Graphonomous — Intelligence That Grows</title>
+        <title>Graphonomous — Grounded Autonomy</title>
         <link
             href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=JetBrains+Mono:wght@300;400;500;700&display=swap"
             rel="stylesheet"
@@ -18,9 +18,14 @@
                 --accent-semantic: #7b8cff;
                 --accent-procedural: #ff6b8a;
                 --accent-temporal: #ffc46b;
+                --accent-outcome: #f97316;
+                --accent-goal: #a78bfa;
                 --glow-episodic: rgba(74, 245, 198, 0.15);
                 --glow-semantic: rgba(123, 140, 255, 0.15);
                 --glow-procedural: rgba(255, 107, 138, 0.15);
+                --glow-temporal: rgba(255, 196, 107, 0.15);
+                --glow-outcome: rgba(249, 115, 22, 0.15);
+                --glow-goal: rgba(167, 139, 250, 0.15);
             }
 
             * {
@@ -415,6 +420,22 @@
                     cursor: pointer;
                 }
             }
+
+            .legend-dot.temporal {
+                background: var(--accent-temporal);
+                box-shadow: 0 0 8px var(--glow-temporal);
+                animation-delay: 2s;
+            }
+            .legend-dot.outcome {
+                background: var(--accent-outcome);
+                box-shadow: 0 0 8px var(--glow-outcome);
+                animation-delay: 2.5s;
+            }
+            .legend-dot.goal {
+                background: var(--accent-goal);
+                box-shadow: 0 0 8px var(--glow-goal);
+                animation-delay: 3s;
+            }
         </style>
     </head>
     <body>
@@ -480,8 +501,8 @@
 
             <p class="description">
                 A continual learning engine for edge&nbsp;AI.<br />
-                Self-evolving knowledge graphs that make small models<br />
-                brilliant — no retraining, no cloud, no&nbsp;forgetting.
+                Grounded in outcomes. Persistent goals via GoalGraph.<br />
+                Better decisions over time — no retraining, no cloud.
             </p>
 
             <div class="memory-legend">
@@ -496,6 +517,18 @@
                 <div class="legend-item">
                     <div class="legend-dot procedural"></div>
                     Procedural
+                </div>
+                <div class="legend-item">
+                    <div class="legend-dot temporal"></div>
+                    Temporal
+                </div>
+                <div class="legend-item">
+                    <div class="legend-dot outcome"></div>
+                    Outcome
+                </div>
+                <div class="legend-item">
+                    <div class="legend-dot goal"></div>
+                    Goal
                 </div>
             </div>
 
@@ -592,28 +625,47 @@
                     name: "episodic",
                     color: "#4af5c6",
                     glow: "rgba(74,245,198,",
-                    prob: 0.4,
+                    prob: 0.26,
                 },
                 {
                     name: "semantic",
                     color: "#7b8cff",
                     glow: "rgba(123,140,255,",
-                    prob: 0.35,
+                    prob: 0.22,
                 },
                 {
                     name: "procedural",
                     color: "#ff6b8a",
                     glow: "rgba(255,107,138,",
-                    prob: 0.25,
+                    prob: 0.18,
+                },
+                {
+                    name: "temporal",
+                    color: "#ffc46b",
+                    glow: "rgba(255,196,107,",
+                    prob: 0.14,
+                },
+                {
+                    name: "outcome",
+                    color: "#f97316",
+                    glow: "rgba(249,115,22,",
+                    prob: 0.12,
+                },
+                {
+                    name: "goal",
+                    color: "#a78bfa",
+                    glow: "rgba(167,139,250,",
+                    prob: 0.08,
                 },
             ];
 
             function pickType() {
-                const r = Math.random();
-                if (r < MEMORY_TYPES[0].prob) return MEMORY_TYPES[0];
-                if (r < MEMORY_TYPES[0].prob + MEMORY_TYPES[1].prob)
-                    return MEMORY_TYPES[1];
-                return MEMORY_TYPES[2];
+                let r = Math.random();
+                for (const t of MEMORY_TYPES) {
+                    r -= t.prob;
+                    if (r <= 0) return t;
+                }
+                return MEMORY_TYPES[MEMORY_TYPES.length - 1];
             }
 
             class GraphNode {

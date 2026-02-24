@@ -129,7 +129,7 @@ A REST/GraphQL API can be added later as a thin wrapper if needed, but MCP is th
 
 ```elixir
 defmodule Graphonomous.Schema.Node do
-  @type memory_type :: :episodic | :semantic | :procedural | :temporal
+  @type memory_type :: :episodic | :semantic | :procedural | :temporal | :outcome | :goal
   @type timescale :: :fast | :medium | :slow | :glacial
 
   @type t :: %__MODULE__{
@@ -138,6 +138,11 @@ defmodule Graphonomous.Schema.Node do
     content: String.t(),             # The knowledge content
     embedding: [float()],            # Vector embedding (384-dim default)
     metadata: map(),                 # Arbitrary structured metadata
+
+    # Grounding / attribution
+    # For :outcome nodes, causal_parent_ids links back to the belief/procedure nodes
+    # that informed the action. For other node types, it is typically empty.
+    causal_parent_ids: [binary()],   # Node IDs this node is causally attributed to
     
     # Learning signals
     confidence: float(),             # 0.0–1.0, how certain we are
@@ -162,6 +167,12 @@ end
 | `:semantic` | Facts, concepts, relationships | "Error E-47 indicates hydraulic pressure loss" | Low (stable knowledge) |
 | `:procedural` | How-to knowledge, procedures | "To reset valve: 1) close intake 2) flush line 3) recalibrate" | Very low (skills persist) |
 | `:temporal` | Time-indexed patterns | "E-47 errors spike on Mondays after weekend shutdown" | Medium (patterns update) |
+| `:outcome` | Empirical results of actions (grounding) | "Reset procedure succeeded; pressure stable after 10m" | Low–Medium (environment can drift) |
+| `:goal` | Durable intent over long horizons (GoalGraph) | "Deploy customer support agent for ACME Corp" | Very low (should persist until resolved) |
+
+**Notes on `:outcome` and `:goal`:**
+- `:outcome` nodes **close the loop**: action → observed result → update causal confidence on the nodes that drove the decision (`causal_parent_ids`).
+- `:goal` nodes live in a **GoalGraph subgraph**. They typically store `status`, `horizon`, `completion_criteria`, and `decomposition` in `metadata`.
 
 ### 4.2 Edges
 
@@ -196,12 +207,13 @@ end
 -- Nodes
 CREATE TABLE nodes (
   id TEXT PRIMARY KEY,              -- UUIDv7
-  type TEXT NOT NULL CHECK(type IN ('episodic','semantic','procedural','temporal')),
+  type TEXT NOT NULL CHECK(type IN ('episodic','semantic','procedural','temporal','outcome','goal')),
   content TEXT NOT NULL,
-  metadata TEXT DEFAULT '{}',       -- JSON
+  metadata TEXT DEFAULT '{}',        -- JSON (stores type-specific fields, see README)
+  causal_parent_ids TEXT DEFAULT '[]', -- JSON array of node IDs (grounding attribution)
   confidence REAL DEFAULT 0.5,
   access_count INTEGER DEFAULT 0,
-  access_recency TEXT,              -- ISO8601
+  access_recency TEXT,               -- ISO8601
   creation_source TEXT DEFAULT 'inference',
   timescale TEXT DEFAULT 'medium',
   decay_rate REAL DEFAULT 0.01,
@@ -277,6 +289,17 @@ end
 | `learn_from_interaction` | Process a user-model interaction for learning | `{user_message: string, model_response: string, context?: object}` | `{learned: [Node], edges_created: int}` |
 | `learn_from_feedback` | Integrate explicit feedback | `{node_id: string, feedback: "positive"\|"negative"\|"correction", correction?: string}` | `{updated: Node}` |
 | `learn_detect_novelty` | Check if a query contains novel concepts | `{query: string}` | `{is_novel: bool, novelty_score: float, nearest_nodes: [Node]}` |
+| `learn_from_outcome` | **Grounding loop.** Ingest an action outcome and causally update the nodes that drove the action | `{outcome_id: string, action_id: string, agent_id: string, goal_id?: string, result_status: "success"\|"failure"\|"partial_success"\|"timeout", evidence_type: "performance"\|"resource"\|"schema"\|"latency"\|"historical"\|"external", evidence_payload?: object, confidence: float, causal_node_ids: [string], duration_ms?: int, observed_at?: string}` | `{outcome_node: Node, updated_nodes: [Node], deltas: [%{node_id: string, confidence_delta: float}]}` |
+| `coverage_query` | Epistemic self-modeling: assess whether the graph adequately covers a proposed task before acting | `{task_description: string, critical_topics?: [string], min_confidence?: float}` | `{relevant_nodes: [Node], coverage_score: float, confidence_mean: float, knowledge_gaps: [string], recommendation: "act"\|"learn_first"\|"escalate"}` |
+
+#### GoalGraph Operations
+
+| Tool | Description | Input | Output |
+|------|------------|-------|--------|
+| `goal_create` | Create a durable goal node (persists across sessions) | `{content: string, completion_criteria: object, horizon: "short"\|"medium"\|"long", parent_goal_id?: string, metadata?: object}` | `{goal: Node}` |
+| `goal_update_status` | Transition a goal state with optional evidence | `{goal_id: string, status: "active"\|"completed"\|"failed"\|"suspended", evidence?: object}` | `{goal: Node}` |
+| `goal_retrieve_active` | Retrieve all active goals (optionally scoped) | `{org_id?: string, agent_id?: string, limit?: int}` | `{goals: [Node]}` |
+| `goal_decompose` | Attach/replace a goal’s decomposition into subgoals | `{goal_id: string, subgoals: [string]}` | `{goal: Node}` |
 
 #### Context Retrieval (for LLM augmentation)
 
@@ -366,6 +389,80 @@ User Query
 │                 │      Assign timescale
 └─────────────────┘
 ```
+
+#### 6.1.1 Outcome Grounding (Closed-Loop Learning)
+
+Language-only learning produces *unverified* knowledge. Autonomy requires that the graph learn from **outcomes**: did a chosen procedure/policy actually work in this environment?
+
+Graphonomous supports a closed loop by ingesting outcomes as first-class nodes and using causal attribution to update confidence on the nodes that drove the action.
+
+**Core mechanism:**
+- The runtime (typically OpenSentience) executes an action.
+- The runtime reports an outcome via `learn_from_outcome`.
+- Graphonomous creates an `:outcome` node and updates causal parents.
+
+**Outcome ingestion contract (tool-level):**
+- `learn_from_outcome` accepts `causal_node_ids` — the node IDs that were retrieved and used as context before the action.
+- Graphonomous persists an `:outcome` node whose `causal_parent_ids` are set to those `causal_node_ids`.
+- Graphonomous adjusts `confidence` on the causal parents:
+  - success ⇒ increase (bounded)
+  - failure ⇒ decrease (bounded)
+  - partial_success ⇒ proportional adjustment
+  - timeout ⇒ typically small/no adjustment (caller may re-run)
+- Adjustments are scaled by:
+  - `confidence` of the outcome evidence (not the LLM’s rhetoric)
+  - `evidence_type` (e.g. `"performance"` vs `"external"`)
+  - optional decay/recency (environment drift)
+
+**Why this matters:** the graph becomes a record of *causal hypotheses* (“these nodes justified that action”) and *empirical results* (“it worked/failed”), not just a store of text.
+
+#### 6.1.2 GoalGraph Persistence (Durable Intent)
+
+Autonomous behavior requires goals that persist across:
+- restarts,
+- interruptions,
+- context switches,
+- multi-step plans.
+
+Graphonomous models durable intent as `:goal` nodes (a GoalGraph subgraph). Goals are linked to the procedural/semantic knowledge that supports them, and goal state transitions are driven by outcomes.
+
+**Goal node convention (stored primarily in `metadata`):**
+- `status`: `active | completed | failed | suspended`
+- `horizon`: `short | medium | long`
+- `completion_criteria`: structured criteria (e.g. `{type: "outcome_threshold", target: 0.85}`)
+- `decomposition`: list of subgoal IDs
+- `parent_goal_id`: optional parent
+
+**GoalGraph tools:**
+- `goal_create` creates a durable intent anchor
+- `goal_decompose` attaches subgoals
+- `goal_retrieve_active` supports restart/resumption
+- `goal_update_status` records state transitions (optionally with evidence)
+
+**Outcome-to-goal linkage:**
+- If an outcome includes `goal_id`, Graphonomous can:
+  - attach `:outcome` → `:goal` edges (e.g. `:part_of` or `:related_to`)
+  - update goal status when criteria are satisfied or retry budgets are exhausted (policy is implementation-defined; the tool surface supports it)
+
+#### 6.1.3 Epistemic Coverage Scoring (Act vs Learn vs Escalate)
+
+Node-level confidence is not enough for autonomy; agents need task-level awareness of whether the graph is *adequate* for the job.
+
+Graphonomous provides `coverage_query(task_description)` to return:
+- `relevant_nodes`: the likely supporting knowledge
+- `coverage_score`: 0.0–1.0 (how much of the task’s domain appears covered)
+- `confidence_mean`: mean confidence over relevant nodes
+- `knowledge_gaps`: missing or low-confidence topics
+- `recommendation`: `"act" | "learn_first" | "escalate"`
+
+**Intended runtime behavior:**
+- Before taking high-stakes or irreversible actions:
+  1. call `coverage_query`
+  2. if `"act"` → proceed
+  3. if `"learn_first"` → gather more info / retrieve more context / request clarifications
+  4. if `"escalate"` → route to Deliberatic (multi-agent deliberation) or human review
+
+Graphonomous returns an assessment; the caller enforces policy (Delegatic) and chooses the control flow.
 
 ### 6.2 Consolidation Cycles
 

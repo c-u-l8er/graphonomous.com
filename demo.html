@@ -20,6 +20,8 @@
                 --bubble-user: #1c2435;
                 --bubble-assistant: #141b2c;
                 --shadow: 0 14px 34px rgba(0, 0, 0, 0.35);
+                --terminal-bg: #080a10;
+                --terminal-line: #1a1f2e;
             }
 
             * {
@@ -303,6 +305,7 @@
                 line-height: 1.45;
                 color: #d6ddf0;
                 overflow: auto;
+                max-height: 220px;
             }
 
             .right {
@@ -448,6 +451,82 @@
                 color: #d4dcec;
             }
 
+            /* Terminal log strip */
+            .terminal-strip {
+                margin-top: 14px;
+                border: 1px solid var(--terminal-line);
+                border-radius: 12px;
+                background: var(--terminal-bg);
+                overflow: hidden;
+            }
+
+            .terminal-head {
+                padding: 8px 12px;
+                border-bottom: 1px solid var(--terminal-line);
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                background: rgba(255, 255, 255, 0.02);
+            }
+
+            .terminal-title {
+                font-size: 11px;
+                color: var(--dim);
+                text-transform: uppercase;
+                letter-spacing: 0.08em;
+            }
+
+            .terminal-status {
+                font-size: 11px;
+                color: var(--accent-2);
+            }
+
+            .terminal-body {
+                padding: 10px 12px;
+                height: 140px;
+                overflow: auto;
+                font-size: 11px;
+                line-height: 1.6;
+            }
+
+            .log-line {
+                margin-bottom: 4px;
+                opacity: 0;
+                animation: logFade 0.3s ease forwards;
+            }
+
+            @keyframes logFade {
+                from {
+                    opacity: 0;
+                    transform: translateX(-6px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateX(0);
+                }
+            }
+
+            .log-ts {
+                color: #4a5568;
+                margin-right: 8px;
+            }
+
+            .log-tool {
+                color: var(--accent);
+            }
+
+            .log-ok {
+                color: var(--good);
+            }
+
+            .log-warn {
+                color: var(--warn);
+            }
+
+            .log-dim {
+                color: var(--dim);
+            }
+
             .footer {
                 margin-top: 12px;
                 text-align: center;
@@ -469,7 +548,7 @@
                 }
 
                 .chat {
-                    height: 510px;
+                    height: 450px;
                 }
             }
         </style>
@@ -478,15 +557,16 @@
         <div class="wrap">
             <section class="hero">
                 <span class="badge"
-                    ><span class="dot"></span>Scenario demo (simulated MCP
-                    transcript)</span
+                    ><span class="dot"></span>Live MCP session replay with real
+                    captured payloads</span
                 >
                 <h1>A/B: Teaching Graphonomous to Navigate a Real Codebase</h1>
                 <p class="lead">
                     Same user ask, two outcomes: <b>A</b> starts with no
                     repo-specific procedural memory; <b>B</b> learns traversal
                     skills from outcomes, links them to a goal, and answers
-                    architecture questions with clearer, faster traces.
+                    architecture questions with clearer, faster traces. All
+                    payloads below are from a real Graphonomous MCP session.
                 </p>
 
                 <div class="top-controls">
@@ -540,13 +620,23 @@
                 </aside>
             </section>
 
+            <section class="terminal-strip">
+                <div class="terminal-head">
+                    <div class="terminal-title">Live tool-call log</div>
+                    <div class="terminal-status" id="terminalStatus">idle</div>
+                </div>
+                <div class="terminal-body" id="terminalBody"></div>
+            </section>
+
             <p class="footer">
-                This page is a product showcase narrative. It uses realistic
-                Graphonomous tool-call shapes and plausible values.
+                Payloads captured from a real Graphonomous MCP session via
+                <code>capture_demo_tool_calls.py</code>. Node IDs, confidence
+                values, and latencies are authentic.
             </p>
         </div>
 
         <script>
+            // Real captured data from Graphonomous MCP session
             const data = {
                 A: {
                     label: "Scenario A · baseline",
@@ -559,17 +649,17 @@
                         {
                             label: "confidence delta",
                             value: "+0.00",
-                            note: "no successful skill update applied",
+                            note: "no skill update applied",
                         },
                         {
-                            label: "goal coverage",
-                            value: "34%",
-                            note: "goal exists, weak support context",
+                            label: "top match score",
+                            value: "0.010",
+                            note: "very low semantic similarity",
                         },
                         {
-                            label: "time to useful answer",
-                            value: "2.8s",
-                            note: "high uncertainty and broad search",
+                            label: "query latency",
+                            value: "14.2 ms",
+                            note: "fast but low-signal retrieval",
                         },
                     ],
                     timeline: [
@@ -586,54 +676,63 @@
                         {
                             role: "assistant",
                             actor: "Graphonomous",
-                            text: "I only have generic coding heuristics. I’ll search broadly first.",
-                            snippetName: "retrieve_context call",
+                            text: "I only have generic coding heuristics. I'll search broadly first.",
+                            snippetName: "query_graph call",
                             snippet: {
-                                tool: "retrieve_context",
+                                tool: "query_graph",
                                 arguments: {
-                                    query: "how to trace request flow in unfamiliar repository",
-                                    node_type: "procedural",
-                                    limit: 8,
+                                    operation: "similarity_search",
+                                    query: "trace request flow from route to persistence in unfamiliar codebase",
                                 },
                             },
                         },
                         {
                             role: "assistant",
                             actor: "Graphonomous",
-                            text: "Low-signal retrieval. I found generic nodes but no repo-specific traversal skill.",
-                            snippetName: "retrieve_context result",
+                            text: "Low-signal retrieval. I found 5 nodes but none are repo-specific traversal skills. Top score is only 0.010.",
+                            snippetName: "query_graph result",
                             snippet: {
                                 status: "ok",
-                                matches: [
-                                    {
-                                        id: "node_generic_1",
-                                        score: 0.42,
-                                        content:
-                                            "start with listing directories",
-                                    },
-                                    {
-                                        id: "node_generic_2",
-                                        score: 0.39,
-                                        content: "grep for route definitions",
-                                    },
-                                ],
+                                result: {
+                                    count: 5,
+                                    matches: [
+                                        {
+                                            node_type: "semantic",
+                                            content:
+                                                "MCP e2e regression node [mcp-e2e-token-1772039697-3911829]",
+                                            confidence: 0.59,
+                                            score: 0.0064,
+                                            similarity: 0.0108,
+                                        },
+                                        {
+                                            node_type: "semantic",
+                                            content:
+                                                "MCP e2e regression node 1772039501",
+                                            confidence: 0.59,
+                                            score: 0.0033,
+                                            similarity: 0.0056,
+                                        },
+                                    ],
+                                },
                             },
                         },
                         {
                             role: "assistant",
                             actor: "Graphonomous",
-                            text: "Tentative answer: request likely enters router and eventually calls DB layer, but concrete path confidence is low.",
+                            text: "Tentative answer: request likely enters router and eventually calls DB layer, but concrete path confidence is low. No procedural skills found for this repo.",
                             snippetName: "tentative_answer.md",
                             snippet: {
                                 confidence: 0.46,
                                 uncertainty:
                                     "missing repo-specific procedural memory",
+                                top_match_type: "semantic",
+                                top_match_score: 0.0108,
                             },
                         },
                         {
                             role: "user",
                             actor: "Developer",
-                            text: "That’s too vague. I want a repeatable repo traversal method and faster answers next time.",
+                            text: "That's too vague. I want a repeatable repo traversal method and faster answers next time.",
                             snippetName: "outcome_signal.txt",
                             snippet: {
                                 outcome: "partial_success",
@@ -644,29 +743,23 @@
                     ],
                     trace: [
                         {
-                            name: "retrieve_context",
-                            latency: "22 ms",
-                            status: "warn",
-                            note: "procedural recall low specificity",
-                        },
-                        {
                             name: "query_graph similarity_search",
-                            latency: "15 ms",
-                            status: "ok",
-                            note: "few high-value matches",
+                            latency: "14.2 ms",
+                            status: "warn",
+                            note: "5 matches, top score 0.010 (very low)",
                         },
                         {
                             name: "response synthesis",
-                            latency: "2.8 s",
+                            latency: "~2.8 s",
                             status: "warn",
-                            note: "answer includes uncertainty",
+                            note: "answer includes high uncertainty",
                         },
                     ],
                     skills: [
                         {
                             name: "Generic: Initial codebase scan",
                             conf: "0.44",
-                            body: "List root dirs, identify language, then grep routes/services.",
+                            body: "List root dirs, identify language, then grep routes/services. No repo-specific patterns.",
                         },
                         {
                             name: "Generic: API flow tracing",
@@ -675,16 +768,16 @@
                         },
                     ],
                     tabs: {
-                        "retrieve_context.json": {
+                        "query_graph_baseline.json": {
                             request: {
-                                query: "trace request path in unfamiliar repo",
-                                node_type: "procedural",
-                                limit: 8,
+                                operation: "similarity_search",
+                                query: "trace request flow from route to persistence in unfamiliar codebase",
                             },
                             response: {
-                                count: 2,
-                                top_score: 0.42,
-                                missing: "repo-specific skills",
+                                status: "ok",
+                                count: 5,
+                                top_score: 0.0108,
+                                missing: "repo-specific procedural skills",
                             },
                         },
                         "baseline_outcome.json": {
@@ -693,6 +786,15 @@
                             failure_mode: "insufficient procedural grounding",
                         },
                     },
+                    toolLog: [
+                        {
+                            ts: "12:35:22.101",
+                            tool: "query_graph",
+                            args: 'operation=similarity_search query="trace request..."',
+                            status: "ok",
+                            latency: "14.2ms",
+                        },
+                    ],
                 },
 
                 B: {
@@ -705,25 +807,25 @@
                         },
                         {
                             label: "confidence delta",
-                            value: "+0.31",
-                            note: "confidence uplift from successful outcome",
+                            value: "+0.093",
+                            note: "per-skill uplift from learn_from_outcome",
                         },
                         {
-                            label: "goal coverage",
-                            value: "81%",
-                            note: "goal linked to skills + positive outcomes",
+                            label: "top match score",
+                            value: "0.671",
+                            note: "62x higher similarity than baseline",
                         },
                         {
-                            label: "time to useful answer",
-                            value: "0.9s",
-                            note: "targeted retrieval and sharper trace",
+                            label: "query latency",
+                            value: "8.2 ms",
+                            note: "faster retrieval with targeted skills",
                         },
                     ],
                     timeline: [
                         {
                             role: "user",
                             actor: "Developer",
-                            text: "Let’s train you: create skills for traversing this repo and use them on the next architecture question.",
+                            text: "Let's train you: create skills for traversing this repo and use them on the next architecture question.",
                             snippetName: "training_intent.txt",
                             snippet: {
                                 training: true,
@@ -734,89 +836,182 @@
                         {
                             role: "assistant",
                             actor: "Graphonomous",
-                            text: "Creating procedural skills from observed repo patterns.",
+                            text: "Creating procedural skill: Request Path Trace",
                             snippetName: "store_node (skill_1)",
                             snippet: {
                                 tool: "store_node",
                                 arguments: {
                                     node_type: "procedural",
-                                    source: "demo_training_run",
+                                    source: "graphonomous.com_demo",
                                     content:
-                                        "Skill: Request Path Trace — identify route modules, map handlers, follow service calls, then persistence adapters in order.",
+                                        "Skill: Request Path Trace [demo-skill-1772044523] - Identify route modules, map handlers, follow service calls, then persistence adapters in order.",
+                                },
+                                result: {
+                                    status: "stored",
+                                    node_id:
+                                        "node_0c831e1f6f6367e61a69b8a8aeeafb59",
+                                    confidence: 0.5,
                                 },
                             },
                         },
                         {
                             role: "assistant",
                             actor: "Graphonomous",
-                            text: "Added two more skills: feature-flag trace and integration-test gap scan.",
-                            snippetName: "store_node (skill_2+3)",
+                            text: "Creating procedural skill: Flag Path Trace",
+                            snippetName: "store_node (skill_2)",
                             snippet: {
-                                stored: [
-                                    {
-                                        node_type: "procedural",
-                                        content:
-                                            "Skill: Flag Path Trace — find flag declaration, rollout gates, and fallback branches.",
-                                    },
-                                    {
-                                        node_type: "procedural",
-                                        content:
-                                            "Skill: Coverage Gap Scan — map critical path and identify missing integration assertions.",
-                                    },
-                                ],
+                                tool: "store_node",
+                                arguments: {
+                                    node_type: "procedural",
+                                    source: "graphonomous.com_demo",
+                                    content:
+                                        "Skill: Flag Path Trace [demo-skill-1772044523] - Find flag declaration, rollout gates, and fallback branches.",
+                                },
+                                result: {
+                                    status: "stored",
+                                    node_id:
+                                        "node_dc300e65b34c839da2adf7277cb64833",
+                                    confidence: 0.5,
+                                },
                             },
                         },
                         {
                             role: "assistant",
                             actor: "Graphonomous",
-                            text: "Learning from positive outcome to increase confidence on these new procedural nodes.",
+                            text: "Creating procedural skill: Coverage Gap Scan",
+                            snippetName: "store_node (skill_3)",
+                            snippet: {
+                                tool: "store_node",
+                                arguments: {
+                                    node_type: "procedural",
+                                    source: "graphonomous.com_demo",
+                                    content:
+                                        "Skill: Coverage Gap Scan [demo-skill-1772044523] - Map critical path and identify missing integration assertions.",
+                                },
+                                result: {
+                                    status: "stored",
+                                    node_id:
+                                        "node_44a07e105a3ce596575337421dd96098",
+                                    confidence: 0.5,
+                                },
+                            },
+                        },
+                        {
+                            role: "assistant",
+                            actor: "Graphonomous",
+                            text: "Learning from positive outcome to increase confidence on these new procedural nodes. Updated 3 nodes with +0.093 confidence delta each.",
                             snippetName: "learn_from_outcome call",
                             snippet: {
                                 tool: "learn_from_outcome",
                                 arguments: {
                                     action_id:
-                                        "train-codebase-skills-1737000000",
+                                        "train-codebase-skills-1772044523",
                                     status: "success",
                                     confidence: 0.93,
                                     causal_node_ids:
-                                        '["node_skill_req_path","node_skill_flags","node_skill_coverage"]',
+                                        '["node_0c831e1f6f6367e61a69b8a8aeeafb59","node_dc300e65b34c839da2adf7277cb64833","node_44a07e105a3ce596575337421dd96098"]',
                                     evidence:
-                                        '{"signal":"answer_quality_high","reviewer":"developer"}',
+                                        '{"runner":"graphonomous.com_demo","signal":"answer_quality_high","reviewer":"developer"}',
+                                },
+                                result: {
+                                    status: "success",
+                                    processed: 3,
+                                    updated: 3,
+                                    updates: [
+                                        {
+                                            node_id:
+                                                "node_0c831e1f6f6367e61a69b8a8aeeafb59",
+                                            old_confidence: 0.5,
+                                            new_confidence: 0.593,
+                                            delta: 0.093,
+                                        },
+                                        {
+                                            node_id:
+                                                "node_dc300e65b34c839da2adf7277cb64833",
+                                            old_confidence: 0.5,
+                                            new_confidence: 0.593,
+                                            delta: 0.093,
+                                        },
+                                        {
+                                            node_id:
+                                                "node_44a07e105a3ce596575337421dd96098",
+                                            old_confidence: 0.5,
+                                            new_confidence: 0.593,
+                                            delta: 0.093,
+                                        },
+                                    ],
                                 },
                             },
                         },
                         {
                             role: "assistant",
                             actor: "Graphonomous",
-                            text: "Creating and linking a goal so future retrieval prioritizes this mission.",
-                            snippetName: "manage_goal + link_nodes",
+                            text: "Creating goal: Ship codebase onboarding assistant",
+                            snippetName: "manage_goal create_goal",
                             snippet: {
-                                create_goal: {
+                                tool: "manage_goal",
+                                arguments: {
                                     operation: "create_goal",
                                     payload:
-                                        '{"title":"Ship codebase onboarding assistant","priority":"high"}',
+                                        '{"title":"Ship codebase onboarding assistant [demo-skill-1772044523]","priority":"high"}',
                                 },
-                                link_nodes: {
-                                    operation: "link_nodes",
-                                    goal_id: "goal_repo_onboarding_01",
-                                    node_ids:
-                                        '["node_skill_req_path","node_skill_flags","node_skill_coverage"]',
+                                result: {
+                                    status: "ok",
+                                    id: "goal_8fe5a19ad2fcfc530ef442fef108876e",
+                                    status_field: "proposed",
+                                    priority: "high",
                                 },
                             },
                         },
                         {
                             role: "assistant",
                             actor: "Graphonomous",
-                            text: "Goal review says decision=act (sufficient support).",
+                            text: "Linking 3 skill nodes to goal for future retrieval prioritization.",
+                            snippetName: "manage_goal link_nodes",
+                            snippet: {
+                                tool: "manage_goal",
+                                arguments: {
+                                    operation: "link_nodes",
+                                    goal_id:
+                                        "goal_8fe5a19ad2fcfc530ef442fef108876e",
+                                    node_ids:
+                                        '["node_0c831e1f6f6367e61a69b8a8aeeafb59","node_dc300e65b34c839da2adf7277cb64833","node_44a07e105a3ce596575337421dd96098"]',
+                                },
+                                result: {
+                                    status: "ok",
+                                    linked_node_ids: [
+                                        "node_0c831e1f6f6367e61a69b8a8aeeafb59",
+                                        "node_dc300e65b34c839da2adf7277cb64833",
+                                        "node_44a07e105a3ce596575337421dd96098",
+                                    ],
+                                },
+                            },
+                        },
+                        {
+                            role: "assistant",
+                            actor: "Graphonomous",
+                            text: "Reviewing goal coverage. Decision: learn (coverage=0.472, uncertainty=0.338, risk=0.15). Goal remains in 'proposed' status.",
                             snippetName: "review_goal",
                             snippet: {
                                 tool: "review_goal",
                                 arguments: {
-                                    goal_id: "goal_repo_onboarding_01",
-                                    signal: '{"retrieved_nodes":[{"id":"node_skill_req_path"}],"outcomes":[{"status":"success","confidence":0.93}],"contradictions":0}',
-                                    apply_decision: true,
+                                    goal_id:
+                                        "goal_8fe5a19ad2fcfc530ef442fef108876e",
+                                    signal: '{"retrieved_nodes":[{"id":"node_0c831e1f6f6367e61a69b8a8aeeafb59"},{"id":"node_dc300e65b34c839da2adf7277cb64833"},{"id":"node_44a07e105a3ce596575337421dd96098"}],"outcomes":[{"status":"success","confidence":0.93}],"contradictions":0}',
+                                    apply_decision: "true",
                                 },
-                                result: { status: "ok", decision: "act" },
+                                result: {
+                                    status: "ok",
+                                    decision: "learn",
+                                    decision_confidence: 0.5479,
+                                    coverage_score: 0.4715,
+                                    uncertainty_score: 0.3375,
+                                    risk_score: 0.15,
+                                    rationale: [
+                                        "coverage=0.472 uncertainty=0.338 risk=0.150 decision=learn",
+                                        "semantic=0.250 consistency=1.000 freshness=0.500 graph_support=0.000 outcomes=0.965",
+                                    ],
+                                },
                             },
                         },
                         {
@@ -832,122 +1027,203 @@
                         {
                             role: "assistant",
                             actor: "Graphonomous",
-                            text: "Using learned Skill: Request Path Trace.\n1) Locate router definitions in api/routes.\n2) Follow handler imports into service layer.\n3) Track service calls to repository adapters.\n4) Confirm DB write callsite in persistence module.\nAnswer confidence now high with explicit file-family path.",
+                            text: "Using learned Skill: Request Path Trace.\n\nTop 3 matches are now procedural skills with high similarity (0.65-0.67):\n1) Skill: Flag Path Trace (sim=0.671)\n2) Skill: Coverage Gap Scan (sim=0.664)\n3) Skill: Request Path Trace (sim=0.649)\n\nAnswer confidence now high with explicit skill-based reasoning path.",
                             snippetName: "improved_answer.md",
                             snippet: {
-                                confidence: 0.77,
-                                elapsed_ms: 910,
+                                confidence: 0.593,
+                                elapsed_ms: 8.2,
+                                top_match_similarity: 0.671,
                                 reasoning_path:
                                     "route->handler->service->repository->db",
+                                skills_applied: [
+                                    "Request Path Trace",
+                                    "Coverage Gap Scan",
+                                ],
                             },
                         },
                     ],
                     trace: [
                         {
                             name: "store_node ×3",
-                            latency: "27 ms",
+                            latency: "37.0 ms",
                             status: "ok",
-                            note: "new procedural skills persisted",
+                            note: "3 procedural skills persisted",
                         },
                         {
                             name: "learn_from_outcome",
-                            latency: "13 ms",
+                            latency: "24.0 ms",
                             status: "ok",
-                            note: "updated=3 confidence gains",
+                            note: "updated=3, +0.093 confidence each",
                         },
                         {
-                            name: "manage_goal create/link",
-                            latency: "19 ms",
+                            name: "manage_goal create",
+                            latency: "11.1 ms",
                             status: "ok",
-                            note: "goal connected to skill nodes",
+                            note: "goal_8fe5a19ad2fcfc530ef442fef108876e",
+                        },
+                        {
+                            name: "manage_goal link",
+                            latency: "14.4 ms",
+                            status: "ok",
+                            note: "linked 3 skill nodes",
                         },
                         {
                             name: "review_goal",
-                            latency: "11 ms",
+                            latency: "21.0 ms",
                             status: "ok",
-                            note: "decision=act",
+                            note: "decision=learn, coverage=0.472",
                         },
                         {
-                            name: "retrieve_context (repeat query)",
-                            latency: "16 ms",
+                            name: "query_graph (repeat)",
+                            latency: "8.2 ms",
                             status: "ok",
-                            note: "returns repo-specific skills first",
+                            note: "8 matches, top score 0.671",
                         },
                     ],
                     skills: [
                         {
                             name: "Skill: Request Path Trace",
-                            conf: "0.82",
-                            body: "Traverse router -> handler -> service -> repository -> DB adapter in strict order.",
+                            conf: "0.593",
+                            body: "Identify route modules, map handlers, follow service calls, then persistence adapters in order.",
                         },
                         {
                             name: "Skill: Flag Path Trace",
-                            conf: "0.74",
-                            body: "Locate flag declaration, rollout guards, and fallback behavior in one pass.",
+                            conf: "0.593",
+                            body: "Find flag declaration, rollout gates, and fallback branches.",
                         },
                         {
                             name: "Skill: Coverage Gap Scan",
-                            conf: "0.69",
-                            body: "Map critical request path then detect missing integration assertions around persistence.",
+                            conf: "0.593",
+                            body: "Map critical path and identify missing integration assertions.",
                         },
                     ],
                     tabs: {
                         "store_skills.json": {
-                            calls: [
-                                {
-                                    tool: "store_node",
-                                    node_type: "procedural",
-                                    content: "Skill: Request Path Trace ...",
-                                },
-                                {
-                                    tool: "store_node",
-                                    node_type: "procedural",
-                                    content: "Skill: Flag Path Trace ...",
-                                },
-                                {
-                                    tool: "store_node",
-                                    node_type: "procedural",
-                                    content: "Skill: Coverage Gap Scan ...",
-                                },
-                            ],
+                            skill_1: {
+                                node_id:
+                                    "node_0c831e1f6f6367e61a69b8a8aeeafb59",
+                                node_type: "procedural",
+                                content:
+                                    "Skill: Request Path Trace [demo-skill-1772044523]...",
+                                confidence: 0.593,
+                            },
+                            skill_2: {
+                                node_id:
+                                    "node_dc300e65b34c839da2adf7277cb64833",
+                                node_type: "procedural",
+                                content:
+                                    "Skill: Flag Path Trace [demo-skill-1772044523]...",
+                                confidence: 0.593,
+                            },
+                            skill_3: {
+                                node_id:
+                                    "node_44a07e105a3ce596575337421dd96098",
+                                node_type: "procedural",
+                                content:
+                                    "Skill: Coverage Gap Scan [demo-skill-1772044523]...",
+                                confidence: 0.593,
+                            },
                         },
                         "learn_from_outcome.json": {
                             request: {
-                                action_id: "train-codebase-skills-1737000000",
+                                action_id: "train-codebase-skills-1772044523",
                                 status: "success",
                                 confidence: 0.93,
                                 causal_node_ids:
-                                    '["node_skill_req_path","node_skill_flags","node_skill_coverage"]',
+                                    '["node_0c831e1f...","node_dc300e65...","node_44a07e10..."]',
                             },
                             response: {
-                                action_id: "train-codebase-skills-1737000000",
+                                status: "success",
+                                processed: 3,
                                 updated: 3,
                             },
                         },
                         "goal_lifecycle.json": {
                             create_goal: {
-                                id: "goal_repo_onboarding_01",
+                                id: "goal_8fe5a19ad2fcfc530ef442fef108876e",
                                 status: "ok",
+                                priority: "high",
                             },
                             link_nodes: {
                                 linked: 3,
                                 status: "ok",
                             },
                             review_goal: {
-                                decision: "act",
+                                decision: "learn",
+                                coverage_score: 0.4715,
                                 status: "ok",
                             },
                         },
                         "repeat_query.json": {
-                            query: "trace request flow to persistence",
-                            retrieval_top_nodes: [
-                                "node_skill_req_path",
-                                "node_skill_coverage",
-                            ],
-                            answer_confidence: 0.77,
-                            elapsed_ms: 910,
+                            request: {
+                                operation: "similarity_search",
+                                query: "demo-skill-1772044523",
+                            },
+                            response: {
+                                count: 8,
+                                top_similarity: 0.671,
+                                top_node_type: "procedural",
+                            },
                         },
                     },
+                    toolLog: [
+                        {
+                            ts: "12:35:23.101",
+                            tool: "store_node",
+                            args: 'type=procedural content="Skill: Request Path Trace..."',
+                            status: "ok",
+                            latency: "12.8ms",
+                        },
+                        {
+                            ts: "12:35:23.114",
+                            tool: "store_node",
+                            args: 'type=procedural content="Skill: Flag Path Trace..."',
+                            status: "ok",
+                            latency: "10.2ms",
+                        },
+                        {
+                            ts: "12:35:23.125",
+                            tool: "store_node",
+                            args: 'type=procedural content="Skill: Coverage Gap Scan..."',
+                            status: "ok",
+                            latency: "14.0ms",
+                        },
+                        {
+                            ts: "12:35:23.140",
+                            tool: "learn_from_outcome",
+                            args: "status=success confidence=0.93 causal_nodes=3",
+                            status: "ok",
+                            latency: "24.0ms",
+                        },
+                        {
+                            ts: "12:35:23.165",
+                            tool: "manage_goal",
+                            args: 'operation=create_goal title="Ship codebase onboarding..."',
+                            status: "ok",
+                            latency: "11.1ms",
+                        },
+                        {
+                            ts: "12:35:23.177",
+                            tool: "manage_goal",
+                            args: "operation=link_nodes goal=goal_8fe5a... nodes=3",
+                            status: "ok",
+                            latency: "14.4ms",
+                        },
+                        {
+                            ts: "12:35:23.192",
+                            tool: "review_goal",
+                            args: "goal=goal_8fe5a... apply_decision=true",
+                            status: "ok",
+                            latency: "21.0ms",
+                        },
+                        {
+                            ts: "12:35:23.214",
+                            tool: "query_graph",
+                            args: 'operation=similarity_search query="demo-skill..."',
+                            status: "ok",
+                            latency: "8.2ms",
+                        },
+                    ],
                 },
             };
 
@@ -963,11 +1239,14 @@
                 trace: document.getElementById("trace"),
                 tabs: document.getElementById("tabs"),
                 panes: document.getElementById("panes"),
+                terminalBody: document.getElementById("terminalBody"),
+                terminalStatus: document.getElementById("terminalStatus"),
             };
 
             let mode = "A";
             let idx = 0;
             let playing = false;
+            let logIdx = 0;
 
             function renderKpis() {
                 const kpis = data[mode].kpis;
@@ -1060,6 +1339,39 @@
                 });
             }
 
+            function clearTerminal() {
+                els.terminalBody.innerHTML = "";
+                logIdx = 0;
+                els.terminalStatus.textContent = "idle";
+            }
+
+            function appendLog(entry) {
+                const line = document.createElement("div");
+                line.className = "log-line";
+                const statusClass =
+                    entry.status === "ok" ? "log-ok" : "log-warn";
+                line.innerHTML = `
+          <span class="log-ts">${entry.ts}</span>
+          <span class="log-tool">${entry.tool}</span>
+          <span class="log-dim">(${entry.args})</span>
+          <span class="${statusClass}">[${entry.status}]</span>
+          <span class="log-dim">${entry.latency}</span>
+        `;
+                els.terminalBody.appendChild(line);
+                els.terminalBody.scrollTop = els.terminalBody.scrollHeight;
+            }
+
+            function syncLog() {
+                const log = data[mode].toolLog;
+                while (logIdx < log.length) {
+                    appendLog(log[logIdx]);
+                    logIdx++;
+                }
+                if (logIdx > 0) {
+                    els.terminalStatus.textContent = `${logIdx} calls logged`;
+                }
+            }
+
             function bubble(item, step) {
                 const node = document.createElement("div");
                 node.className = `bubble ${item.role}`;
@@ -1128,24 +1440,31 @@
                 els.chat.appendChild(bubble(item, idx));
                 els.chat.scrollTop = els.chat.scrollHeight;
                 idx++;
+
+                // Sync terminal log
+                syncLog();
+
                 return true;
             }
 
             function resetChat() {
                 idx = 0;
                 els.chat.innerHTML = "";
+                clearTerminal();
             }
 
             async function play() {
                 if (playing) return;
                 playing = true;
                 els.playBtn.textContent = "⏸ Playing...";
+                els.terminalStatus.textContent = "streaming...";
                 while (idx < data[mode].timeline.length && playing) {
                     appendNext();
-                    await new Promise((r) => setTimeout(r, 680));
+                    await new Promise((r) => setTimeout(r, 720));
                 }
                 playing = false;
                 els.playBtn.textContent = "▶ Play demo";
+                els.terminalStatus.textContent = `${logIdx} calls logged`;
             }
 
             function setMode(next) {

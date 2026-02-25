@@ -1,0 +1,1187 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Graphonomous Demo — Codebase Skill Learning (A/B)</title>
+        <style>
+            :root {
+                --bg: #0a0b0f;
+                --surface: #11141c;
+                --surface-2: #171b26;
+                --surface-3: #0d1018;
+                --line: #252b3b;
+                --text: #e9ecf4;
+                --dim: #8a92a7;
+                --good: #38d39f;
+                --accent: #7b8cff;
+                --accent-2: #4af5c6;
+                --warn: #ffc46b;
+                --bubble-user: #1c2435;
+                --bubble-assistant: #141b2c;
+                --shadow: 0 14px 34px rgba(0, 0, 0, 0.35);
+            }
+
+            * {
+                box-sizing: border-box;
+            }
+
+            html,
+            body {
+                margin: 0;
+                padding: 0;
+                min-height: 100%;
+                background:
+                    radial-gradient(
+                        1200px 800px at 85% -20%,
+                        rgba(123, 140, 255, 0.11),
+                        transparent 60%
+                    ),
+                    radial-gradient(
+                        1000px 700px at -10% 120%,
+                        rgba(74, 245, 198, 0.08),
+                        transparent 55%
+                    ),
+                    var(--bg);
+                color: var(--text);
+                font-family:
+                    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+                    "Liberation Mono", "Courier New", monospace;
+            }
+
+            a {
+                color: inherit;
+            }
+
+            .wrap {
+                max-width: 1220px;
+                margin: 0 auto;
+                padding: 22px;
+            }
+
+            .hero {
+                border: 1px solid var(--line);
+                border-radius: 18px;
+                background: linear-gradient(
+                    160deg,
+                    rgba(123, 140, 255, 0.08),
+                    rgba(17, 20, 28, 0.95) 28%
+                );
+                padding: 18px;
+                box-shadow: var(--shadow);
+            }
+
+            .badge {
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+                border-radius: 999px;
+                border: 1px solid rgba(74, 245, 198, 0.35);
+                color: var(--accent-2);
+                background: rgba(74, 245, 198, 0.08);
+                font-size: 12px;
+                padding: 6px 10px;
+            }
+
+            .dot {
+                width: 8px;
+                height: 8px;
+                border-radius: 50%;
+                background: var(--accent-2);
+                box-shadow: 0 0 12px rgba(74, 245, 198, 0.8);
+                animation: pulse 1.7s infinite;
+            }
+
+            @keyframes pulse {
+                0%,
+                100% {
+                    transform: scale(1);
+                    opacity: 0.85;
+                }
+                50% {
+                    transform: scale(1.3);
+                    opacity: 1;
+                }
+            }
+
+            h1 {
+                margin: 14px 0 6px;
+                font-size: clamp(26px, 4vw, 42px);
+                line-height: 1.06;
+                letter-spacing: -0.02em;
+            }
+
+            .lead {
+                color: var(--dim);
+                max-width: 90ch;
+                line-height: 1.55;
+                margin: 0;
+            }
+
+            .top-controls {
+                margin-top: 14px;
+                display: flex;
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+
+            button {
+                border: 1px solid var(--line);
+                background: var(--surface-2);
+                color: var(--text);
+                border-radius: 10px;
+                padding: 8px 10px;
+                font-size: 12px;
+                cursor: pointer;
+            }
+
+            button:hover {
+                border-color: #3a4256;
+                transform: translateY(-1px);
+            }
+
+            .btn-primary {
+                border-color: rgba(74, 245, 198, 0.35);
+                color: var(--accent-2);
+                background: rgba(74, 245, 198, 0.08);
+            }
+
+            .btn-active {
+                border-color: rgba(123, 140, 255, 0.45);
+                color: var(--accent);
+                background: rgba(123, 140, 255, 0.12);
+            }
+
+            .kpis {
+                margin-top: 12px;
+                display: grid;
+                gap: 10px;
+                grid-template-columns: repeat(4, minmax(0, 1fr));
+            }
+
+            .kpi {
+                border: 1px solid var(--line);
+                border-radius: 12px;
+                background: rgba(18, 21, 30, 0.88);
+                padding: 10px 11px;
+            }
+
+            .kpi-label {
+                color: var(--dim);
+                font-size: 11px;
+                text-transform: uppercase;
+                letter-spacing: 0.08em;
+                margin-bottom: 6px;
+            }
+
+            .kpi-value {
+                color: var(--accent-2);
+                font-size: 20px;
+                font-weight: 700;
+            }
+
+            .kpi-note {
+                color: var(--dim);
+                font-size: 11px;
+                margin-top: 2px;
+                line-height: 1.35;
+            }
+
+            .layout {
+                margin-top: 14px;
+                display: grid;
+                gap: 16px;
+                grid-template-columns: 1.08fr 0.92fr;
+            }
+
+            .panel {
+                border: 1px solid var(--line);
+                border-radius: 16px;
+                background: var(--surface);
+                overflow: hidden;
+                box-shadow: var(--shadow);
+            }
+
+            .panel-head {
+                border-bottom: 1px solid var(--line);
+                padding: 11px 13px;
+                display: flex;
+                justify-content: space-between;
+                gap: 10px;
+                align-items: center;
+                background: rgba(255, 255, 255, 0.01);
+            }
+
+            .panel-title {
+                color: #c9d2e8;
+                font-size: 13px;
+                letter-spacing: 0.08em;
+                text-transform: uppercase;
+            }
+
+            .chat {
+                padding: 13px;
+                overflow: auto;
+                background:
+                    linear-gradient(
+                        transparent 0%,
+                        rgba(255, 255, 255, 0.01) 100%
+                    ),
+                    var(--surface);
+            }
+
+            .bubble {
+                border: 1px solid var(--line);
+                border-radius: 14px;
+                padding: 10px 11px;
+                margin-bottom: 10px;
+                max-width: 94%;
+                box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+                animation: rise 0.24s ease;
+            }
+
+            .bubble.user {
+                margin-left: auto;
+                background: var(--bubble-user);
+            }
+
+            .bubble.assistant {
+                margin-right: auto;
+                background: var(--bubble-assistant);
+            }
+
+            @keyframes rise {
+                from {
+                    opacity: 0;
+                    transform: translateY(8px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+
+            .meta {
+                display: flex;
+                justify-content: space-between;
+                gap: 10px;
+                font-size: 10px;
+                color: var(--dim);
+                margin-bottom: 7px;
+                text-transform: uppercase;
+                letter-spacing: 0.08em;
+            }
+
+            .text {
+                font-size: 13px;
+                line-height: 1.52;
+                white-space: pre-wrap;
+            }
+
+            .code {
+                margin-top: 8px;
+                border: 1px solid #222a3f;
+                border-radius: 10px;
+                overflow: hidden;
+                background: var(--surface-3);
+            }
+
+            .code-head {
+                border-bottom: 1px solid #222a3f;
+                padding: 7px 9px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                color: var(--dim);
+                font-size: 11px;
+            }
+
+            .code pre {
+                margin: 0;
+                padding: 10px 11px;
+                font-size: 12px;
+                line-height: 1.45;
+                color: #d6ddf0;
+                overflow: auto;
+            }
+
+            .right {
+                display: grid;
+                gap: 16px;
+                grid-template-rows: 0.93fr 1.07fr;
+            }
+
+            .skill-grid {
+                padding: 12px;
+                overflow: auto;
+            }
+
+            .skill-card {
+                border: 1px solid var(--line);
+                border-radius: 12px;
+                background: rgba(255, 255, 255, 0.01);
+                padding: 9px 10px;
+                margin-bottom: 8px;
+            }
+
+            .skill-top {
+                display: flex;
+                justify-content: space-between;
+                gap: 8px;
+                align-items: baseline;
+                margin-bottom: 5px;
+            }
+
+            .skill-name {
+                font-size: 12px;
+                color: #cfd8ee;
+            }
+
+            .conf {
+                font-size: 11px;
+                color: var(--accent-2);
+            }
+
+            .skill-body {
+                color: var(--dim);
+                font-size: 11px;
+                line-height: 1.45;
+            }
+
+            .trace-wrap {
+                display: grid;
+                grid-template-rows: auto 1fr;
+                min-height: 0;
+            }
+
+            .trace-list {
+                padding: 11px;
+                max-height: 190px;
+                overflow: auto;
+                border-bottom: 1px solid var(--line);
+            }
+
+            .trace-item {
+                border: 1px solid var(--line);
+                border-radius: 11px;
+                padding: 8px;
+                margin-bottom: 7px;
+                background: rgba(255, 255, 255, 0.01);
+            }
+
+            .trace-head {
+                display: flex;
+                justify-content: space-between;
+                align-items: baseline;
+                gap: 7px;
+            }
+
+            .trace-name {
+                font-size: 12px;
+                color: #d2daee;
+            }
+
+            .trace-latency {
+                font-size: 11px;
+                color: var(--dim);
+            }
+
+            .pill {
+                margin-top: 4px;
+                display: inline-block;
+                padding: 2px 8px;
+                border-radius: 999px;
+                font-size: 10px;
+                text-transform: uppercase;
+                letter-spacing: 0.06em;
+            }
+
+            .pill.ok {
+                color: var(--good);
+                border: 1px solid rgba(56, 211, 159, 0.45);
+                background: rgba(56, 211, 159, 0.08);
+            }
+
+            .pill.warn {
+                color: var(--warn);
+                border: 1px solid rgba(255, 196, 107, 0.45);
+                background: rgba(255, 196, 107, 0.08);
+            }
+
+            .tabs {
+                display: flex;
+                overflow: auto;
+                border-bottom: 1px solid var(--line);
+            }
+
+            .tab {
+                border: none;
+                border-right: 1px solid var(--line);
+                border-radius: 0;
+                background: #0f131d;
+                color: var(--dim);
+                font-size: 11px;
+                padding: 9px 11px;
+                white-space: nowrap;
+            }
+
+            .tab.active {
+                color: var(--accent);
+                background: #131a2a;
+            }
+
+            .pane {
+                display: none;
+                height: 255px;
+                overflow: auto;
+            }
+
+            .pane.active {
+                display: block;
+            }
+
+            .pane pre {
+                margin: 0;
+                padding: 10px 11px;
+                font-size: 12px;
+                line-height: 1.44;
+                color: #d4dcec;
+            }
+
+            .footer {
+                margin-top: 12px;
+                text-align: center;
+                color: var(--dim);
+                font-size: 12px;
+            }
+
+            @media (max-width: 1024px) {
+                .kpis {
+                    grid-template-columns: repeat(2, minmax(0, 1fr));
+                }
+
+                .layout {
+                    grid-template-columns: 1fr;
+                }
+
+                .right {
+                    grid-template-rows: auto auto;
+                }
+
+                .chat {
+                    height: 510px;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="wrap">
+            <section class="hero">
+                <span class="badge"
+                    ><span class="dot"></span>Scenario demo (simulated MCP
+                    transcript)</span
+                >
+                <h1>A/B: Teaching Graphonomous to Navigate a Real Codebase</h1>
+                <p class="lead">
+                    Same user ask, two outcomes: <b>A</b> starts with no
+                    repo-specific procedural memory; <b>B</b> learns traversal
+                    skills from outcomes, links them to a goal, and answers
+                    architecture questions with clearer, faster traces.
+                </p>
+
+                <div class="top-controls">
+                    <button class="btn-active" id="scenarioA">
+                        Scenario A · baseline
+                    </button>
+                    <button id="scenarioB">Scenario B · learned skills</button>
+                    <button class="btn-primary" id="playBtn">
+                        ▶ Play demo
+                    </button>
+                    <button id="nextBtn">Next bubble</button>
+                    <button id="resetBtn">Reset</button>
+                    <a href="./index.html"
+                        ><button>← Back to landing page</button></a
+                    >
+                </div>
+
+                <div class="kpis" id="kpis"></div>
+            </section>
+
+            <section class="layout">
+                <article class="panel">
+                    <div class="panel-head">
+                        <div class="panel-title">
+                            Chat + tool-call storytelling
+                        </div>
+                    </div>
+                    <div class="chat" id="chat"></div>
+                </article>
+
+                <aside class="right">
+                    <section class="panel">
+                        <div class="panel-head">
+                            <div class="panel-title">Skill graph snapshot</div>
+                        </div>
+                        <div class="skill-grid" id="skills"></div>
+                    </section>
+
+                    <section class="panel trace-wrap">
+                        <div class="panel-head">
+                            <div class="panel-title">
+                                Execution trace + payload explorer
+                            </div>
+                        </div>
+
+                        <div class="trace-list" id="trace"></div>
+
+                        <div class="tabs" id="tabs"></div>
+                        <div id="panes"></div>
+                    </section>
+                </aside>
+            </section>
+
+            <p class="footer">
+                This page is a product showcase narrative. It uses realistic
+                Graphonomous tool-call shapes and plausible values.
+            </p>
+        </div>
+
+        <script>
+            const data = {
+                A: {
+                    label: "Scenario A · baseline",
+                    kpis: [
+                        {
+                            label: "skills created",
+                            value: "0",
+                            note: "no repo-specific procedural memory yet",
+                        },
+                        {
+                            label: "confidence delta",
+                            value: "+0.00",
+                            note: "no successful skill update applied",
+                        },
+                        {
+                            label: "goal coverage",
+                            value: "34%",
+                            note: "goal exists, weak support context",
+                        },
+                        {
+                            label: "time to useful answer",
+                            value: "2.8s",
+                            note: "high uncertainty and broad search",
+                        },
+                    ],
+                    timeline: [
+                        {
+                            role: "user",
+                            actor: "Developer",
+                            text: "You are my repo assistant. Explain how an incoming request reaches persistence in this codebase.",
+                            snippetName: "user_goal.txt",
+                            snippet: {
+                                goal: "trace request path route -> handler -> service -> persistence",
+                                project: "large mono-repo",
+                            },
+                        },
+                        {
+                            role: "assistant",
+                            actor: "Graphonomous",
+                            text: "I only have generic coding heuristics. I’ll search broadly first.",
+                            snippetName: "retrieve_context call",
+                            snippet: {
+                                tool: "retrieve_context",
+                                arguments: {
+                                    query: "how to trace request flow in unfamiliar repository",
+                                    node_type: "procedural",
+                                    limit: 8,
+                                },
+                            },
+                        },
+                        {
+                            role: "assistant",
+                            actor: "Graphonomous",
+                            text: "Low-signal retrieval. I found generic nodes but no repo-specific traversal skill.",
+                            snippetName: "retrieve_context result",
+                            snippet: {
+                                status: "ok",
+                                matches: [
+                                    {
+                                        id: "node_generic_1",
+                                        score: 0.42,
+                                        content:
+                                            "start with listing directories",
+                                    },
+                                    {
+                                        id: "node_generic_2",
+                                        score: 0.39,
+                                        content: "grep for route definitions",
+                                    },
+                                ],
+                            },
+                        },
+                        {
+                            role: "assistant",
+                            actor: "Graphonomous",
+                            text: "Tentative answer: request likely enters router and eventually calls DB layer, but concrete path confidence is low.",
+                            snippetName: "tentative_answer.md",
+                            snippet: {
+                                confidence: 0.46,
+                                uncertainty:
+                                    "missing repo-specific procedural memory",
+                            },
+                        },
+                        {
+                            role: "user",
+                            actor: "Developer",
+                            text: "That’s too vague. I want a repeatable repo traversal method and faster answers next time.",
+                            snippetName: "outcome_signal.txt",
+                            snippet: {
+                                outcome: "partial_success",
+                                desired_improvement:
+                                    "procedural skill for codebase traversal",
+                            },
+                        },
+                    ],
+                    trace: [
+                        {
+                            name: "retrieve_context",
+                            latency: "22 ms",
+                            status: "warn",
+                            note: "procedural recall low specificity",
+                        },
+                        {
+                            name: "query_graph similarity_search",
+                            latency: "15 ms",
+                            status: "ok",
+                            note: "few high-value matches",
+                        },
+                        {
+                            name: "response synthesis",
+                            latency: "2.8 s",
+                            status: "warn",
+                            note: "answer includes uncertainty",
+                        },
+                    ],
+                    skills: [
+                        {
+                            name: "Generic: Initial codebase scan",
+                            conf: "0.44",
+                            body: "List root dirs, identify language, then grep routes/services.",
+                        },
+                        {
+                            name: "Generic: API flow tracing",
+                            conf: "0.38",
+                            body: "Search handlers and references, but no repo naming conventions captured.",
+                        },
+                    ],
+                    tabs: {
+                        "retrieve_context.json": {
+                            request: {
+                                query: "trace request path in unfamiliar repo",
+                                node_type: "procedural",
+                                limit: 8,
+                            },
+                            response: {
+                                count: 2,
+                                top_score: 0.42,
+                                missing: "repo-specific skills",
+                            },
+                        },
+                        "baseline_outcome.json": {
+                            status: "partial_success",
+                            confidence: 0.46,
+                            failure_mode: "insufficient procedural grounding",
+                        },
+                    },
+                },
+
+                B: {
+                    label: "Scenario B · learned skills",
+                    kpis: [
+                        {
+                            label: "skills created",
+                            value: "3",
+                            note: "repo-specific procedural nodes stored",
+                        },
+                        {
+                            label: "confidence delta",
+                            value: "+0.31",
+                            note: "confidence uplift from successful outcome",
+                        },
+                        {
+                            label: "goal coverage",
+                            value: "81%",
+                            note: "goal linked to skills + positive outcomes",
+                        },
+                        {
+                            label: "time to useful answer",
+                            value: "0.9s",
+                            note: "targeted retrieval and sharper trace",
+                        },
+                    ],
+                    timeline: [
+                        {
+                            role: "user",
+                            actor: "Developer",
+                            text: "Let’s train you: create skills for traversing this repo and use them on the next architecture question.",
+                            snippetName: "training_intent.txt",
+                            snippet: {
+                                training: true,
+                                objective:
+                                    "build procedural memory for this codebase",
+                            },
+                        },
+                        {
+                            role: "assistant",
+                            actor: "Graphonomous",
+                            text: "Creating procedural skills from observed repo patterns.",
+                            snippetName: "store_node (skill_1)",
+                            snippet: {
+                                tool: "store_node",
+                                arguments: {
+                                    node_type: "procedural",
+                                    source: "demo_training_run",
+                                    content:
+                                        "Skill: Request Path Trace — identify route modules, map handlers, follow service calls, then persistence adapters in order.",
+                                },
+                            },
+                        },
+                        {
+                            role: "assistant",
+                            actor: "Graphonomous",
+                            text: "Added two more skills: feature-flag trace and integration-test gap scan.",
+                            snippetName: "store_node (skill_2+3)",
+                            snippet: {
+                                stored: [
+                                    {
+                                        node_type: "procedural",
+                                        content:
+                                            "Skill: Flag Path Trace — find flag declaration, rollout gates, and fallback branches.",
+                                    },
+                                    {
+                                        node_type: "procedural",
+                                        content:
+                                            "Skill: Coverage Gap Scan — map critical path and identify missing integration assertions.",
+                                    },
+                                ],
+                            },
+                        },
+                        {
+                            role: "assistant",
+                            actor: "Graphonomous",
+                            text: "Learning from positive outcome to increase confidence on these new procedural nodes.",
+                            snippetName: "learn_from_outcome call",
+                            snippet: {
+                                tool: "learn_from_outcome",
+                                arguments: {
+                                    action_id:
+                                        "train-codebase-skills-1737000000",
+                                    status: "success",
+                                    confidence: 0.93,
+                                    causal_node_ids:
+                                        '["node_skill_req_path","node_skill_flags","node_skill_coverage"]',
+                                    evidence:
+                                        '{"signal":"answer_quality_high","reviewer":"developer"}',
+                                },
+                            },
+                        },
+                        {
+                            role: "assistant",
+                            actor: "Graphonomous",
+                            text: "Creating and linking a goal so future retrieval prioritizes this mission.",
+                            snippetName: "manage_goal + link_nodes",
+                            snippet: {
+                                create_goal: {
+                                    operation: "create_goal",
+                                    payload:
+                                        '{"title":"Ship codebase onboarding assistant","priority":"high"}',
+                                },
+                                link_nodes: {
+                                    operation: "link_nodes",
+                                    goal_id: "goal_repo_onboarding_01",
+                                    node_ids:
+                                        '["node_skill_req_path","node_skill_flags","node_skill_coverage"]',
+                                },
+                            },
+                        },
+                        {
+                            role: "assistant",
+                            actor: "Graphonomous",
+                            text: "Goal review says decision=act (sufficient support).",
+                            snippetName: "review_goal",
+                            snippet: {
+                                tool: "review_goal",
+                                arguments: {
+                                    goal_id: "goal_repo_onboarding_01",
+                                    signal: '{"retrieved_nodes":[{"id":"node_skill_req_path"}],"outcomes":[{"status":"success","confidence":0.93}],"contradictions":0}',
+                                    apply_decision: true,
+                                },
+                                result: { status: "ok", decision: "act" },
+                            },
+                        },
+                        {
+                            role: "user",
+                            actor: "Developer",
+                            text: "Now answer again: how does request -> persistence flow in this codebase?",
+                            snippetName: "repeat_question.txt",
+                            snippet: {
+                                repeated_query: true,
+                                compare_with_baseline: true,
+                            },
+                        },
+                        {
+                            role: "assistant",
+                            actor: "Graphonomous",
+                            text: "Using learned Skill: Request Path Trace.\n1) Locate router definitions in api/routes.\n2) Follow handler imports into service layer.\n3) Track service calls to repository adapters.\n4) Confirm DB write callsite in persistence module.\nAnswer confidence now high with explicit file-family path.",
+                            snippetName: "improved_answer.md",
+                            snippet: {
+                                confidence: 0.77,
+                                elapsed_ms: 910,
+                                reasoning_path:
+                                    "route->handler->service->repository->db",
+                            },
+                        },
+                    ],
+                    trace: [
+                        {
+                            name: "store_node ×3",
+                            latency: "27 ms",
+                            status: "ok",
+                            note: "new procedural skills persisted",
+                        },
+                        {
+                            name: "learn_from_outcome",
+                            latency: "13 ms",
+                            status: "ok",
+                            note: "updated=3 confidence gains",
+                        },
+                        {
+                            name: "manage_goal create/link",
+                            latency: "19 ms",
+                            status: "ok",
+                            note: "goal connected to skill nodes",
+                        },
+                        {
+                            name: "review_goal",
+                            latency: "11 ms",
+                            status: "ok",
+                            note: "decision=act",
+                        },
+                        {
+                            name: "retrieve_context (repeat query)",
+                            latency: "16 ms",
+                            status: "ok",
+                            note: "returns repo-specific skills first",
+                        },
+                    ],
+                    skills: [
+                        {
+                            name: "Skill: Request Path Trace",
+                            conf: "0.82",
+                            body: "Traverse router -> handler -> service -> repository -> DB adapter in strict order.",
+                        },
+                        {
+                            name: "Skill: Flag Path Trace",
+                            conf: "0.74",
+                            body: "Locate flag declaration, rollout guards, and fallback behavior in one pass.",
+                        },
+                        {
+                            name: "Skill: Coverage Gap Scan",
+                            conf: "0.69",
+                            body: "Map critical request path then detect missing integration assertions around persistence.",
+                        },
+                    ],
+                    tabs: {
+                        "store_skills.json": {
+                            calls: [
+                                {
+                                    tool: "store_node",
+                                    node_type: "procedural",
+                                    content: "Skill: Request Path Trace ...",
+                                },
+                                {
+                                    tool: "store_node",
+                                    node_type: "procedural",
+                                    content: "Skill: Flag Path Trace ...",
+                                },
+                                {
+                                    tool: "store_node",
+                                    node_type: "procedural",
+                                    content: "Skill: Coverage Gap Scan ...",
+                                },
+                            ],
+                        },
+                        "learn_from_outcome.json": {
+                            request: {
+                                action_id: "train-codebase-skills-1737000000",
+                                status: "success",
+                                confidence: 0.93,
+                                causal_node_ids:
+                                    '["node_skill_req_path","node_skill_flags","node_skill_coverage"]',
+                            },
+                            response: {
+                                action_id: "train-codebase-skills-1737000000",
+                                updated: 3,
+                            },
+                        },
+                        "goal_lifecycle.json": {
+                            create_goal: {
+                                id: "goal_repo_onboarding_01",
+                                status: "ok",
+                            },
+                            link_nodes: {
+                                linked: 3,
+                                status: "ok",
+                            },
+                            review_goal: {
+                                decision: "act",
+                                status: "ok",
+                            },
+                        },
+                        "repeat_query.json": {
+                            query: "trace request flow to persistence",
+                            retrieval_top_nodes: [
+                                "node_skill_req_path",
+                                "node_skill_coverage",
+                            ],
+                            answer_confidence: 0.77,
+                            elapsed_ms: 910,
+                        },
+                    },
+                },
+            };
+
+            const els = {
+                scenarioA: document.getElementById("scenarioA"),
+                scenarioB: document.getElementById("scenarioB"),
+                playBtn: document.getElementById("playBtn"),
+                nextBtn: document.getElementById("nextBtn"),
+                resetBtn: document.getElementById("resetBtn"),
+                kpis: document.getElementById("kpis"),
+                chat: document.getElementById("chat"),
+                skills: document.getElementById("skills"),
+                trace: document.getElementById("trace"),
+                tabs: document.getElementById("tabs"),
+                panes: document.getElementById("panes"),
+            };
+
+            let mode = "A";
+            let idx = 0;
+            let playing = false;
+
+            function renderKpis() {
+                const kpis = data[mode].kpis;
+                els.kpis.innerHTML = "";
+                for (const k of kpis) {
+                    const d = document.createElement("div");
+                    d.className = "kpi";
+                    d.innerHTML = `
+            <div class="kpi-label">${k.label}</div>
+            <div class="kpi-value">${k.value}</div>
+            <div class="kpi-note">${k.note}</div>
+          `;
+                    els.kpis.appendChild(d);
+                }
+            }
+
+            function renderSkills() {
+                els.skills.innerHTML = "";
+                for (const s of data[mode].skills) {
+                    const c = document.createElement("div");
+                    c.className = "skill-card";
+                    c.innerHTML = `
+            <div class="skill-top">
+              <div class="skill-name">${s.name}</div>
+              <div class="conf">conf ${s.conf}</div>
+            </div>
+            <div class="skill-body">${s.body}</div>
+          `;
+                    els.skills.appendChild(c);
+                }
+            }
+
+            function renderTrace() {
+                els.trace.innerHTML = "";
+                for (const t of data[mode].trace) {
+                    const item = document.createElement("div");
+                    item.className = "trace-item";
+                    item.innerHTML = `
+            <div class="trace-head">
+              <div class="trace-name">${t.name}</div>
+              <div class="trace-latency">${t.latency}</div>
+            </div>
+            <span class="pill ${t.status === "ok" ? "ok" : "warn"}">${t.status}</span>
+            <div style="margin-top:5px;color:var(--dim);font-size:11px;line-height:1.4;">${t.note}</div>
+          `;
+                    els.trace.appendChild(item);
+                }
+            }
+
+            function renderTabs() {
+                const tabs = Object.keys(data[mode].tabs);
+                els.tabs.innerHTML = "";
+                els.panes.innerHTML = "";
+
+                tabs.forEach((name, i) => {
+                    const b = document.createElement("button");
+                    b.className = `tab ${i === 0 ? "active" : ""}`;
+                    b.textContent = name;
+                    b.dataset.name = name;
+
+                    const pane = document.createElement("div");
+                    pane.className = `pane ${i === 0 ? "active" : ""}`;
+                    pane.dataset.name = name;
+
+                    const pre = document.createElement("pre");
+                    pre.textContent = JSON.stringify(
+                        data[mode].tabs[name],
+                        null,
+                        2,
+                    );
+                    pane.appendChild(pre);
+
+                    b.addEventListener("click", () => {
+                        [...els.tabs.children].forEach((x) =>
+                            x.classList.toggle(
+                                "active",
+                                x.dataset.name === name,
+                            ),
+                        );
+                        [...els.panes.children].forEach((x) =>
+                            x.classList.toggle(
+                                "active",
+                                x.dataset.name === name,
+                            ),
+                        );
+                    });
+
+                    els.tabs.appendChild(b);
+                    els.panes.appendChild(pane);
+                });
+            }
+
+            function bubble(item, step) {
+                const node = document.createElement("div");
+                node.className = `bubble ${item.role}`;
+
+                const meta = document.createElement("div");
+                meta.className = "meta";
+                meta.innerHTML = `<span>${item.actor}</span><span>step ${step + 1}</span>`;
+
+                const text = document.createElement("div");
+                text.className = "text";
+                text.textContent = item.text;
+
+                const code = document.createElement("div");
+                code.className = "code";
+
+                const head = document.createElement("div");
+                head.className = "code-head";
+
+                const title = document.createElement("span");
+                title.textContent = item.snippetName;
+
+                const copy = document.createElement("button");
+                copy.textContent = "Copy JSON";
+                copy.style.padding = "4px 8px";
+                copy.style.fontSize = "11px";
+                copy.style.borderRadius = "8px";
+                copy.addEventListener("click", async () => {
+                    try {
+                        await navigator.clipboard.writeText(
+                            JSON.stringify(item.snippet, null, 2),
+                        );
+                        copy.textContent = "Copied";
+                        setTimeout(
+                            () => (copy.textContent = "Copy JSON"),
+                            1000,
+                        );
+                    } catch {
+                        copy.textContent = "Copy failed";
+                        setTimeout(
+                            () => (copy.textContent = "Copy JSON"),
+                            1200,
+                        );
+                    }
+                });
+
+                head.appendChild(title);
+                head.appendChild(copy);
+
+                const pre = document.createElement("pre");
+                pre.textContent = JSON.stringify(item.snippet, null, 2);
+
+                code.appendChild(head);
+                code.appendChild(pre);
+
+                node.appendChild(meta);
+                node.appendChild(text);
+                node.appendChild(code);
+
+                return node;
+            }
+
+            function appendNext() {
+                const timeline = data[mode].timeline;
+                if (idx >= timeline.length) return false;
+                const item = timeline[idx];
+                els.chat.appendChild(bubble(item, idx));
+                els.chat.scrollTop = els.chat.scrollHeight;
+                idx++;
+                return true;
+            }
+
+            function resetChat() {
+                idx = 0;
+                els.chat.innerHTML = "";
+            }
+
+            async function play() {
+                if (playing) return;
+                playing = true;
+                els.playBtn.textContent = "⏸ Playing...";
+                while (idx < data[mode].timeline.length && playing) {
+                    appendNext();
+                    await new Promise((r) => setTimeout(r, 680));
+                }
+                playing = false;
+                els.playBtn.textContent = "▶ Play demo";
+            }
+
+            function setMode(next) {
+                mode = next;
+                playing = false;
+                els.playBtn.textContent = "▶ Play demo";
+                els.scenarioA.classList.toggle("btn-active", next === "A");
+                els.scenarioB.classList.toggle("btn-active", next === "B");
+                renderKpis();
+                renderSkills();
+                renderTrace();
+                renderTabs();
+                resetChat();
+                appendNext();
+                appendNext();
+            }
+
+            els.scenarioA.addEventListener("click", () => setMode("A"));
+            els.scenarioB.addEventListener("click", () => setMode("B"));
+            els.playBtn.addEventListener("click", () => {
+                if (playing) {
+                    playing = false;
+                    els.playBtn.textContent = "▶ Play demo";
+                } else {
+                    play();
+                }
+            });
+            els.nextBtn.addEventListener("click", appendNext);
+            els.resetBtn.addEventListener("click", () => {
+                playing = false;
+                els.playBtn.textContent = "▶ Play demo";
+                resetChat();
+                appendNext();
+            });
+
+            setMode("A");
+        </script>
+    </body>
+</html>

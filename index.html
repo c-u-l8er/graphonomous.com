@@ -338,6 +338,39 @@
                 transform: translateX(4px);
             }
 
+            .cta-row {
+                pointer-events: auto;
+                display: flex;
+                gap: 0.85rem;
+                align-items: center;
+                opacity: 0;
+                animation: revealUp 1s cubic-bezier(0.16, 1, 0.3, 1) 1.5s
+                    forwards;
+            }
+
+            .cta-row .cta {
+                animation: none;
+                opacity: 1;
+            }
+
+            .cta-secondary {
+                color: var(--accent-episodic);
+                background: transparent;
+                border: 1px solid rgba(74, 245, 198, 0.35);
+            }
+
+            .cta-secondary::before {
+                background: linear-gradient(
+                    135deg,
+                    rgba(123, 140, 255, 0.2),
+                    rgba(74, 245, 198, 0.2)
+                );
+            }
+
+            .cta-secondary:hover {
+                box-shadow: 0 8px 32px rgba(123, 140, 255, 0.2);
+            }
+
             .stats-bar {
                 position: fixed;
                 bottom: 0;
@@ -532,22 +565,32 @@
                 </div>
             </div>
 
-            <a
-                href="https://github.com/c-u-l8er/graphonomous"
-                class="cta"
-                id="ctaBtn"
-            >
-                <span>View on GitHub</span>
-                <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                    <path
-                        d="M3 8h10M9 4l4 4-4 4"
-                        stroke="currentColor"
-                        stroke-width="1.5"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                    />
-                </svg>
-            </a>
+            <div class="cta-row">
+                <a href="https://github.com/c-u-l8er/graphonomous" class="cta">
+                    <span>View on GitHub</span>
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                        <path
+                            d="M3 8h10M9 4l4 4-4 4"
+                            stroke="currentColor"
+                            stroke-width="1.5"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                        />
+                    </svg>
+                </a>
+                <a href="./demo.html" class="cta cta-secondary">
+                    <span>Open MCP Demo</span>
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                        <path
+                            d="M3 8h10M9 4l4 4-4 4"
+                            stroke="currentColor"
+                            stroke-width="1.5"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                        />
+                    </svg>
+                </a>
+            </div>
         </div>
 
         <div class="stats-bar">
@@ -590,18 +633,11 @@
                 cursorDot.style.top = e.clientY + "px";
             });
 
-            const ctaBtn = document.getElementById("ctaBtn");
-            ctaBtn.addEventListener("mouseenter", () =>
-                cursor.classList.add("hovering"),
-            );
-            ctaBtn.addEventListener("mouseleave", () =>
-                cursor.classList.remove("hovering"),
-            );
-            document.querySelectorAll(".stats-bar a").forEach((a) => {
-                a.addEventListener("mouseenter", () =>
+            document.querySelectorAll(".cta, .stats-bar a").forEach((el) => {
+                el.addEventListener("mouseenter", () =>
                     cursor.classList.add("hovering"),
                 );
-                a.addEventListener("mouseleave", () =>
+                el.addEventListener("mouseleave", () =>
                     cursor.classList.remove("hovering"),
                 );
             });

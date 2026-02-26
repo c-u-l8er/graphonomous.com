@@ -24,6 +24,7 @@ Current LLM deployments are **frozen at training time**. The industry's answer �
 4. **Multi-timescale memory** — Fast (seconds), medium (hours), slow (days), glacial (months).
 5. **Consolidation cycles** — Idle-time memory consolidation inspired by the brain's sleep cycles.
 6. **MCP-first API** — Every capability is exposed as an MCP tool. No REST API needed unless you want one.
+7. **Source-aware ingestion modes** — Support both full baseline traversal (`scan`) and continuous filesystem-aware traversal (`watch`) so knowledge stays synchronized with changing local directories.
 
 ---
 
@@ -77,7 +78,8 @@ Current LLM deployments are **frozen at training time**. The industry's answer �
 | `Graphonomous.Learner` | Detect novelty, create/update nodes from inference | GenServer |
 | `Graphonomous.Consolidator` | Idle-time memory consolidation, pruning, merging | GenServer + `:timer` |
 | `Graphonomous.Retriever` | Graph-aware context retrieval for LLM injection | Stateless module |
-| `Graphonomous.Orchestrator` | Stability-plasticity balance, decide what to learn | GenServer |
+| `Graphonomous.FilesystemTraversal` | Directory ingestion via one-shot `scan` and continuous `watch`; emits traversal events as graph knowledge | Module + polling watcher process |
+| `Graphonomous.CLI` | STDIO MCP entrypoint plus operational subcommands (`scan`, `watch`) | Escript entrypoint |
 | `Graphonomous.MCP.Server` | MCP tool/resource exposure via Hermes | Hermes.Server |
 | `Graphonomous.Federation` | Cross-instance graph sync (future) | GenServer |
 
@@ -516,7 +518,9 @@ graphonomous/
 ├── lib/
 │   ├── graphonomous/
 │   │   ├── application.ex          # OTP application + supervision tree
+│   │   ├── cli.ex                  # CLI entrypoint (MCP server, scan, watch)
 │   │   ├── graph.ex                # Knowledge graph GenServer
+│   │   ├── filesystem_traversal.ex # Directory scan/watch traversal + ingestion
 │   │   ├── graph/
 │   │   │   ├── node.ex             # Node schema + operations
 │   │   │   ├── edge.ex             # Edge schema + operations
@@ -642,6 +646,17 @@ config :graphonomous,
   max_nodes: 50_000,        # Soft limit, triggers aggressive pruning
   max_fast_memory_nodes: 500,
   ets_cache_ttl: :timer.minutes(10),
+
+  # Filesystem traversal (scan/watch)
+  filesystem_traversal_enabled: true,
+  filesystem_default_recursive: true,
+  filesystem_default_include_hidden: false,
+  filesystem_default_follow_symlinks: false,
+  filesystem_respect_gitignore: true,
+  filesystem_watch_poll_interval_ms: 1_000,
+  filesystem_watch_ingest_on_start: false,
+  filesystem_max_file_size_bytes: 1_000_000,
+  filesystem_max_read_bytes: 16_384,
   
   # MCP transport
   mcp_transport: :stdio,     # :stdio | :streamable_http
@@ -679,6 +694,16 @@ OpenSentience agent manifest:
       "transport": "stdio",
       "command": "graphonomous",
       "args": ["--db", "~/.opensentience/graphonomous/knowledge.db"]
+    }
+  ],
+  "bootstrap_commands": [
+    {
+      "command": "graphonomous",
+      "args": ["scan", "/workspace/project", "--extensions", ".md,.ex,.exs,.txt"]
+    },
+    {
+      "command": "graphonomous",
+      "args": ["watch", "/workspace/project", "--poll-interval-ms", "1500", "--ingest-on-start"]
     }
   ]
 }

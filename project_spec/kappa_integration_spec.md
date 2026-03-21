@@ -1,7 +1,14 @@
 # κ Integration Spec: Product-Level Specification
-## Version 0.1.0 — Draft
+## Version 0.2.0 — Normalized
 
 > How the cyclicity invariant κ is computed, surfaced, and used across Graphonomous, BendScript, Deliberatic, TickTickClock, and the [&] Protocol.
+>
+> **v0.2.0 changes (from Codex review):**
+> - Normalized all field names to a single canonical schema (§2.4)
+> - Resolved tool naming: `analyze_topology` is the standalone tool; `retrieve_context` gains a `topology` field — no `memory_recall_with_topology` tool
+> - Fixed approximation representation: `kappa` is always an integer; large SCCs add `approximate: true` (no `exact` field)
+> - Added instrumentation requirements (§7)
+> - Clarified BendScript directed-edge policy (§4.3)
 
 ---
 
@@ -24,9 +31,12 @@ This spec defines:
 
 ```
 function compute_kappa(graph):
+    # Pre-step: define node universe U from the analyzed subgraph/query result.
+    # Ignore any edge where src ∉ U or dst ∉ U.
+    # Exclude self-loops (u -> u) from adjacency for κ computation.
     # Step 1: Find all strongly connected components
     sccs = tarjan_scc(graph)                    # O(V + E)
-    
+
     # Step 2: For each nontrivial SCC (size > 1)
     results = []
     for scc in sccs where |scc| > 1:
@@ -38,7 +48,7 @@ function compute_kappa(graph):
             bidirectional_cut = min(edges_a_to_b, edges_b_to_a)
             k = min(k, bidirectional_cut)
             if k == 0: break  # early exit (can't go lower)
-        
+
         # Step 4: Record SCC with its κ value and minimum-cut partition
         results.append({
             scc: scc,
@@ -46,7 +56,7 @@ function compute_kappa(graph):
             min_cut_partition: (A_min, B_min),
             min_cut_edges: edges_achieving_minimum
         })
-    
+
     return results
 ```
 
@@ -55,8 +65,10 @@ function compute_kappa(graph):
 - **SCC decomposition:** O(V + E) via Tarjan's algorithm
 - **κ computation per SCC:** O(2^|SCC| × |SCC|²) in the worst case (enumerating all bipartitions)
 - **Practical constraint:** For SCCs up to ~20 nodes, bipartition enumeration is feasible in real time. For larger SCCs, use approximation:
-  - Approximate κ via min-cut algorithms (e.g., Stoer-Wagner on the undirected bidirectional-minimum projection)
-  - Or compute only SCC membership (O(V+E)) and use SCC size as a proxy for deliberation budget
+  - Return SCC size as a proxy for κ, with `approximate: true` flag
+  - κ field remains an integer (the estimate), never a symbol/atom/string
+- **Node-universe rule (NORMATIVE):** Analyze only the node set supplied by retrieval/query scope (or explicit `node_ids` input). Do not pull in external nodes implicitly during κ analysis.
+- **Self-loop rule (NORMATIVE):** Exclude self-loops (`source == target`) from κ adjacency and cut counts.
 
 ### 2.3 Incremental Updates
 
@@ -65,6 +77,66 @@ When an edge is added or removed from the knowledge graph:
 1. **Edge addition:** Can only merge SCCs or enlarge existing ones. Re-run Tarjan on the affected component. If a new nontrivial SCC is formed, compute κ for it.
 2. **Edge removal:** Can only split SCCs or shrink them. Re-run Tarjan on the affected component. Recompute κ for any remaining nontrivial SCCs.
 3. **Optimization:** Maintain an SCC index alongside the knowledge graph. Incremental SCC algorithms (e.g., Bender, Fineman & Gilbert 2015) can update SCCs in O(V) amortized per edge change.
+
+### 2.4 Canonical Schema (NORMATIVE — all implementations must match)
+
+Every κ topology result — whether from Elixir, JavaScript, or MCP JSON — uses these exact field names:
+
+```json
+{
+  "sccs": [
+    {
+      "id": "scc-0",
+      "nodes": ["node-a", "node-b"],
+      "kappa": 2,
+      "approximate": false,
+      "fault_line_edges": [
+        {"source": "node-a", "target": "node-b"}
+      ],
+      "routing": "deliberate",
+      "deliberation_budget": {
+        "max_iterations": 3,
+        "agent_count": 2,
+        "timeout_multiplier": 2.0,
+        "confidence_threshold": 0.80
+      }
+    }
+  ],
+  "dag_nodes": ["node-x", "node-y"],
+  "routing": "deliberate",
+  "max_kappa": 2,
+  "scc_count": 1
+}
+```
+
+**Field name rules (resolves all drift):**
+- Top-level routing key: `routing` (not `overall_routing`)
+- Edge endpoints: `source` / `target` (not `from`/`to`, not `a`/`b`)
+- Fault lines: `fault_line_edges` (not `min_cut_edges`)
+- κ type: always `integer` (never string, atom, or symbol)
+- Approximation: `"approximate": true` boolean flag on the SCC object; `kappa` still holds the integer estimate
+- Routing values: `"fast"` or `"deliberate"` (strings in JSON, atoms `:fast`/`:deliberate` in Elixir, strings in JS)
+
+**Schema boundary rules (NORMATIVE):**
+- **On MCP/JSON boundaries:** use canonical snake_case keys exactly as defined in §2.4 (`fault_line_edges`, `max_kappa`, `scc_count`, etc.).
+- **Inside Elixir runtime:** atoms are allowed for routing values (`:fast`, `:deliberate`), but keys remain canonical and are serialized to JSON strings at the boundary.
+- **Inside JavaScript UI code:** camelCase mirrors are allowed for local-only objects (`faultLineEdges`, `maxKappa`, `sccCount`) for ergonomics, but any network payload or persisted topology record must be converted back to canonical snake_case.
+
+**Elixir atom mapping:**
+```elixir
+# Elixir uses atoms internally, converts to strings for MCP JSON
+:fast       → "fast"
+:deliberate → "deliberate"
+```
+
+**JavaScript mapping (local only):**
+```javascript
+// Local object ergonomics
+{ faultLineEdges, maxKappa, sccCount, routing }
+
+// MCP / wire payloads must remain canonical snake_case
+{ fault_line_edges, max_kappa, scc_count, routing }
+```
 
 ---
 
@@ -77,41 +149,41 @@ The κ router sits between memory retrieval and reasoning. It inspects the topol
 ```
 function kappa_route(retrieved_subgraph):
     scc_analysis = compute_kappa(retrieved_subgraph)
-    
+
     dag_context = nodes NOT in any nontrivial SCC
-    scc_contexts = scc_analysis  # list of {scc, kappa, min_cut_partition, min_cut_edges}
-    
+    scc_contexts = scc_analysis  # list of {scc, kappa, fault_line_edges, ...}
+
     # DAG regions: single-pass retrieval
     retrieval_context = topological_sort_and_collect(dag_context)
-    
+
     # SCC regions: flag for deliberation
     deliberation_tasks = []
     for scc_info in scc_contexts:
         deliberation_tasks.append({
             nodes: scc_info.scc,
             kappa: scc_info.kappa,
-            fault_lines: scc_info.min_cut_edges,
-            budget: deliberation_budget(scc_info.kappa)  # see §3.2
+            fault_lines: scc_info.fault_line_edges,
+            budget: deliberation_budget(scc_info.kappa)
         })
-    
+
     return {
         retrieval_context: retrieval_context,
         deliberation_tasks: deliberation_tasks,
-        routing_decision: "fast" if len(deliberation_tasks) == 0 else "deliberate"
+        routing: "fast" if len(deliberation_tasks) == 0 else "deliberate"
     }
 ```
 
 ### 3.2 Deliberation Budget Function
 
-The deliberation budget maps κ to concrete inference parameters. This is an engineering heuristic (not proved — to be tuned empirically):
+The deliberation budget maps κ to concrete inference parameters. This is an engineering heuristic (not proved — to be tuned empirically). Caps on `max_iterations` and `confidence_threshold` are required to prevent runaway values when `approximate: true` SCCs use size-based κ estimates:
 
 ```
 function deliberation_budget(kappa):
     return {
-        max_iterations: kappa + 1,          # at least κ+1 passes to resolve all feedback loops
-        agent_count: min(kappa, 3),          # up to 3 parallel deliberation agents for high-κ
-        timeout_multiplier: 1.0 + 0.5*kappa, # more time for more complex topology
-        confidence_threshold: 0.7 + 0.05*kappa  # higher bar for convergence in complex regions
+        max_iterations: min(kappa + 1, 4),
+        agent_count: min(kappa, 3),
+        timeout_multiplier: min(1.0 + 0.5*kappa, 3.5),
+        confidence_threshold: min(0.7 + 0.05*kappa, 0.95)
     }
 ```
 
@@ -162,48 +234,68 @@ function deliberation_budget(kappa):
 **Where κ lives:** Computed at query time on the retrieved subgraph. Cached per SCC in the knowledge graph index; invalidated on edge changes.
 
 **What changes:**
-- `recall/2` now returns `{context, topology}` where `topology` includes SCC decomposition and κ values for each SCC in the query path.
-- New function `topology/1` computes and returns the full SCC analysis for a given subgraph.
-- The `learn/1` function, after adding new nodes/edges, triggers incremental SCC recomputation.
+- `Retriever.retrieve/2` now returns a `topology` key alongside existing `results`, `causal_context`, `stats`
+- New module `Graphonomous.Topology` computes and returns the full SCC analysis for a given subgraph
+- New function `Store.list_edges_between/1` fetches edges within a node set
 
-**MCP tool additions:**
+**MCP tool: `analyze_topology` (NEW standalone tool):**
 ```json
 {
-  "name": "memory_recall_with_topology",
-  "description": "Retrieve context from knowledge graph with topological analysis. Returns nodes, edges, SCC decomposition, and κ values.",
+  "name": "analyze_topology",
+  "description": "Compute topological structure (SCCs, κ values, routing decision) for a set of nodes in the knowledge graph.",
   "inputSchema": {
     "type": "object",
     "properties": {
-      "query": { "type": "string" },
-      "max_depth": { "type": "integer", "default": 3 },
-      "include_topology": { "type": "boolean", "default": true }
+      "node_ids": {
+        "type": "array",
+        "items": { "type": "string" },
+        "description": "Node IDs to analyze. If omitted, analyzes the full graph."
+      },
+      "query": {
+        "type": "string",
+        "description": "Optional query text. If provided, retrieves relevant nodes first, then analyzes their topology."
+      }
     }
   }
 }
 ```
 
-**Response shape:**
+**MCP tool: `retrieve_context` (EXISTING — augmented with topology):**
+
+The existing `retrieve_context` tool gains a `topology` field in its response. No new tool name — same endpoint, richer response:
+
 ```json
 {
-  "context": {
-    "nodes": [...],
-    "edges": [...]
-  },
+  "status": "ok",
+  "query": "company strategy",
+  "count": 7,
+  "results": ["...existing results..."],
+  "causal_context": ["...existing..."],
+  "stats": {"...existing..."},
   "topology": {
     "sccs": [
       {
-        "id": "scc-1",
-        "nodes": ["market-share", "r-and-d", "product-quality", "retention"],
+        "id": "scc-0",
+        "nodes": ["market-share", "revenue", "r-and-d", "product-quality"],
         "kappa": 2,
-        "min_cut_edges": [
-          {"from": "market-share", "to": "r-and-d"},
-          {"from": "product-quality", "to": "retention"}
+        "approximate": false,
+        "fault_line_edges": [
+          {"source": "market-share", "target": "r-and-d"},
+          {"source": "product-quality", "target": "revenue"}
         ],
-        "routing": "deliberate"
+        "routing": "deliberate",
+        "deliberation_budget": {
+          "max_iterations": 3,
+          "agent_count": 2,
+          "timeout_multiplier": 2.0,
+          "confidence_threshold": 0.80
+        }
       }
     ],
     "dag_nodes": ["founding-date", "ceo-name", "headquarters"],
-    "overall_routing": "deliberate"
+    "routing": "deliberate",
+    "max_kappa": 2,
+    "scc_count": 1
   }
 }
 ```
@@ -211,9 +303,9 @@ function deliberation_budget(kappa):
 ### 4.2 Deliberatic
 
 **What changes:**
-- Accepts `kappa` and `fault_lines` as input parameters on its deliberation endpoint.
+- Accepts `kappa` and `fault_line_edges` as input parameters on its deliberation endpoint.
 - Uses `kappa` to set argumentation depth (number of rounds).
-- Uses `fault_lines` (minimum-cut edges) to generate the initial propositions that agents must argue about — these are the critical bidirectional dependencies.
+- Uses `fault_line_edges` (minimum-cut edges) to generate the initial propositions that agents must argue about — these are the critical bidirectional dependencies.
 
 **MCP tool additions:**
 ```json
@@ -226,34 +318,54 @@ function deliberation_budget(kappa):
       "scc_nodes": { "type": "array", "items": { "type": "string" } },
       "scc_edges": { "type": "array" },
       "kappa": { "type": "integer" },
-      "fault_lines": { "type": "array" },
+      "fault_line_edges": { "type": "array" },
       "governance": { "type": "object" }
     }
   }
 }
 ```
 
+**Key insight:** Deliberatic doesn't need to know about graph theory. It receives a set of propositions (derived from fault lines), a budget (derived from κ), and it argues. The graph intelligence lives in Graphonomous; the argumentation intelligence lives in Deliberatic. κ is the handshake between them.
+
 ### 4.3 BendScript
 
 **What changes:**
 
+#### Directed-Edge Policy (NORMATIVE)
+
+BendScript edges have a `kind` property. For κ computation, edge directionality is determined by kind:
+
+| Edge kind | Directionality for κ | Rationale |
+|-----------|---------------------|-----------|
+| `causal` | **Directed** (a → b) | Cause precedes effect |
+| `temporal` | **Directed** (a → b) | Before precedes after |
+| `context` | **Skip** (excluded from κ graph) | Symmetric, no feedback |
+| `associative` | **Skip** (excluded from κ graph) | Symmetric, no feedback |
+| `user` | **Skip** (excluded from κ graph) | Ambiguous directionality |
+
+This is a **hard rule**, not a toggle. Only `causal` and `temporal` edges participate in SCC/κ computation. The filter constant:
+```javascript
+const DIRECTED_KINDS = ['causal', 'temporal'];
+```
+
 #### Visual Layer
-- **SCC clusters rendered visually:** Nodes within a nontrivial SCC share a colored halo or background region. Color intensity or pulse rate scales with κ.
-- **DAG regions rendered with directional flow:** Edges in DAG regions show animated particles flowing in one direction. Edges within SCCs show bidirectional particle flow.
-- **Minimum-cut edges highlighted:** The edges that define the minimum bidirectional cut are rendered in a distinct style (dashed, colored, thicker) — these are the "fault lines" of the cluster.
+- **SCC clusters rendered visually:** Nodes within a nontrivial SCC share a colored halo or background region. Color intensity scales with κ.
+- **Minimum-cut edges highlighted:** Fault-line edges rendered in dashed style (`ctx.setLineDash([6, 4])`) with brighter color.
 - **κ badge on SCC clusters:** Each SCC cluster shows its κ value as a small badge, e.g., "κ=2".
 
 #### Interaction Layer
-- **Topology preview on edge creation:** When the user hovers over a potential new edge, BendScript previews:
-  - "This edge would create a new SCC (κ = 1). The AI will deliberate on this cluster."
-  - "This edge increases κ from 1 to 2 in this cluster."
-  - "This edge has no topological effect (stays in the same SCC)."
-- **"Bend" action formalized:** The right-click context menu gains a "Bend" option on DAG nodes — automatically suggests an edge that would create a feedback loop with nearby nodes, transforming the local region from retrieval to deliberation.
-- **"Unbend" action:** On SCC nodes, suggests which edge to remove to simplify back to a DAG (the minimum-cut edge — removing it is the cheapest way to break the feedback loop).
+- **Topology preview via context menu:** When the user right-clicks a node and selects "Connect to…" (a new context menu item), BendScript shows candidate target nodes with topology impact annotations:
+  - "→ NodeX: creates feedback loop (κ: 0→1)"
+  - "→ NodeY: strengthens loop (κ: 1→2)"
+  - "→ NodeZ: no topological change"
+- **"Bend" action:** Right-click context menu on DAG nodes — automatically suggests the nearest edge that would create a feedback loop.
+- **"Unbend" action:** Right-click context menu on SCC nodes — identifies the fault-line edge and offers to remove it.
+
+**Note:** BendScript does NOT currently have drag-to-connect edge creation. The topology preview is accessed via the context menu "Connect to…" flow. Do not implement drag-to-connect in this phase.
 
 #### HUD
-- **Global κ display:** The existing HUD (nodes / edges / depth / zoom) gains a κ readout showing the maximum κ across all SCCs in the graph, and a count of SCCs.
-- **Routing indicator:** "Mode: RETRIEVAL" (all κ = 0) or "Mode: DELIBERATION (3 SCCs, max κ = 2)".
+- **Global κ display:** The existing HUD gains a κ readout showing the maximum κ across all SCCs in the graph, and a count of SCCs.
+- **Routing indicator:** "mode: RETRIEVAL" (all κ = 0) or "mode: DELIBERATION" (any κ > 0).
 
 ### 4.4 The [&] Protocol
 
@@ -261,17 +373,15 @@ function deliberation_budget(kappa):
 
 ```
 # Extended [&] capability grammar — topology-aware routing
-
-# New built-in capability
 TopologyOp      := "&topology" "." ("analyze" | "route" | "kappa")
 
 # Updated pipeline pattern
 InferencePipeline :=
     "&memory.recall" "(" QueryExpr ")"
-    "|>" "&topology.analyze" "()"        # Compute SCCs + κ
-    "|>" "&topology.route" "()"          # Route: fast vs deliberate
-    "|>" "&reason.deliberate" "(" "budget:" ":κ" ")"  # Deliberatic with κ budget
-    "|>" "&memory.learn" "()"            # Results back to graph
+    "|>" "&topology.analyze" "()"
+    "|>" "&topology.route" "()"
+    "|>" "&reason.deliberate" "(" "budget:" ":κ" ")"
+    "|>" "&memory.learn" "()"
 ```
 
 **Schema extension (ampersand.schema.json):**
@@ -284,7 +394,7 @@ InferencePipeline :=
       "description": "Compute SCC decomposition and κ values for a subgraph",
       "config": {
         "max_scc_size_for_exact": 20,
-        "approximation": "stoer_wagner"
+        "approximation_strategy": "scc_size_proxy"
       }
     },
     "&topology.route": {
@@ -327,7 +437,7 @@ This is a secondary integration (TickTickClock already has Mamba SSM for pattern
 - [ ] Port κ computation to Elixir (Graphonomous server-side)
 - [ ] Port κ computation to JavaScript (BendScript client-side)
 - [ ] Integrate Tarjan's SCC into Graphonomous's graph index
-- [ ] Return topology annotations from `memory_recall`
+- [ ] Return topology annotations from `retrieve_context`
 - [ ] Add SCC visualization to BendScript canvas
 
 ### Phase 2: Routing (ship second)
@@ -337,7 +447,7 @@ This is a secondary integration (TickTickClock already has Mamba SSM for pattern
 - [ ] Test on real knowledge graph queries: does κ-aware routing improve answer quality?
 
 ### Phase 3: Polish (ship third)
-- [ ] BendScript topology preview on edge hover
+- [ ] BendScript topology preview via context menu
 - [ ] Bend/Unbend context menu actions
 - [ ] HUD κ display and routing indicator
 - [ ] TickTickClock periodicity detection via κ
@@ -363,4 +473,57 @@ This is a secondary integration (TickTickClock already has Mamba SSM for pattern
 
 ---
 
-*Spec version: 0.1.0. Status: Draft. Depends on: kappa_reference.py (computation), kappa_theory_applied.md (theoretical foundations), kappa_proof.py (verification). Products affected: Graphonomous, Deliberatic, BendScript, [&] Protocol, TickTickClock, OpenSentience.*
+## 7. Instrumentation Requirements (NEW in v0.2.0)
+
+All κ computation must emit telemetry. This is required for Gate C (performance) and Gate D (product effect) validation.
+
+### 7.1 Latency Counters (Elixir — `:telemetry`)
+
+```elixir
+# Emit on every topology computation
+# REQUIRED UNIT: duration_ms (float milliseconds)
+# If measured via :timer.tc/1, convert with: duration_ms = duration_us / 1000.0
+:telemetry.execute(
+  [:graphonomous, :topology, :analyze],
+  %{duration_ms: elapsed_ms, node_count: n, edge_count: e},
+  %{scc_count: scc_count, max_kappa: max_kappa, routing: routing}
+)
+```
+
+Track:
+- `topology.analyze.duration_ms` — p50, p95, p99 (canonical latency metric)
+- `topology.analyze.node_count` — distribution of subgraph sizes
+- `topology.analyze.edge_count` — distribution of subgraph densities
+- `topology.analyze.scc_count` — how often SCCs are found
+- `topology.analyze.routing.deliberate_ratio` — deliberate / total analyzes
+- `topology.analyze.self_loop_filtered_count` — number of self-loops ignored during adjacency construction
+
+### 7.2 Routing Decision Counters
+
+```elixir
+:telemetry.execute(
+  [:graphonomous, :topology, :route],
+  %{},
+  %{decision: :fast | :deliberate, max_kappa: max_kappa, trigger: :retrieve_context | :analyze_topology}
+)
+```
+
+Track:
+- `topology.route.fast_count` — queries routed to fast path
+- `topology.route.deliberate_count` — queries routed to deliberation
+- `topology.route.deliberate_ratio` — deliberate / total (target: < 30% on typical workloads)
+
+### 7.3 BendScript Performance (JavaScript — `performance.now()`)
+
+```javascript
+const t0 = performance.now();
+const topo = analyzeTopology(plane);
+const elapsed = performance.now() - t0;
+console.debug(`[κ] topology: ${elapsed.toFixed(1)}ms, maxκ=${topo.maxKappa}, sccs=${topo.sccCount}`);
+```
+
+Target: < 50ms at 100 nodes.
+
+---
+
+*Spec version: 0.2.0. Status: Draft (normalized). Depends on: kappa_reference.py (computation), kappa_theory_applied.md (theoretical foundations). Products affected: Graphonomous, Deliberatic, BendScript, [&] Protocol, TickTickClock, OpenSentience.*

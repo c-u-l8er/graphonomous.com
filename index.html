@@ -3,53 +3,642 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Graphonomous — Grounded Autonomy</title>
+        <title>Graphonomous — Knowledge graphs that know when to think</title>
+        <meta
+            name="description"
+            content="Graphonomous is a continual learning memory engine for AI agents. It stores knowledge as a graph, detects circular dependencies via the κ invariant, and routes inference depth automatically."
+        />
+        <meta
+            name="keywords"
+            content="agent memory, knowledge graph, MCP server, κ-routing, topology analysis, continual learning, Elixir, AI agents"
+        />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
         <link
-            href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=JetBrains+Mono:wght@300;400;500;700&display=swap"
+            href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,600;0,6..72,700;1,6..72,300;1,6..72,400&family=JetBrains+Mono:wght@400;500;600;700&display=swap"
             rel="stylesheet"
         />
         <style>
             :root {
-                --bg: #0a0b0f;
-                --surface: #12131a;
-                --text: #e8e6e1;
-                --dim: #5a5867;
-                --accent-episodic: #4af5c6;
-                --accent-semantic: #7b8cff;
-                --accent-procedural: #ff6b8a;
-                --accent-temporal: #ffc46b;
-                --accent-outcome: #f97316;
-                --accent-goal: #a78bfa;
-                --glow-episodic: rgba(74, 245, 198, 0.15);
-                --glow-semantic: rgba(123, 140, 255, 0.15);
-                --glow-procedural: rgba(255, 107, 138, 0.15);
-                --glow-temporal: rgba(255, 196, 107, 0.15);
-                --glow-outcome: rgba(249, 115, 22, 0.15);
-                --glow-goal: rgba(167, 139, 250, 0.15);
+                --bg: #08090c;
+                --surface: #0e1017;
+                --surface-2: #14161e;
+                --border: rgba(255, 255, 255, 0.06);
+                --text: #e2e0db;
+                --dim: #6b6980;
+                --muted: #3d3b4a;
+                --cyan: #4af5c6;
+                --blue: #7b8cff;
+                --rose: #ff6b8a;
+                --amber: #ffc46b;
+                --serif: "Newsreader", Georgia, serif;
+                --mono: "JetBrains Mono", monospace;
+                --max-w: 1100px;
+                --gutter: clamp(1.5rem, 4vw, 3rem);
             }
 
-            * {
+            *,
+            *::before,
+            *::after {
+                box-sizing: border-box;
                 margin: 0;
                 padding: 0;
-                box-sizing: border-box;
+            }
+
+            html {
+                scroll-behavior: smooth;
+                -webkit-font-smoothing: antialiased;
             }
 
             body {
-                font-family: "JetBrains Mono", monospace;
                 background: var(--bg);
                 color: var(--text);
-                overflow: hidden;
-                cursor: none;
+                font-family: var(--serif);
+                font-size: 18px;
+                line-height: 1.7;
+                overflow-x: hidden;
             }
 
+            /* Grain overlay */
+            body::after {
+                content: "";
+                position: fixed;
+                inset: 0;
+                background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+                pointer-events: none;
+                z-index: 9999;
+            }
+
+            ::selection {
+                background: var(--cyan);
+                color: var(--bg);
+            }
+
+            a {
+                color: var(--cyan);
+                text-decoration: none;
+                transition: color 0.2s;
+            }
+            a:hover {
+                color: var(--text);
+            }
+
+            .container {
+                max-width: var(--max-w);
+                margin: 0 auto;
+                padding: 0 var(--gutter);
+            }
+
+            section {
+                padding: 5rem 0;
+            }
+
+            /* ─── NAV ─── */
+            nav {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                z-index: 100;
+                background: rgba(8, 9, 12, 0.85);
+                backdrop-filter: blur(12px);
+                border-bottom: 1px solid var(--border);
+                padding: 0.75rem 0;
+            }
+            .nav-inner {
+                max-width: var(--max-w);
+                margin: 0 auto;
+                padding: 0 var(--gutter);
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+            }
+            .nav-brand {
+                font-family: var(--mono);
+                font-size: 0.85rem;
+                font-weight: 600;
+                color: var(--text);
+                letter-spacing: 0.02em;
+            }
+            .nav-links {
+                display: flex;
+                gap: 1.5rem;
+                list-style: none;
+            }
+            .nav-links a {
+                font-family: var(--mono);
+                font-size: 0.7rem;
+                letter-spacing: 0.08em;
+                text-transform: uppercase;
+                color: var(--dim);
+                transition: color 0.2s;
+            }
+            .nav-links a:hover {
+                color: var(--cyan);
+            }
+
+            /* ─── HERO ─── */
+            .hero {
+                padding-top: 10rem;
+                padding-bottom: 5rem;
+                text-align: center;
+            }
+            .hero h1 {
+                font-family: var(--serif);
+                font-weight: 400;
+                font-size: clamp(2.2rem, 5vw, 3.8rem);
+                line-height: 1.15;
+                letter-spacing: -0.02em;
+                margin-bottom: 1.5rem;
+            }
+            .hero .subline {
+                font-size: 1.3rem;
+                color: #aaa;
+                max-width: 640px;
+                margin: 0 auto 2.5rem;
+                line-height: 1.8;
+            }
+            .hero .cta-row {
+                display: flex;
+                gap: 0.75rem;
+                justify-content: center;
+                flex-wrap: wrap;
+                margin-bottom: 2rem;
+            }
+            .btn {
+                font-family: var(--mono);
+                font-size: 0.75rem;
+                font-weight: 500;
+                letter-spacing: 0.06em;
+                text-transform: uppercase;
+                padding: 0.85rem 1.75rem;
+                border: none;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                text-decoration: none;
+                display: inline-block;
+            }
+            .btn-primary {
+                background: var(--cyan);
+                color: var(--bg);
+            }
+            .btn-primary:hover {
+                color: var(--bg);
+                box-shadow: 0 4px 24px rgba(74, 245, 198, 0.3);
+                transform: translateY(-2px);
+            }
+            .btn-secondary {
+                background: transparent;
+                color: var(--cyan);
+                border: 1px solid rgba(74, 245, 198, 0.3);
+            }
+            .btn-secondary:hover {
+                color: var(--text);
+                border-color: rgba(74, 245, 198, 0.6);
+                transform: translateY(-2px);
+            }
+            .btn-ghost {
+                background: transparent;
+                color: var(--dim);
+                border: 1px solid var(--border);
+            }
+            .btn-ghost:hover {
+                color: var(--text);
+                border-color: rgba(255, 255, 255, 0.15);
+                transform: translateY(-2px);
+            }
+            .badge {
+                font-family: var(--mono);
+                font-size: 0.65rem;
+                letter-spacing: 0.08em;
+                color: var(--dim);
+                padding: 0.4rem 1rem;
+                border: 1px solid var(--border);
+                border-radius: 100px;
+                display: inline-block;
+            }
+
+            /* ─── SECTION COMMON ─── */
+            .section-label {
+                font-family: var(--mono);
+                font-size: 0.65rem;
+                letter-spacing: 0.1em;
+                text-transform: uppercase;
+                color: var(--cyan);
+                margin-bottom: 2rem;
+                display: inline-block;
+                padding: 0.35rem 0.9rem;
+                border: 1px solid rgba(74, 245, 198, 0.2);
+                border-radius: 100px;
+                background: rgba(74, 245, 198, 0.05);
+            }
+            section h2 {
+                font-family: var(--serif);
+                font-weight: 400;
+                font-size: clamp(1.8rem, 3.5vw, 2.6rem);
+                line-height: 1.2;
+                margin-bottom: 1.5rem;
+                letter-spacing: -0.01em;
+            }
+            section h2 em {
+                font-style: italic;
+                color: var(--cyan);
+            }
+            .lead {
+                font-size: 1.05rem;
+                color: var(--dim);
+                max-width: 700px;
+                margin-bottom: 3rem;
+                line-height: 1.8;
+            }
+
+            /* ─── KAPPA DEMO ─── */
+            .demo-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 1.5rem;
+                margin: 2.5rem 0;
+            }
+            @media (max-width: 700px) {
+                .demo-grid {
+                    grid-template-columns: 1fr;
+                }
+            }
+            .demo-box {
+                background: var(--surface);
+                border: 1px solid var(--border);
+                border-radius: 10px;
+                padding: 2rem;
+                position: relative;
+                overflow: hidden;
+            }
+            .demo-box::before {
+                content: "";
+                position: absolute;
+                top: 0;
+                left: 0;
+                right: 0;
+                height: 2px;
+            }
+            .demo-box.dag::before {
+                background: var(--cyan);
+            }
+            .demo-box.scc::before {
+                background: var(--rose);
+            }
+            .demo-box h3 {
+                font-family: var(--mono);
+                font-size: 0.75rem;
+                font-weight: 600;
+                letter-spacing: 0.06em;
+                text-transform: uppercase;
+                margin-bottom: 1.25rem;
+            }
+            .demo-box.dag h3 {
+                color: var(--cyan);
+            }
+            .demo-box.scc h3 {
+                color: var(--rose);
+            }
+            .demo-box pre {
+                background: transparent;
+                border: none;
+                padding: 0;
+                margin: 0;
+                font-family: var(--mono);
+                font-size: 0.8rem;
+                line-height: 1.8;
+                color: var(--text);
+            }
+            .demo-box .key {
+                color: var(--dim);
+            }
+            .demo-box.dag .val {
+                color: var(--cyan);
+            }
+            .demo-box.scc .val {
+                color: var(--rose);
+            }
+
+            .code-block {
+                background: var(--surface);
+                border: 1px solid var(--border);
+                border-radius: 10px;
+                padding: 1.75rem;
+                overflow-x: auto;
+                margin: 2rem 0;
+                position: relative;
+            }
+            .code-block .code-header {
+                font-family: var(--mono);
+                font-size: 0.65rem;
+                letter-spacing: 0.08em;
+                text-transform: uppercase;
+                color: var(--dim);
+                margin-bottom: 1rem;
+                padding-bottom: 0.75rem;
+                border-bottom: 1px solid var(--border);
+            }
+            .code-block pre {
+                font-family: var(--mono);
+                font-size: 0.78rem;
+                line-height: 1.7;
+                color: var(--dim);
+                white-space: pre;
+                margin: 0;
+            }
+            .code-block .ck {
+                color: var(--dim);
+            } /* comment */
+            .code-block .cs {
+                color: var(--blue);
+            } /* string */
+            .code-block .cn {
+                color: var(--amber);
+            } /* number */
+            .code-block .cp {
+                color: var(--dim);
+            } /* punctuation */
+            .code-block .ky {
+                color: var(--rose);
+            } /* keyword */
+            .code-block .cv {
+                color: var(--cyan);
+            } /* value highlight */
+
+            .caption {
+                font-size: 0.9rem;
+                color: var(--dim);
+                line-height: 1.7;
+                margin-top: 1.5rem;
+                max-width: 800px;
+            }
+            .caption strong {
+                color: var(--text);
+                font-weight: 600;
+            }
+
+            /* ─── HOW IT WORKS ─── */
+            .steps-grid {
+                display: grid;
+                grid-template-columns: repeat(3, 1fr);
+                gap: 1.5rem;
+                margin-top: 2rem;
+            }
+            @media (max-width: 800px) {
+                .steps-grid {
+                    grid-template-columns: 1fr;
+                }
+            }
+            .step-card {
+                background: var(--surface);
+                border: 1px solid var(--border);
+                border-radius: 10px;
+                padding: 2rem;
+                border-left: 3px solid transparent;
+            }
+            .step-card.cyan {
+                border-left-color: var(--cyan);
+            }
+            .step-card.blue {
+                border-left-color: var(--blue);
+            }
+            .step-card.rose {
+                border-left-color: var(--rose);
+            }
+            .step-card h3 {
+                font-family: var(--mono);
+                font-size: 0.8rem;
+                font-weight: 600;
+                letter-spacing: 0.06em;
+                text-transform: uppercase;
+                margin-bottom: 1rem;
+            }
+            .step-card.cyan h3 {
+                color: var(--cyan);
+            }
+            .step-card.blue h3 {
+                color: var(--blue);
+            }
+            .step-card.rose h3 {
+                color: var(--rose);
+            }
+            .step-card p {
+                font-size: 0.9rem;
+                color: var(--dim);
+                line-height: 1.7;
+            }
+
+            /* ─── MCP TOOLS TABLE ─── */
+            .tools-table {
+                width: 100%;
+                border-collapse: collapse;
+                font-family: var(--mono);
+                font-size: 0.78rem;
+                margin-top: 2rem;
+            }
+            .tools-table th {
+                text-align: left;
+                padding: 0.75rem 1rem;
+                border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+                color: var(--dim);
+                font-weight: 500;
+                font-size: 0.65rem;
+                letter-spacing: 0.08em;
+                text-transform: uppercase;
+            }
+            .tools-table td {
+                padding: 0.75rem 1rem;
+                border-bottom: 1px solid var(--border);
+                color: var(--dim);
+                vertical-align: top;
+            }
+            .tools-table td:first-child {
+                color: var(--text);
+                font-weight: 500;
+                white-space: nowrap;
+            }
+            .tools-table tr.highlight td {
+                background: rgba(74, 245, 198, 0.04);
+            }
+            .tools-table tr:hover td {
+                background: rgba(255, 255, 255, 0.02);
+            }
+
+            /* ─── COMPARISON CALLOUT ─── */
+            .callout {
+                border-left: 3px solid var(--cyan);
+                padding: 2.5rem 3rem;
+                background: linear-gradient(
+                    90deg,
+                    rgba(74, 245, 198, 0.04),
+                    transparent
+                );
+                border-radius: 0 10px 10px 0;
+                margin: 2rem 0;
+            }
+            .callout p {
+                font-size: 1.05rem;
+                color: var(--text);
+                line-height: 1.8;
+                margin-bottom: 1.5rem;
+            }
+            .callout p:last-child {
+                margin-bottom: 0;
+            }
+            .callout ul {
+                list-style: none;
+                margin: 1.5rem 0;
+            }
+            .callout ul li {
+                font-size: 0.95rem;
+                color: var(--dim);
+                line-height: 1.7;
+                padding-left: 1.25rem;
+                position: relative;
+                margin-bottom: 0.5rem;
+            }
+            .callout ul li::before {
+                content: "\2022";
+                color: var(--cyan);
+                position: absolute;
+                left: 0;
+            }
+
+            /* ─── TECH DETAILS ─── */
+            .tech-list {
+                list-style: none;
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 0.75rem;
+                margin-top: 1.5rem;
+            }
+            @media (max-width: 600px) {
+                .tech-list {
+                    grid-template-columns: 1fr;
+                }
+            }
+            .tech-list li {
+                font-family: var(--mono);
+                font-size: 0.8rem;
+                color: var(--dim);
+                padding: 0.75rem 1rem;
+                background: var(--surface);
+                border: 1px solid var(--border);
+                border-radius: 6px;
+            }
+            .tech-list li strong {
+                color: var(--text);
+                font-weight: 500;
+            }
+
+            /* ─── RESEARCH ─── */
+            .research-block {
+                background: var(--surface);
+                border: 1px solid var(--border);
+                border-radius: 10px;
+                padding: 2.5rem;
+                margin-top: 2rem;
+            }
+            .research-block p {
+                font-size: 0.95rem;
+                color: var(--dim);
+                line-height: 1.8;
+                margin-bottom: 1rem;
+            }
+            .research-block p:last-child {
+                margin-bottom: 0;
+            }
+            .research-block a {
+                color: var(--cyan);
+            }
+
+            /* ─── FOOTER ─── */
+            footer {
+                border-top: 1px solid var(--border);
+                padding: 3rem 0;
+                margin-top: 2rem;
+            }
+            .footer-inner {
+                max-width: var(--max-w);
+                margin: 0 auto;
+                padding: 0 var(--gutter);
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                flex-wrap: wrap;
+                gap: 1rem;
+            }
+            .footer-links {
+                display: flex;
+                gap: 1.5rem;
+                flex-wrap: wrap;
+                list-style: none;
+            }
+            .footer-links a {
+                font-family: var(--mono);
+                font-size: 0.7rem;
+                letter-spacing: 0.06em;
+                text-transform: uppercase;
+                color: var(--dim);
+            }
+            .footer-links a:hover {
+                color: var(--cyan);
+            }
+            .footer-copy {
+                font-family: var(--mono);
+                font-size: 0.65rem;
+                color: var(--muted);
+            }
+
+            /* ─── REVEAL ANIMATION ─── */
+            .reveal {
+                opacity: 0;
+                transform: translateY(24px);
+                transition:
+                    opacity 0.6s ease,
+                    transform 0.6s ease;
+            }
+            .reveal.visible {
+                opacity: 1;
+                transform: translateY(0);
+            }
+
+            /* ─── SEPARATOR ─── */
+            .sep {
+                border: none;
+                height: 1px;
+                background: var(--border);
+                margin: 0;
+            }
+
+            /* ─── HERO GRAPH CANVAS ─── */
+            #graph-canvas {
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                z-index: 0;
+            }
+            .hero {
+                position: relative;
+                overflow: hidden;
+            }
+            .hero .container {
+                position: relative;
+                z-index: 2;
+            }
+
+            /* ─── CUSTOM CURSOR ─── */
             #cursor {
                 position: fixed;
                 width: 20px;
                 height: 20px;
-                border: 1.5px solid var(--accent-episodic);
+                border: 1.5px solid var(--cyan);
                 border-radius: 50%;
                 pointer-events: none;
-                z-index: 9999;
+                z-index: 10000;
                 transition:
                     transform 0.15s ease,
                     border-color 0.3s ease,
@@ -58,387 +647,22 @@
                 transform: translate(-50%, -50%);
                 mix-blend-mode: difference;
             }
-
             #cursor.hovering {
                 width: 48px;
                 height: 48px;
-                border-color: var(--accent-semantic);
+                border-color: var(--blue);
             }
-
             #cursor-dot {
                 position: fixed;
                 width: 4px;
                 height: 4px;
-                background: var(--accent-episodic);
+                background: var(--cyan);
                 border-radius: 50%;
                 pointer-events: none;
-                z-index: 9999;
+                z-index: 10000;
                 transform: translate(-50%, -50%);
             }
-
-            canvas {
-                position: fixed;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                z-index: 1;
-            }
-
-            /* Grain overlay */
-            body::after {
-                content: "";
-                position: fixed;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
-                pointer-events: none;
-                z-index: 2;
-                opacity: 0.5;
-            }
-
-            .content {
-                position: relative;
-                z-index: 10;
-                display: flex;
-                flex-direction: column;
-                align-items: center;
-                justify-content: center;
-                min-height: 100vh;
-                padding: 2rem;
-                pointer-events: none;
-            }
-
-            .logo-mark {
-                display: flex;
-                align-items: center;
-                gap: 1rem;
-                margin-bottom: 1.5rem;
-                opacity: 0;
-                animation: revealUp 1s cubic-bezier(0.16, 1, 0.3, 1) 0.4s
-                    forwards;
-            }
-
-            .logo-icon {
-                width: 48px;
-                height: 48px;
-                position: relative;
-            }
-
-            .logo-icon svg {
-                width: 100%;
-                height: 100%;
-            }
-
-            .logo-icon .ring {
-                fill: none;
-                stroke: var(--accent-episodic);
-                stroke-width: 1.5;
-                opacity: 0.6;
-                animation: spinSlow 20s linear infinite;
-                transform-origin: center;
-            }
-
-            .logo-icon .ring2 {
-                fill: none;
-                stroke: var(--accent-semantic);
-                stroke-width: 1;
-                opacity: 0.4;
-                animation: spinSlow 30s linear infinite reverse;
-                transform-origin: center;
-            }
-
-            .logo-icon .core {
-                fill: var(--accent-episodic);
-                opacity: 0.9;
-            }
-
-            @keyframes spinSlow {
-                to {
-                    transform: rotate(360deg);
-                }
-            }
-
-            h1 {
-                font-family: "DM Serif Display", serif;
-                font-size: clamp(3rem, 7vw, 5.5rem);
-                font-weight: 400;
-                letter-spacing: -0.03em;
-                line-height: 1;
-                color: var(--text);
-                opacity: 0;
-                animation: revealUp 1s cubic-bezier(0.16, 1, 0.3, 1) 0.6s
-                    forwards;
-            }
-
-            @keyframes revealUp {
-                from {
-                    opacity: 0;
-                    transform: translateY(40px);
-                }
-                to {
-                    opacity: 1;
-                    transform: translateY(0);
-                }
-            }
-
-            .tagline {
-                font-size: clamp(0.85rem, 1.5vw, 1.05rem);
-                font-weight: 300;
-                letter-spacing: 0.15em;
-                text-transform: uppercase;
-                color: var(--dim);
-                margin-top: 1.25rem;
-                margin-bottom: 3rem;
-                opacity: 0;
-                animation: revealUp 1s cubic-bezier(0.16, 1, 0.3, 1) 0.85s
-                    forwards;
-            }
-
-            .tagline span {
-                transition: color 0.4s ease;
-            }
-
-            .tagline .t-learn {
-                color: var(--accent-episodic);
-            }
-            .tagline .t-adapt {
-                color: var(--accent-semantic);
-            }
-            .tagline .t-decide {
-                color: var(--accent-procedural);
-            }
-
-            .description {
-                max-width: 560px;
-                font-size: clamp(0.8rem, 1.1vw, 0.95rem);
-                font-weight: 300;
-                line-height: 1.9;
-                color: var(--dim);
-                text-align: center;
-                margin-bottom: 3rem;
-                opacity: 0;
-                animation: revealUp 1s cubic-bezier(0.16, 1, 0.3, 1) 1.1s
-                    forwards;
-            }
-
-            .memory-legend {
-                display: flex;
-                gap: 2rem;
-                margin-bottom: 3rem;
-                opacity: 0;
-                animation: revealUp 1s cubic-bezier(0.16, 1, 0.3, 1) 1.3s
-                    forwards;
-            }
-
-            .legend-item {
-                display: flex;
-                align-items: center;
-                gap: 0.5rem;
-                font-size: 0.7rem;
-                font-weight: 400;
-                letter-spacing: 0.08em;
-                text-transform: uppercase;
-                color: var(--dim);
-            }
-
-            .legend-dot {
-                width: 8px;
-                height: 8px;
-                border-radius: 50%;
-                animation: pulse 3s ease-in-out infinite;
-            }
-
-            .legend-dot.episodic {
-                background: var(--accent-episodic);
-                box-shadow: 0 0 8px var(--glow-episodic);
-            }
-            .legend-dot.semantic {
-                background: var(--accent-semantic);
-                box-shadow: 0 0 8px var(--glow-semantic);
-                animation-delay: 1s;
-            }
-            .legend-dot.procedural {
-                background: var(--accent-procedural);
-                box-shadow: 0 0 8px var(--glow-procedural);
-                animation-delay: 2s;
-            }
-
-            @keyframes pulse {
-                0%,
-                100% {
-                    opacity: 0.6;
-                    transform: scale(1);
-                }
-                50% {
-                    opacity: 1;
-                    transform: scale(1.3);
-                }
-            }
-
-            .cta {
-                pointer-events: auto;
-                display: inline-flex;
-                align-items: center;
-                gap: 0.75rem;
-                font-family: "JetBrains Mono", monospace;
-                font-size: 0.8rem;
-                font-weight: 500;
-                letter-spacing: 0.08em;
-                text-transform: uppercase;
-                color: var(--bg);
-                background: var(--accent-episodic);
-                text-decoration: none;
-                padding: 1rem 2.25rem;
-                border: none;
-                position: relative;
-                overflow: hidden;
-                transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-                opacity: 0;
-                animation: revealUp 1s cubic-bezier(0.16, 1, 0.3, 1) 1.5s
-                    forwards;
-                cursor: none;
-            }
-
-            .cta::before {
-                content: "";
-                position: absolute;
-                top: 0;
-                left: 0;
-                width: 100%;
-                height: 100%;
-                background: linear-gradient(
-                    135deg,
-                    var(--accent-semantic),
-                    var(--accent-episodic)
-                );
-                opacity: 0;
-                transition: opacity 0.4s ease;
-            }
-
-            .cta:hover::before {
-                opacity: 1;
-            }
-            .cta:hover {
-                transform: translateY(-2px);
-                box-shadow: 0 8px 32px rgba(74, 245, 198, 0.25);
-            }
-            .cta span {
-                position: relative;
-                z-index: 1;
-            }
-            .cta svg {
-                position: relative;
-                z-index: 1;
-                transition: transform 0.3s ease;
-            }
-            .cta:hover svg {
-                transform: translateX(4px);
-            }
-
-            .cta-row {
-                pointer-events: auto;
-                display: flex;
-                gap: 0.85rem;
-                align-items: center;
-                opacity: 0;
-                animation: revealUp 1s cubic-bezier(0.16, 1, 0.3, 1) 1.5s
-                    forwards;
-            }
-
-            .cta-row .cta {
-                animation: none;
-                opacity: 1;
-            }
-
-            .cta-secondary {
-                color: var(--accent-episodic);
-                background: transparent;
-                border: 1px solid rgba(74, 245, 198, 0.35);
-            }
-
-            .cta-secondary::before {
-                background: linear-gradient(
-                    135deg,
-                    rgba(123, 140, 255, 0.2),
-                    rgba(74, 245, 198, 0.2)
-                );
-            }
-
-            .cta-secondary:hover {
-                box-shadow: 0 8px 32px rgba(123, 140, 255, 0.2);
-            }
-
-            .stats-bar {
-                position: fixed;
-                bottom: 0;
-                left: 0;
-                right: 0;
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                padding: 1rem 2.5rem;
-                font-size: 0.65rem;
-                font-weight: 400;
-                letter-spacing: 0.1em;
-                text-transform: uppercase;
-                color: var(--dim);
-                border-top: 1px solid rgba(255, 255, 255, 0.04);
-                background: rgba(10, 11, 15, 0.8);
-                backdrop-filter: blur(12px);
-                z-index: 10;
-                opacity: 0;
-                animation: revealUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 1.8s
-                    forwards;
-            }
-
-            .stats-bar a {
-                color: var(--dim);
-                text-decoration: none;
-                transition: color 0.3s ease;
-                pointer-events: auto;
-                cursor: none;
-            }
-            .stats-bar a:hover {
-                color: var(--accent-episodic);
-            }
-
-            .stat-group {
-                display: flex;
-                gap: 2rem;
-            }
-
-            .stat {
-                display: flex;
-                align-items: center;
-                gap: 0.5rem;
-            }
-
-            .stat-value {
-                color: var(--accent-episodic);
-                font-weight: 700;
-                font-variant-numeric: tabular-nums;
-            }
-
-            /* Mobile */
             @media (max-width: 768px) {
-                .memory-legend {
-                    gap: 1rem;
-                    flex-wrap: wrap;
-                    justify-content: center;
-                }
-                .stats-bar {
-                    padding: 0.75rem 1.25rem;
-                    flex-direction: column;
-                    gap: 0.5rem;
-                }
-                .stat-group {
-                    gap: 1rem;
-                    flex-wrap: wrap;
-                    justify-content: center;
-                }
                 #cursor,
                 #cursor-dot {
                     display: none;
@@ -446,28 +670,6 @@
                 body {
                     cursor: auto;
                 }
-                .cta {
-                    cursor: pointer;
-                }
-                .stats-bar a {
-                    cursor: pointer;
-                }
-            }
-
-            .legend-dot.temporal {
-                background: var(--accent-temporal);
-                box-shadow: 0 0 8px var(--glow-temporal);
-                animation-delay: 2s;
-            }
-            .legend-dot.outcome {
-                background: var(--accent-outcome);
-                box-shadow: 0 0 8px var(--glow-outcome);
-                animation-delay: 2.5s;
-            }
-            .legend-dot.goal {
-                background: var(--accent-goal);
-                box-shadow: 0 0 8px var(--glow-goal);
-                animation-delay: 3s;
             }
         </style>
     </head>
@@ -475,148 +677,404 @@
         <div id="cursor"></div>
         <div id="cursor-dot"></div>
 
-        <canvas id="graph"></canvas>
-
-        <div class="content">
-            <div class="logo-mark">
-                <div class="logo-icon">
-                    <svg viewBox="0 0 48 48">
-                        <ellipse class="ring" cx="24" cy="24" rx="20" ry="12" />
-                        <ellipse
-                            class="ring2"
-                            cx="24"
-                            cy="24"
-                            rx="12"
-                            ry="20"
-                        />
-                        <circle class="core" cx="24" cy="24" r="3" />
-                        <circle
-                            fill="var(--accent-semantic)"
-                            cx="24"
-                            cy="8"
-                            r="1.5"
-                            opacity="0.6"
-                        />
-                        <circle
-                            fill="var(--accent-procedural)"
-                            cx="40"
-                            cy="24"
-                            r="1.5"
-                            opacity="0.6"
-                        />
-                        <circle
-                            fill="var(--accent-temporal)"
-                            cx="24"
-                            cy="40"
-                            r="1.5"
-                            opacity="0.6"
-                        />
-                        <circle
-                            fill="var(--accent-episodic)"
-                            cx="8"
-                            cy="24"
-                            r="1.5"
-                            opacity="0.6"
-                        />
-                    </svg>
-                </div>
+        <!-- NAV -->
+        <nav>
+            <div class="nav-inner">
+                <span class="nav-brand">graphonomous</span>
+                <ul class="nav-links">
+                    <li><a href="#demo">Demo</a></li>
+                    <li><a href="#how">How It Works</a></li>
+                    <li><a href="#tools">MCP Tools</a></li>
+                    <li>
+                        <a href="https://github.com/c-u-l8er/graphonomous"
+                            >GitHub</a
+                        >
+                    </li>
+                </ul>
             </div>
+        </nav>
 
-            <h1>Graphonomous</h1>
-
-            <p class="tagline">
-                <span class="t-learn">Learn</span>
-                <span>&nbsp;·&nbsp;</span>
-                <span class="t-adapt">Adapt</span>
-                <span>&nbsp;·&nbsp;</span>
-                <span class="t-decide">Decide</span>
-            </p>
-
-            <p class="description">
-                A continual learning engine for edge&nbsp;AI.<br />
-                Grounded in outcomes. Persistent goals via GoalGraph.<br />
-                Better decisions over time — no retraining, no cloud.
-            </p>
-
-            <div class="memory-legend">
-                <div class="legend-item">
-                    <div class="legend-dot episodic"></div>
-                    Episodic
+        <!-- HERO -->
+        <section class="hero">
+            <canvas id="graph-canvas"></canvas>
+            <div class="container">
+                <h1>Knowledge graphs that<br />know when to think</h1>
+                <p class="subline">
+                    Graphonomous is a continual learning memory engine for AI
+                    agents. It stores knowledge as a graph, detects circular
+                    dependencies via the &kappa; invariant, and tells your agent
+                    when to retrieve and when to deliberate.
+                </p>
+                <div class="cta-row">
+                    <a
+                        href="https://github.com/c-u-l8er/graphonomous"
+                        class="btn btn-primary"
+                        >Install via MCP</a
+                    >
+                    <a
+                        href="https://github.com/c-u-l8er/graphonomous"
+                        class="btn btn-secondary"
+                        >View on GitHub</a
+                    >
+                    <a href="https://opensentience.org" class="btn btn-ghost"
+                        >Read the Theory</a
+                    >
                 </div>
-                <div class="legend-item">
-                    <div class="legend-dot semantic"></div>
-                    Semantic
-                </div>
-                <div class="legend-item">
-                    <div class="legend-dot procedural"></div>
-                    Procedural
-                </div>
-                <div class="legend-item">
-                    <div class="legend-dot temporal"></div>
-                    Temporal
-                </div>
-                <div class="legend-item">
-                    <div class="legend-dot outcome"></div>
-                    Outcome
-                </div>
-                <div class="legend-item">
-                    <div class="legend-dot goal"></div>
-                    Goal
-                </div>
-            </div>
-
-            <div class="cta-row">
-                <a href="https://github.com/c-u-l8er/graphonomous" class="cta">
-                    <span>View on GitHub</span>
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                        <path
-                            d="M3 8h10M9 4l4 4-4 4"
-                            stroke="currentColor"
-                            stroke-width="1.5"
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                        />
-                    </svg>
-                </a>
-                <a href="./demo.html" class="cta cta-secondary">
-                    <span>Open MCP Demo</span>
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                        <path
-                            d="M3 8h10M9 4l4 4-4 4"
-                            stroke="currentColor"
-                            stroke-width="1.5"
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                        />
-                    </svg>
-                </a>
-            </div>
-        </div>
-
-        <div class="stats-bar">
-            <div class="stat-group">
-                <div class="stat">
-                    Nodes <span class="stat-value" id="nodeCount">0</span>
-                </div>
-                <div class="stat">
-                    Edges <span class="stat-value" id="edgeCount">0</span>
-                </div>
-                <div class="stat">
-                    Learning
-                    <span class="stat-value" id="learningRate">0.00</span>
-                </div>
-            </div>
-            <div>
-                &copy; <span id="year"></span> Graphonomous &middot; Powered by
-                <a href="https://ampersandboxdesign.com" target="_blank"
-                    >[&amp;]</a
+                <span class="badge"
+                    >v0.1.12 &middot; Elixir/OTP &middot; MCP Server &middot;
+                    Apache 2.0</span
                 >
             </div>
-        </div>
+        </section>
+
+        <hr class="sep" />
+
+        <!-- KAPPA ROUTING DEMO -->
+        <section id="demo">
+            <div class="container">
+                <div class="section-label reveal">
+                    Phase 0 &middot; Live Result
+                </div>
+                <h2 class="reveal">The &kappa; routing <em>demo</em></h2>
+                <p class="lead reveal">
+                    The system analyzed a 4-node business cycle and made the
+                    routing decision automatically. This is the proof that
+                    &kappa;-aware topology routing works end-to-end on live MCP
+                    calls.
+                </p>
+
+                <div class="demo-grid reveal">
+                    <div class="demo-box dag">
+                        <h3>DAG Region (&kappa; = 0)</h3>
+                        <pre><span class="key">routing:</span>    <span class="val">fast</span>
+<span class="key">max_kappa:</span>  <span class="val">0</span>
+<span class="key">action:</span>     <span class="val">Single-pass retrieval.</span>
+            <span class="val">No deliberation needed.</span></pre>
+                    </div>
+                    <div class="demo-box scc">
+                        <h3>SCC Region (&kappa; &gt; 0)</h3>
+                        <pre><span class="key">routing:</span>    <span class="val">deliberate</span>
+<span class="key">max_kappa:</span>  <span class="val">1</span>
+<span class="key">scc_count:</span>  <span class="val">1</span>
+<span class="key">fault_line:</span> <span class="val">Product Quality &rarr; Market Share</span>
+<span class="key">budget:</span>     <span class="val">max_iterations: 2, agents: 1,</span>
+            <span class="val">confidence: 0.75</span></pre>
+                    </div>
+                </div>
+
+                <div class="code-block reveal">
+                    <div class="code-header">
+                        MCP Tool: analyze_topology &mdash; Input: 4 business
+                        cycle nodes
+                    </div>
+                    <pre>{
+  <span class="cs">"routing"</span>: <span class="cs">"deliberate"</span>,
+  <span class="cs">"max_kappa"</span>: <span class="cn">1</span>,
+  <span class="cs">"scc_count"</span>: <span class="cn">1</span>,
+  <span class="cs">"sccs"</span>: [{
+    <span class="cs">"id"</span>: <span class="cs">"scc-0"</span>,
+    <span class="cs">"nodes"</span>: [<span class="cs">"market-share"</span>, <span class="cs">"revenue"</span>, <span class="cs">"r-and-d"</span>, <span class="cs">"product-quality"</span>],
+    <span class="cs">"kappa"</span>: <span class="cn">1</span>,
+    <span class="cs">"approximate"</span>: <span class="ky">false</span>,
+    <span class="cs">"fault_line_edges"</span>: [{
+      <span class="cs">"source"</span>: <span class="cs">"product-quality"</span>,
+      <span class="cs">"target"</span>: <span class="cs">"market-share"</span>
+    }],
+    <span class="cs">"routing"</span>: <span class="cs">"deliberate"</span>,
+    <span class="cs">"deliberation_budget"</span>: {
+      <span class="cs">"max_iterations"</span>: <span class="cn">2</span>,
+      <span class="cs">"agent_count"</span>: <span class="cn">1</span>,
+      <span class="cs">"timeout_multiplier"</span>: <span class="cn">1.5</span>,
+      <span class="cs">"confidence_threshold"</span>: <span class="cn">0.75</span>
+    }
+  }],
+  <span class="cs">"dag_nodes"</span>: []
+}</pre>
+                </div>
+
+                <p class="caption reveal">
+                    <strong>Live result from Graphonomous MCP server.</strong>
+                    The system detected a circular dependency between market
+                    share, revenue, R&amp;D, and product quality &mdash; and
+                    identified the exact edge (Product Quality &rarr; Market
+                    Share) where the feedback loop is weakest. No other agent
+                    memory system does this.
+                </p>
+            </div>
+        </section>
+
+        <hr class="sep" />
+
+        <!-- HOW IT WORKS -->
+        <section id="how">
+            <div class="container">
+                <div class="section-label reveal">Architecture</div>
+                <h2 class="reveal">How it <em>works</em></h2>
+
+                <div class="steps-grid">
+                    <div class="step-card cyan reveal">
+                        <h3>Store</h3>
+                        <p>
+                            Agents store episodic, semantic, and procedural
+                            knowledge as typed graph nodes with confidence
+                            scores and provenance. Edges capture causal,
+                            temporal, and associative relationships.
+                        </p>
+                    </div>
+                    <div class="step-card blue reveal">
+                        <h3>Analyze</h3>
+                        <p>
+                            On every retrieval, Graphonomous computes the
+                            topological structure of the relevant subgraph.
+                            Tarjan's SCC algorithm detects circular
+                            dependencies. The &kappa; invariant measures
+                            entanglement depth.
+                        </p>
+                    </div>
+                    <div class="step-card rose reveal">
+                        <h3>Route</h3>
+                        <p>
+                            &kappa; = 0 &rarr; fast retrieval (single pass, no
+                            LLM call). &kappa; &gt; 0 &rarr; deliberate
+                            (decompose along fault lines, reason through
+                            partitions, write conclusions back). The graph tells
+                            the agent how to think.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <hr class="sep" />
+
+        <!-- MCP TOOLS -->
+        <section id="tools">
+            <div class="container">
+                <div class="section-label reveal">MCP Server</div>
+                <h2 class="reveal">Available <em>tools</em></h2>
+
+                <table class="tools-table reveal">
+                    <thead>
+                        <tr>
+                            <th>Tool</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>store_node</td>
+                            <td>
+                                Persist knowledge nodes with type, confidence,
+                                metadata
+                            </td>
+                        </tr>
+                        <tr class="highlight">
+                            <td>retrieve_context</td>
+                            <td>
+                                Semantic search + neighborhood expansion +
+                                topology annotations
+                            </td>
+                        </tr>
+                        <tr class="highlight">
+                            <td>analyze_topology</td>
+                            <td>
+                                Compute SCCs, &kappa; values, routing decision,
+                                fault-line edges
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>learn_from_outcome</td>
+                            <td>
+                                Update confidence across causal chains from
+                                grounded outcomes
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>query_graph</td>
+                            <td>
+                                List, filter, similarity search across the graph
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>manage_goal</td>
+                            <td>
+                                Goal lifecycle &mdash; create, transition, link
+                                nodes
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>review_goal</td>
+                            <td>Inspect goal state, coverage, progress</td>
+                        </tr>
+                        <tr>
+                            <td>run_consolidation</td>
+                            <td>Trigger decay, prune, merge cycle</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <hr class="sep" />
+
+        <!-- WHAT MAKES THIS DIFFERENT -->
+        <section id="different">
+            <div class="container">
+                <div class="section-label reveal">Comparison</div>
+                <h2 class="reveal">What makes this <em>different</em></h2>
+
+                <div class="callout reveal">
+                    <p>
+                        Every agent memory system retrieves context.
+                        Graphonomous is the only one that tells you the
+                        <em>shape</em> of what you retrieved.
+                    </p>
+                    <ul>
+                        <li>
+                            <strong>Mem0</strong> stores facts with smart
+                            updates. It doesn't detect circular dependencies.
+                        </li>
+                        <li>
+                            <strong>Zep / Graphiti</strong> builds temporal
+                            knowledge graphs. It doesn't route inference based
+                            on topology.
+                        </li>
+                        <li>
+                            <strong>Letta (MemGPT)</strong> pages memory in and
+                            out of context. It doesn't know when context is
+                            tangled.
+                        </li>
+                    </ul>
+                    <p>
+                        Graphonomous computes &kappa; &mdash; a proved
+                        graph-theoretic invariant &mdash; on every retrieval.
+                        When your knowledge has feedback loops, the system tells
+                        you exactly where they are and how to reason through
+                        them.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <hr class="sep" />
+
+        <!-- TECHNICAL DETAILS -->
+        <section id="tech">
+            <div class="container">
+                <div class="section-label reveal">Technical Details</div>
+                <h2 class="reveal">Under the <em>hood</em></h2>
+
+                <ul class="tech-list reveal">
+                    <li>
+                        <strong>Stack:</strong> Elixir 1.17+, OTP 27, SQLite via
+                        exqlite, Bumblebee embeddings, ETS cache
+                    </li>
+                    <li>
+                        <strong>MCP transport:</strong> stdio via vendored
+                        anubis_mcp
+                    </li>
+                    <li><strong>License:</strong> Apache 2.0</li>
+                    <li>
+                        <strong>Topology overhead:</strong> &lt;10ms p50 on
+                        typical subgraphs (&lt;50 nodes)
+                    </li>
+                    <li>
+                        <strong>&kappa; computation:</strong> O(V+E) for SCC
+                        decomposition, O(2<sup>n</sup> &times; n&sup2;) for
+                        bipartition (n = SCC size, exact for n &le; 20)
+                    </li>
+                    <li>
+                        <strong>Embeddings:</strong> Bumblebee all-MiniLM-L6-v2,
+                        local inference
+                    </li>
+                </ul>
+            </div>
+        </section>
+
+        <hr class="sep" />
+
+        <!-- RESEARCH FOUNDATION -->
+        <section id="research">
+            <div class="container">
+                <div class="section-label reveal">Research Foundation</div>
+                <h2 class="reveal">Proved <em>theory</em></h2>
+
+                <div class="research-block reveal">
+                    <p>
+                        The &kappa; invariant is proved on 1,926,351 finite
+                        systems with zero counterexamples. The proof is
+                        browser-runnable at
+                        <a href="https://opensentience.org">opensentience.org</a
+                        >.
+                    </p>
+                    <p>
+                        The theoretical foundations, deliberation protocol,
+                        attention engine, and governance model are published as
+                        open research protocols OS-001 through OS-006.
+                    </p>
+                    <p>
+                        <a href="https://opensentience.org">OpenSentience</a>
+                        &middot;
+                        <a href="https://ampersandboxdesign.com"
+                            >Ampersand Box Design</a
+                        >
+                        &middot;
+                        <a href="https://ampersandboxdesign.com/protocol.html"
+                            >[&amp;] Protocol Spec</a
+                        >
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- FOOTER -->
+        <footer>
+            <div class="footer-inner">
+                <ul class="footer-links">
+                    <li>
+                        <a href="https://github.com/c-u-l8er/graphonomous"
+                            >GitHub</a
+                        >
+                    </li>
+                    <li>
+                        <a href="https://opensentience.org">OpenSentience</a>
+                    </li>
+                    <li>
+                        <a href="https://ampersandboxdesign.com/protocol.html"
+                            >[&amp;] Protocol</a
+                        >
+                    </li>
+                    <li>
+                        <a href="https://ampersandboxdesign.com"
+                            >Ampersand Box Design</a
+                        >
+                    </li>
+                </ul>
+                <span class="footer-copy"
+                    >&copy; <span id="year"></span> Graphonomous &middot;
+                    Powered by
+                    <a href="https://ampersandboxdesign.com">[&amp;]</a></span
+                >
+            </div>
+        </footer>
 
         <script>
             document.getElementById("year").textContent =
                 new Date().getFullYear();
+
+            // Scroll-triggered reveal
+            const reveals = document.querySelectorAll(".reveal");
+            const observer = new IntersectionObserver(
+                (entries) => {
+                    entries.forEach((entry) => {
+                        if (entry.isIntersecting) {
+                            entry.target.classList.add("visible");
+                        }
+                    });
+                },
+                { threshold: 0.1 },
+            );
+            reveals.forEach((el) => observer.observe(el));
 
             // ─── Custom cursor ───
             const cursor = document.getElementById("cursor");
@@ -633,7 +1091,7 @@
                 cursorDot.style.top = e.clientY + "px";
             });
 
-            document.querySelectorAll(".cta, .stats-bar a").forEach((el) => {
+            document.querySelectorAll("a, .btn").forEach((el) => {
                 el.addEventListener("mouseenter", () =>
                     cursor.classList.add("hovering"),
                 );
@@ -652,8 +1110,9 @@
             updateCursor();
 
             // ─── Living Graph Visualization ───
-            const canvas = document.getElementById("graph");
+            const canvas = document.getElementById("graph-canvas");
             const ctx = canvas.getContext("2d");
+            const heroEl = document.querySelector(".hero");
             let W, H;
 
             const MEMORY_TYPES = [
@@ -715,57 +1174,39 @@
                     this.targetRadius = this.radius;
                     this.connections = [];
                     this.birth = performance.now();
-                    this.accessCount = 0;
                     this.confidence = 0.3 + Math.random() * 0.7;
                     this.pulsePhase = Math.random() * Math.PI * 2;
                     this.alive = true;
                     this.fadeIn = 0;
                 }
-
                 update(time, mouseX, mouseY) {
-                    // Fade in
                     if (this.fadeIn < 1)
                         this.fadeIn = Math.min(1, this.fadeIn + 0.02);
-
-                    // Gentle drift
                     this.x += this.vx;
                     this.y += this.vy;
-
-                    // Mouse attraction (subtle)
-                    const dx = mouseX - this.x;
-                    const dy = mouseY - this.y;
+                    const dx = mouseX - this.x,
+                        dy = mouseY - this.y;
                     const dist = Math.sqrt(dx * dx + dy * dy);
                     if (dist < 250 && dist > 10) {
                         const force = 0.00015 * (250 - dist);
                         this.vx += (dx / dist) * force;
                         this.vy += (dy / dist) * force;
                     }
-
-                    // Damping
                     this.vx *= 0.995;
                     this.vy *= 0.995;
-
-                    // Boundary wrapping with margin
                     const margin = 60;
                     if (this.x < -margin) this.x = W + margin;
                     if (this.x > W + margin) this.x = -margin;
                     if (this.y < -margin) this.y = H + margin;
                     if (this.y > H + margin) this.y = -margin;
-
-                    // Pulse
                     this.pulsePhase += 0.02;
-
-                    // Smooth radius
                     this.radius += (this.targetRadius - this.radius) * 0.05;
                 }
-
-                draw(ctx, time) {
+                draw(ctx) {
                     const pulse = 0.7 + 0.3 * Math.sin(this.pulsePhase);
                     const alpha = this.fadeIn * this.confidence * pulse;
                     const r =
                         this.radius * (0.9 + 0.1 * Math.sin(this.pulsePhase));
-
-                    // Outer glow
                     const grad = ctx.createRadialGradient(
                         this.x,
                         this.y,
@@ -780,8 +1221,6 @@
                     ctx.beginPath();
                     ctx.arc(this.x, this.y, r * 6, 0, Math.PI * 2);
                     ctx.fill();
-
-                    // Core
                     ctx.fillStyle = this.type.color;
                     ctx.globalAlpha = alpha;
                     ctx.beginPath();
@@ -797,33 +1236,24 @@
                     this.b = b;
                     this.strength = 0.1;
                     this.targetStrength = 0.3 + Math.random() * 0.5;
-                    this.coActivations = 0;
                     this.birth = performance.now();
                 }
-
                 update() {
                     this.strength +=
                         (this.targetStrength - this.strength) * 0.01;
-                    // Decay
                     this.targetStrength *= 0.9999;
                 }
-
                 draw(ctx) {
-                    const dx = this.b.x - this.a.x;
-                    const dy = this.b.y - this.a.y;
+                    const dx = this.b.x - this.a.x,
+                        dy = this.b.y - this.a.y;
                     const dist = Math.sqrt(dx * dx + dy * dy);
                     if (dist > 300) return;
-
-                    const fadeA = this.a.fadeIn;
-                    const fadeB = this.b.fadeIn;
                     const alpha =
                         this.strength *
                         0.35 *
-                        fadeA *
-                        fadeB *
+                        this.a.fadeIn *
+                        this.b.fadeIn *
                         Math.max(0, 1 - dist / 300);
-
-                    // Gradient edge between two node types
                     const grad = ctx.createLinearGradient(
                         this.a.x,
                         this.a.y,
@@ -832,7 +1262,6 @@
                     );
                     grad.addColorStop(0, this.a.type.glow + alpha + ")");
                     grad.addColorStop(1, this.b.type.glow + alpha + ")");
-
                     ctx.strokeStyle = grad;
                     ctx.lineWidth = 0.5 + this.strength * 1.5;
                     ctx.beginPath();
@@ -842,23 +1271,22 @@
                 }
             }
 
-            let nodes = [];
-            let edges = [];
+            let nodes = [],
+                edges = [];
             let mouseX = 0,
-                mouseY = 0;
-            let targetMX = 0,
+                mouseY = 0,
+                targetMX = 0,
                 targetMY = 0;
             let frame = 0;
 
             function resize() {
-                W = canvas.width = window.innerWidth;
-                H = canvas.height = window.innerHeight;
+                W = canvas.width = heroEl.offsetWidth;
+                H = canvas.height = heroEl.offsetHeight;
                 mouseX = targetMX = W / 2;
                 mouseY = targetMY = H / 2;
             }
 
             function spawnNode() {
-                // Spawn near existing cluster or random
                 let x, y;
                 if (nodes.length > 5 && Math.random() < 0.7) {
                     const parent =
@@ -873,12 +1301,10 @@
                 }
                 const node = new GraphNode(x, y);
                 nodes.push(node);
-
-                // Connect to nearby nodes
                 nodes.forEach((other) => {
                     if (other === node) return;
-                    const dx = other.x - node.x;
-                    const dy = other.y - node.y;
+                    const dx = other.x - node.x,
+                        dy = other.y - node.y;
                     const dist = Math.sqrt(dx * dx + dy * dy);
                     if (dist < 180 && Math.random() < 0.4) {
                         const edge = new Edge(node, other);
@@ -887,12 +1313,10 @@
                         other.connections.push(edge);
                     }
                 });
-
                 return node;
             }
 
             function consolidate() {
-                // Prune weak edges
                 edges = edges.filter((e) => {
                     if (e.strength < 0.05) {
                         e.a.connections = e.a.connections.filter(
@@ -905,8 +1329,6 @@
                     }
                     return true;
                 });
-
-                // Prune isolated, old nodes (keep minimum)
                 if (nodes.length > 80) {
                     const now = performance.now();
                     nodes = nodes.filter((n) => {
@@ -921,8 +1343,6 @@
                         return true;
                     });
                 }
-
-                // Strengthen frequently co-accessed edges
                 edges.forEach((e) => {
                     if (Math.random() < 0.05) {
                         e.targetStrength = Math.min(1, e.targetStrength + 0.05);
@@ -936,24 +1356,15 @@
                 resize();
                 nodes = [];
                 edges = [];
-                // Seed initial cluster
-                for (let i = 0; i < 35; i++) {
-                    spawnNode();
-                }
+                for (let i = 0; i < 35; i++) spawnNode();
             }
 
             function animate() {
                 frame++;
-                const time = performance.now();
-
                 mouseX += (targetMX - mouseX) * 0.06;
                 mouseY += (targetMY - mouseY) * 0.06;
-
-                // Background
-                ctx.fillStyle = "rgba(10, 11, 15, 0.15)";
+                ctx.fillStyle = "rgba(8, 9, 12, 0.15)";
                 ctx.fillRect(0, 0, W, H);
-
-                // Subtle radial glow at center
                 if (frame % 3 === 0) {
                     const cGrad = ctx.createRadialGradient(
                         W / 2,
@@ -965,85 +1376,27 @@
                     );
                     cGrad.addColorStop(0, "rgba(74, 245, 198, 0.008)");
                     cGrad.addColorStop(0.5, "rgba(123, 140, 255, 0.004)");
-                    cGrad.addColorStop(1, "rgba(10, 11, 15, 0)");
+                    cGrad.addColorStop(1, "rgba(8, 9, 12, 0)");
                     ctx.fillStyle = cGrad;
                     ctx.fillRect(0, 0, W, H);
                 }
-
-                // Grow
-                if (frame % 60 === 0 && nodes.length < 120) {
-                    spawnNode();
-                }
-
-                // Consolidation cycle every ~5 seconds
-                if (frame % 300 === 0) {
-                    consolidate();
-                }
-
-                // Update & draw edges
+                if (frame % 60 === 0 && nodes.length < 120) spawnNode();
+                if (frame % 300 === 0) consolidate();
                 edges.forEach((e) => {
                     e.update();
                     e.draw(ctx);
                 });
-
-                // Update & draw nodes
                 nodes.forEach((n) => {
-                    n.update(time, mouseX, mouseY);
-                    n.draw(ctx, time);
+                    n.update(performance.now(), mouseX, mouseY);
+                    n.draw(ctx);
                 });
-
-                // Stats
-                document.getElementById("nodeCount").textContent = nodes.length;
-                document.getElementById("edgeCount").textContent = edges.length;
-                const lr = (0.01 + Math.sin(time * 0.0003) * 0.005).toFixed(4);
-                document.getElementById("learningRate").textContent = lr;
-
                 requestAnimationFrame(animate);
             }
 
             document.addEventListener("mousemove", (e) => {
-                targetMX = e.clientX;
-                targetMY = e.clientY;
-            });
-            document.addEventListener(
-                "touchmove",
-                (e) => {
-                    e.preventDefault();
-                    targetMX = e.touches[0].clientX;
-                    targetMY = e.touches[0].clientY;
-                },
-                { passive: false },
-            );
-            document.addEventListener("touchstart", (e) => {
-                targetMX = e.touches[0].clientX;
-                targetMY = e.touches[0].clientY;
-            });
-
-            // Click to spawn burst of nodes at cursor
-            document.addEventListener("click", (e) => {
-                if (e.target.closest("a")) return;
-                for (let i = 0; i < 3; i++) {
-                    const angle = Math.random() * Math.PI * 2;
-                    const dist = 20 + Math.random() * 60;
-                    const node = new GraphNode(
-                        e.clientX + Math.cos(angle) * dist,
-                        e.clientY + Math.sin(angle) * dist,
-                    );
-                    nodes.push(node);
-                    // Connect to nearby
-                    nodes.forEach((other) => {
-                        if (other === node) return;
-                        const dx = other.x - node.x;
-                        const dy = other.y - node.y;
-                        const d = Math.sqrt(dx * dx + dy * dy);
-                        if (d < 140 && Math.random() < 0.5) {
-                            const edge = new Edge(node, other);
-                            edges.push(edge);
-                            node.connections.push(edge);
-                            other.connections.push(edge);
-                        }
-                    });
-                }
+                const rect = heroEl.getBoundingClientRect();
+                targetMX = e.clientX - rect.left;
+                targetMY = e.clientY - rect.top;
             });
 
             window.addEventListener("resize", init);

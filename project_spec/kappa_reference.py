@@ -251,7 +251,7 @@ def analyze_topology(graph: DirectedGraph) -> dict:
                 ...
             ],
             'dag_nodes': [...],  # nodes not in any nontrivial SCC
-            'overall_routing': 'fast' or 'deliberate',
+            'routing': 'fast' or 'deliberate',
             'max_kappa': int,
             'scc_count': int,
             'total_nodes': int,
@@ -289,7 +289,7 @@ def analyze_topology(graph: DirectedGraph) -> dict:
     return {
         'sccs': scc_results,
         'dag_nodes': dag_nodes,
-        'overall_routing': 'deliberate' if any(s['kappa'] > 0 for s in scc_results) else 'fast',
+        'routing': 'deliberate' if any(s['kappa'] > 0 for s in scc_results) else 'fast',
         'max_kappa': max_kappa,
         'scc_count': len(scc_results),
         'total_nodes': len(graph.nodes),
@@ -561,7 +561,7 @@ def demo_knowledge_graph():
     result = analyze_topology(g)
     
     print(f"\nGraph: {result['total_nodes']} nodes, {result['total_edges']} edges")
-    print(f"Overall routing: {result['overall_routing'].upper()}")
+    print(f"Overall routing: {result['routing'].upper()}")
     print(f"Max κ: {result['max_kappa']}")
     print(f"SCCs with feedback: {result['scc_count']}")
     

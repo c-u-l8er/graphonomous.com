@@ -276,25 +276,24 @@ The existing `retrieve_context` tool gains a `topology` field in its response. N
     "sccs": [
       {
         "id": "scc-0",
-        "nodes": ["market-share", "revenue", "r-and-d", "product-quality"],
-        "kappa": 2,
+        "nodes": ["market-share", "revenue", "r-and-d", "product-quality", "customer-retention"],
+        "kappa": 1,
         "approximate": false,
         "fault_line_edges": [
-          {"source": "market-share", "target": "r-and-d"},
-          {"source": "product-quality", "target": "revenue"}
+          {"source": "product-quality", "target": "market-share"}
         ],
         "routing": "deliberate",
         "deliberation_budget": {
-          "max_iterations": 3,
-          "agent_count": 2,
-          "timeout_multiplier": 2.0,
-          "confidence_threshold": 0.80
+          "max_iterations": 2,
+          "agent_count": 1,
+          "timeout_multiplier": 1.5,
+          "confidence_threshold": 0.75
         }
       }
     ],
     "dag_nodes": ["founding-date", "ceo-name", "headquarters"],
     "routing": "deliberate",
-    "max_kappa": 2,
+    "max_kappa": 1,
     "scc_count": 1
   }
 }

@@ -17,7 +17,7 @@
 | Consolidation (sleep cycle metaphor) | κ-aware consolidation: SCC regions consolidate differently than DAG regions — cyclic clusters need multi-pass consolidation | Modify consolidation logic to respect SCC boundaries |
 | Edge types (episodic, semantic, etc.) | No change to edge types — κ operates on the directed graph regardless of edge semantics | None |
 | Pruning (weak connections decay) | κ-informed pruning: never prune an edge that would reduce a critical SCC to κ = 0 unless the whole cluster is decaying | Add κ check before pruning edges in SCC regions |
-| MCP tool: `memory_recall` | New MCP tool: `memory_recall_with_topology` — returns SCC decomposition + κ annotations alongside context | Add new tool endpoint |
+| MCP tool: `retrieve_context` | Augmented with `topology` field in response — returns SCC decomposition + κ annotations alongside context. Standalone `analyze_topology` tool for explicit topology queries. | Augment existing tool response + register new tool |
 
 **New capability to register:**
 ```json
@@ -73,10 +73,10 @@
 | SCC edges | Rendered with bidirectional particle flow (particles moving both ways) | New render style for edges within SCCs |
 | HUD (nodes / edges / depth / zoom) | Add: κ readout (max κ across SCCs), SCC count, routing mode indicator | Extend HUD component |
 | Right-click context menu (fork/merge/pin/stargate/delete) | Add: "Bend" (suggest edge to create feedback loop) and "Unbend" (suggest edge to remove to break loop) | New context menu items with topology preview |
-| Edge creation (drag-to-connect) | Topology preview on hover: "This edge creates an SCC with κ=1" | Add preview computation on mouse events |
+| Edge creation ("Connect to…" context menu) | Topology preview per candidate: "→ NodeX (κ: 0→1 — creates feedback loop)" | Add `previewEdgeImpact` computation when submenu opens |
 | Stargates (sub-graph portals) | Auto-suggest Stargates at SCC boundaries: "This cluster is a deliberation zone — create a Stargate?" | Add SCC-boundary detection to Stargate suggestion logic |
 | Edge inspector (kind, label, strength) | Add κ impact indicator: "This edge is a fault line (part of the minimum cut)" | Annotate edges with their role in κ structure |
-| Node inspector (text, type, pinned) | Add SCC membership indicator: "This node is in SCC-0 (κ=2)" | Annotate nodes with SCC membership |
+| Node inspector (text, type, pinned) | Add SCC membership indicator: "This node is in SCC-0 (κ=N)" | Annotate nodes with SCC membership |
 
 **JavaScript implementation note:** Port `tarjan_scc` and `compute_kappa` to JS. Run in a web worker to avoid blocking the canvas render loop. For graphs under ~100 nodes (typical BendScript usage), the full computation takes <10ms and can run on every graph mutation. Cache SCC results and invalidate on edge add/remove.
 
@@ -162,7 +162,7 @@ Phase 1 (foundation):
   └── Integrate Tarjan SCC into graph index → Graphonomous
 
 Phase 2 (routing):
-  ├── memory_recall_with_topology endpoint  → Graphonomous MCP
+  ├── retrieve_context + topology field     → Graphonomous MCP
   ├── κ router (fast vs deliberate)         → [&] pipeline
   ├── deliberate_on_scc endpoint            → Deliberatic MCP
   └── SCC visualization on canvas           → BendScript

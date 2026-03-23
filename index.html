@@ -701,9 +701,10 @@
                 <h1>Knowledge graphs that<br />know when to think</h1>
                 <p class="subline">
                     Graphonomous is a continual learning memory engine for AI
-                    agents. It stores knowledge as a graph, detects circular
-                    dependencies via the &kappa; invariant, and tells your agent
-                    when to retrieve and when to deliberate.
+                    agents. It stores knowledge as a graph, routes reasoning via
+                    the &kappa; invariant, and now includes tier-aware
+                    deliberation plus proactive attention loops for bounded
+                    autonomy.
                 </p>
                 <div class="cta-row">
                     <a
@@ -721,7 +722,8 @@
                     >
                 </div>
                 <span class="badge"
-                    >v0.1.12 &middot; Elixir/OTP &middot; MCP Server &middot;
+                    >v0.1.12 &middot; Phase 2: Deliberator + Attention +
+                    Model-Tier &middot; Elixir/OTP &middot; MCP Server &middot;
                     Apache 2.0</span
                 >
             </div>
@@ -733,14 +735,17 @@
         <section id="demo">
             <div class="container">
                 <div class="section-label reveal">
-                    Phase 0 &middot; Live Result
+                    Phase 2 &middot; Live Stack
                 </div>
-                <h2 class="reveal">The &kappa; routing <em>demo</em></h2>
+                <h2 class="reveal">
+                    The &kappa; routing + deliberation + attention
+                    <em>stack</em>
+                </h2>
                 <p class="lead reveal">
-                    The system analyzed a 4-node business cycle and made the
-                    routing decision automatically. This is the proof that
-                    &kappa;-aware topology routing works end-to-end on live MCP
-                    calls.
+                    The system analyzed a 4-node business cycle, routed
+                    reasoning depth automatically, and now supports both
+                    topology-aware deliberation and proactive attention cycles
+                    with model-tier adaptation.
                 </p>
 
                 <div class="demo-grid reveal">
@@ -834,11 +839,12 @@
                     <div class="step-card rose reveal">
                         <h3>Route</h3>
                         <p>
-                            &kappa; = 0 &rarr; fast retrieval (single pass, no
-                            LLM call). &kappa; &gt; 0 &rarr; deliberate
-                            (decompose along fault lines, reason through
-                            partitions, write conclusions back). The graph tells
-                            the agent how to think.
+                            &kappa; = 0 &rarr; fast retrieval. On constrained
+                            tiers, low-&kappa; regions can be enriched without
+                            full deliberation. Higher-friction regions route to
+                            deliberate (decompose fault lines, reconcile, write
+                            conclusions back). Attention then prioritizes what
+                            to do next under autonomy and budget controls.
                         </p>
                     </div>
                 </div>
@@ -872,7 +878,7 @@
                             <td>retrieve_context</td>
                             <td>
                                 Semantic search + neighborhood expansion +
-                                topology annotations
+                                topology annotations + tier-aware enrichment
                             </td>
                         </tr>
                         <tr class="highlight">
@@ -880,6 +886,27 @@
                             <td>
                                 Compute SCCs, &kappa; values, routing decision,
                                 fault-line edges
+                            </td>
+                        </tr>
+                        <tr class="highlight">
+                            <td>deliberate</td>
+                            <td>
+                                κ-driven focused reasoning over cyclic regions
+                                with optional crystallization
+                            </td>
+                        </tr>
+                        <tr class="highlight">
+                            <td>attention_survey</td>
+                            <td>
+                                Ranked attention map across goals, coverage, and
+                                topology signals
+                            </td>
+                        </tr>
+                        <tr class="highlight">
+                            <td>attention_run_cycle</td>
+                            <td>
+                                Trigger one survey/triage/dispatch attention
+                                cycle with autonomy override
                             </td>
                         </tr>
                         <tr>

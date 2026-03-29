@@ -89,7 +89,7 @@
 
 ## The [&] Protocol (protocol spec v0.1.0)
 
-**What it defines now:** Four cognitive primitives (`&memory`, `&reason`, `&time`, `&space`). Composition operator `&`. Pipeline operator `|>`. Formal BNF grammar. JSON schema. Capability registry. Composition algebra. Governance constraints. Capability contracts.
+**What it defines now:** Five cognitive primitives (`&memory`, `&reason`, `&time`, `&space`, `&govern`). Composition operator `&`. Pipeline operator `|>`. Formal BNF grammar. JSON schema. Capability registry. Composition algebra. Governance constraints. Capability contracts.
 
 **What κ adds:**
 

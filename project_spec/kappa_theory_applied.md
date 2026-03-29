@@ -123,7 +123,7 @@ BendScript is already a tool where "prompts become topology." Users build knowle
 
 ### 4.4 The [&] Protocol: κ in the Composition Grammar
 
-The [&] protocol's formal grammar defines four cognitive primitives: `&memory`, `&reason`, `&time`, `&space`. The κ invariant provides a formal criterion for when `&reason` (Deliberatic) is required:
+The [&] protocol's formal grammar defines five cognitive primitives: `&memory`, `&reason`, `&time`, `&space`, `&govern`. The κ invariant provides a formal criterion for when `&reason` (Deliberatic) is required:
 
 ```
 # Extended pipeline with κ-aware routing

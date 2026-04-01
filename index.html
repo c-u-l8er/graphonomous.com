@@ -697,28 +697,36 @@
             </div>
         </nav>
 
+        <!-- TOPICAL BANNER -->
+        <div style="background: linear-gradient(90deg, rgba(255,107,138,0.12), rgba(74,245,198,0.08)); border-bottom: 1px solid rgba(255,107,138,0.2); padding: 0.65rem 0; text-align: center; margin-top: 3.2rem;">
+            <span style="font-family: var(--mono); font-size: 0.72rem; color: var(--rose); letter-spacing: 0.04em;">
+                Claude Code&rsquo;s KAIROS autonomous agent just leaked &mdash;
+                <span style="color: var(--text);">Graphonomous is the open-source version that&rsquo;s already more capable.</span>
+                <a href="#different" style="color: var(--cyan); margin-left: 0.5rem;">See the comparison &darr;</a>
+            </span>
+        </div>
+
         <!-- HERO -->
         <section class="hero">
             <canvas id="graph-canvas"></canvas>
             <div class="container">
                 <h1>Knowledge graphs that<br />know when to think</h1>
                 <p class="subline">
-                    Graphonomous is a continual learning memory engine for AI
-                    agents. It stores knowledge as a graph, routes reasoning via
-                    the &kappa; invariant, and now includes tier-aware
-                    deliberation plus proactive attention loops for bounded
-                    autonomy.
+                    Graphonomous gives AI agents real memory that persists,
+                    learns, and knows when its own knowledge has circular
+                    dependencies. It&rsquo;s an open-source MCP server &mdash;
+                    plug it into Claude, ChatGPT, Cursor, or any model.
                 </p>
                 <div class="cta-row">
                     <a
-                        href="https://docs.graphonomous.com"
+                        href="https://github.com/c-u-l8er/graphonomous"
                         class="btn btn-primary"
-                        >Read Documentation</a
+                        >&#9733; Star on GitHub</a
                     >
                     <a
-                        href="https://github.com/c-u-l8er/graphonomous"
+                        href="https://docs.graphonomous.com"
                         class="btn btn-secondary"
-                        >View on GitHub</a
+                        >Read Documentation</a
                     >
                     <a href="https://opensentience.org" class="btn btn-ghost"
                         >Read the Theory</a
@@ -965,17 +973,25 @@
                     </p>
                     <ul>
                         <li>
+                            <strong>Claude Code KAIROS</strong> (leaked March 2026)
+                            uses a single memory timescale with flat key-value context.
+                            Graphonomous uses 4 timescales (working &rarr; short &rarr;
+                            long &rarr; consolidated) with a typed knowledge graph.
+                            KAIROS is locked to Claude. Graphonomous is MCP-native
+                            &mdash; works with any model.
+                        </li>
+                        <li>
                             <strong>Mem0</strong> stores facts with smart
-                            updates. It doesn't detect circular dependencies.
+                            updates. It doesn&rsquo;t detect circular dependencies.
                         </li>
                         <li>
                             <strong>Zep / Graphiti</strong> builds temporal
-                            knowledge graphs. It doesn't route inference based
+                            knowledge graphs. It doesn&rsquo;t route inference based
                             on topology.
                         </li>
                         <li>
                             <strong>Letta (MemGPT)</strong> pages memory in and
-                            out of context. It doesn't know when context is
+                            out of context. It doesn&rsquo;t know when context is
                             tangled.
                         </li>
                     </ul>

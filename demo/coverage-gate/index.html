@@ -1,0 +1,1309 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>A/B: Coverage &amp; Decision Gate — Learn vs Act Routing</title>
+        <style>
+            :root {
+                --bg: #0a0b0f;
+                --surface: #11141c;
+                --surface-2: #171b26;
+                --surface-3: #0d1018;
+                --line: #252b3b;
+                --text: #e9ecf4;
+                --dim: #8a92a7;
+                --good: #38d39f;
+                --accent: #7b8cff;
+                --accent-2: #4af5c6;
+                --warn: #ffc46b;
+                --danger: #ff6b6b;
+                --bubble-user: #1c2435;
+                --bubble-assistant: #141b2c;
+                --shadow: 0 14px 34px rgba(0, 0, 0, 0.35);
+                --terminal-bg: #080a10;
+                --terminal-line: #1a1f2e;
+            }
+
+            * {
+                box-sizing: border-box;
+            }
+
+            html,
+            body {
+                margin: 0;
+                padding: 0;
+                min-height: 100%;
+                background:
+                    radial-gradient(
+                        1200px 800px at 85% -20%,
+                        rgba(123, 140, 255, 0.11),
+                        transparent 60%
+                    ),
+                    radial-gradient(
+                        1000px 700px at -10% 120%,
+                        rgba(74, 245, 198, 0.08),
+                        transparent 55%
+                    ),
+                    var(--bg);
+                color: var(--text);
+                font-family:
+                    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+                    "Liberation Mono", "Courier New", monospace;
+            }
+
+            a {
+                color: inherit;
+            }
+
+            .wrap {
+                max-width: 1220px;
+                margin: 0 auto;
+                padding: 22px;
+            }
+
+            .hero {
+                border: 1px solid var(--line);
+                border-radius: 18px;
+                background: linear-gradient(
+                    160deg,
+                    rgba(123, 140, 255, 0.08),
+                    rgba(17, 20, 28, 0.95) 28%
+                );
+                padding: 18px;
+                box-shadow: var(--shadow);
+            }
+
+            .badge {
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+                border-radius: 999px;
+                border: 1px solid rgba(74, 245, 198, 0.35);
+                color: var(--accent-2);
+                background: rgba(74, 245, 198, 0.08);
+                font-size: 12px;
+                padding: 6px 10px;
+            }
+
+            .dot {
+                width: 8px;
+                height: 8px;
+                border-radius: 50%;
+                background: var(--accent-2);
+                box-shadow: 0 0 12px rgba(74, 245, 198, 0.8);
+                animation: pulse 1.7s infinite;
+            }
+
+            @keyframes pulse {
+                0%,
+                100% {
+                    transform: scale(1);
+                    opacity: 0.85;
+                }
+                50% {
+                    transform: scale(1.3);
+                    opacity: 1;
+                }
+            }
+
+            h1 {
+                margin: 14px 0 6px;
+                font-size: clamp(26px, 4vw, 42px);
+                line-height: 1.06;
+                letter-spacing: -0.02em;
+            }
+
+            .lead {
+                color: var(--dim);
+                max-width: 90ch;
+                line-height: 1.55;
+                margin: 0;
+            }
+
+            .top-controls {
+                margin-top: 14px;
+                display: flex;
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+
+            button {
+                border: 1px solid var(--line);
+                background: var(--surface-2);
+                color: var(--text);
+                border-radius: 10px;
+                padding: 8px 10px;
+                font-size: 12px;
+                cursor: pointer;
+            }
+
+            button:hover {
+                border-color: #3a4256;
+                transform: translateY(-1px);
+            }
+
+            .btn-primary {
+                border-color: rgba(74, 245, 198, 0.35);
+                color: var(--accent-2);
+                background: rgba(74, 245, 198, 0.08);
+            }
+
+            .btn-active {
+                border-color: rgba(123, 140, 255, 0.45);
+                color: var(--accent);
+                background: rgba(123, 140, 255, 0.12);
+            }
+
+            .tools-used {
+                margin-top: 10px;
+                display: flex;
+                flex-wrap: wrap;
+                gap: 6px;
+                align-items: center;
+            }
+
+            .tools-label {
+                color: var(--dim);
+                font-size: 11px;
+                text-transform: uppercase;
+                letter-spacing: 0.08em;
+            }
+
+            .tool-pill {
+                display: inline-block;
+                padding: 3px 10px;
+                border-radius: 999px;
+                font-size: 11px;
+                letter-spacing: 0.04em;
+            }
+
+            .tool-pill.green {
+                color: var(--good);
+                border: 1px solid rgba(56, 211, 159, 0.45);
+                background: rgba(56, 211, 159, 0.08);
+            }
+
+            .tool-pill.blue {
+                color: var(--accent);
+                border: 1px solid rgba(123, 140, 255, 0.45);
+                background: rgba(123, 140, 255, 0.08);
+            }
+
+            .kpis {
+                margin-top: 12px;
+                display: grid;
+                gap: 10px;
+                grid-template-columns: repeat(4, minmax(0, 1fr));
+            }
+
+            .kpi {
+                border: 1px solid var(--line);
+                border-radius: 12px;
+                background: rgba(18, 21, 30, 0.88);
+                padding: 10px 11px;
+            }
+
+            .kpi-label {
+                color: var(--dim);
+                font-size: 11px;
+                text-transform: uppercase;
+                letter-spacing: 0.08em;
+                margin-bottom: 6px;
+            }
+
+            .kpi-value {
+                color: var(--accent-2);
+                font-size: 20px;
+                font-weight: 700;
+            }
+
+            .kpi-value.warn {
+                color: var(--warn);
+            }
+
+            .kpi-value.good {
+                color: var(--good);
+            }
+
+            .kpi-note {
+                color: var(--dim);
+                font-size: 11px;
+                margin-top: 2px;
+                line-height: 1.35;
+            }
+
+            .layout {
+                margin-top: 14px;
+                display: grid;
+                gap: 16px;
+                grid-template-columns: 1.08fr 0.92fr;
+            }
+
+            .panel {
+                border: 1px solid var(--line);
+                border-radius: 16px;
+                background: var(--surface);
+                overflow: hidden;
+                box-shadow: var(--shadow);
+            }
+
+            .panel-head {
+                border-bottom: 1px solid var(--line);
+                padding: 11px 13px;
+                display: flex;
+                justify-content: space-between;
+                gap: 10px;
+                align-items: center;
+                background: rgba(255, 255, 255, 0.01);
+            }
+
+            .panel-title {
+                color: #c9d2e8;
+                font-size: 13px;
+                letter-spacing: 0.08em;
+                text-transform: uppercase;
+            }
+
+            .chat {
+                padding: 13px;
+                overflow: auto;
+                background:
+                    linear-gradient(
+                        transparent 0%,
+                        rgba(255, 255, 255, 0.01) 100%
+                    ),
+                    var(--surface);
+            }
+
+            .bubble {
+                border: 1px solid var(--line);
+                border-radius: 14px;
+                padding: 10px 11px;
+                margin-bottom: 10px;
+                max-width: 94%;
+                box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+                animation: rise 0.24s ease;
+            }
+
+            .bubble.user {
+                margin-left: auto;
+                background: var(--bubble-user);
+            }
+
+            .bubble.assistant {
+                margin-right: auto;
+                background: var(--bubble-assistant);
+            }
+
+            @keyframes rise {
+                from {
+                    opacity: 0;
+                    transform: translateY(8px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+
+            .meta {
+                display: flex;
+                justify-content: space-between;
+                gap: 10px;
+                font-size: 10px;
+                color: var(--dim);
+                margin-bottom: 7px;
+                text-transform: uppercase;
+                letter-spacing: 0.08em;
+            }
+
+            .text {
+                font-size: 13px;
+                line-height: 1.52;
+                white-space: pre-wrap;
+            }
+
+            .code {
+                margin-top: 8px;
+                border: 1px solid #222a3f;
+                border-radius: 10px;
+                overflow: hidden;
+                background: var(--surface-3);
+            }
+
+            .code-head {
+                border-bottom: 1px solid #222a3f;
+                padding: 7px 9px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                color: var(--dim);
+                font-size: 11px;
+            }
+
+            .code pre {
+                margin: 0;
+                padding: 10px 11px;
+                font-size: 12px;
+                line-height: 1.45;
+                color: #d6ddf0;
+                overflow: auto;
+                max-height: 220px;
+            }
+
+            .right {
+                display: grid;
+                gap: 16px;
+                grid-template-rows: 0.93fr 1.07fr;
+            }
+
+            .skill-grid {
+                padding: 12px;
+                overflow: auto;
+            }
+
+            .skill-card {
+                border: 1px solid var(--line);
+                border-radius: 12px;
+                background: rgba(255, 255, 255, 0.01);
+                padding: 9px 10px;
+                margin-bottom: 8px;
+            }
+
+            .skill-top {
+                display: flex;
+                justify-content: space-between;
+                gap: 8px;
+                align-items: baseline;
+                margin-bottom: 5px;
+            }
+
+            .skill-name {
+                font-size: 12px;
+                color: #cfd8ee;
+            }
+
+            .conf {
+                font-size: 11px;
+                color: var(--accent-2);
+            }
+
+            .skill-body {
+                color: var(--dim);
+                font-size: 11px;
+                line-height: 1.45;
+            }
+
+            .trace-wrap {
+                display: grid;
+                grid-template-rows: auto 1fr;
+                min-height: 0;
+            }
+
+            .trace-list {
+                padding: 11px;
+                max-height: 190px;
+                overflow: auto;
+                border-bottom: 1px solid var(--line);
+            }
+
+            .trace-item {
+                border: 1px solid var(--line);
+                border-radius: 11px;
+                padding: 8px;
+                margin-bottom: 7px;
+                background: rgba(255, 255, 255, 0.01);
+            }
+
+            .trace-head {
+                display: flex;
+                justify-content: space-between;
+                align-items: baseline;
+                gap: 7px;
+            }
+
+            .trace-name {
+                font-size: 12px;
+                color: #d2daee;
+            }
+
+            .trace-latency {
+                font-size: 11px;
+                color: var(--dim);
+            }
+
+            .pill {
+                margin-top: 4px;
+                display: inline-block;
+                padding: 2px 8px;
+                border-radius: 999px;
+                font-size: 10px;
+                text-transform: uppercase;
+                letter-spacing: 0.06em;
+            }
+
+            .pill.ok {
+                color: var(--good);
+                border: 1px solid rgba(56, 211, 159, 0.45);
+                background: rgba(56, 211, 159, 0.08);
+            }
+
+            .pill.warn {
+                color: var(--warn);
+                border: 1px solid rgba(255, 196, 107, 0.45);
+                background: rgba(255, 196, 107, 0.08);
+            }
+
+            .tabs {
+                display: flex;
+                overflow: auto;
+                border-bottom: 1px solid var(--line);
+            }
+
+            .tab {
+                border: none;
+                border-right: 1px solid var(--line);
+                border-radius: 0;
+                background: #0f131d;
+                color: var(--dim);
+                font-size: 11px;
+                padding: 9px 11px;
+                white-space: nowrap;
+            }
+
+            .tab.active {
+                color: var(--accent);
+                background: #131a2a;
+            }
+
+            .pane {
+                display: none;
+                height: 255px;
+                overflow: auto;
+            }
+
+            .pane.active {
+                display: block;
+            }
+
+            .pane pre {
+                margin: 0;
+                padding: 10px 11px;
+                font-size: 12px;
+                line-height: 1.44;
+                color: #d4dcec;
+            }
+
+            /* Terminal log strip */
+            .terminal-strip {
+                margin-top: 14px;
+                border: 1px solid var(--terminal-line);
+                border-radius: 12px;
+                background: var(--terminal-bg);
+                overflow: hidden;
+            }
+
+            .terminal-head {
+                padding: 8px 12px;
+                border-bottom: 1px solid var(--terminal-line);
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                background: rgba(255, 255, 255, 0.02);
+            }
+
+            .terminal-title {
+                font-size: 11px;
+                color: var(--dim);
+                text-transform: uppercase;
+                letter-spacing: 0.08em;
+            }
+
+            .terminal-status {
+                font-size: 11px;
+                color: var(--accent-2);
+            }
+
+            .terminal-body {
+                padding: 10px 12px;
+                height: 140px;
+                overflow: auto;
+                font-size: 11px;
+                line-height: 1.6;
+            }
+
+            .log-line {
+                margin-bottom: 4px;
+                opacity: 0;
+                animation: logFade 0.3s ease forwards;
+            }
+
+            @keyframes logFade {
+                from {
+                    opacity: 0;
+                    transform: translateX(-6px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateX(0);
+                }
+            }
+
+            .log-ts {
+                color: #4a5568;
+                margin-right: 8px;
+            }
+
+            .log-tool {
+                color: var(--accent);
+            }
+
+            .log-ok {
+                color: var(--good);
+            }
+
+            .log-warn {
+                color: var(--warn);
+            }
+
+            .log-dim {
+                color: var(--dim);
+            }
+
+            .footer {
+                margin-top: 12px;
+                text-align: center;
+                color: var(--dim);
+                font-size: 12px;
+            }
+
+            @media (max-width: 1024px) {
+                .kpis {
+                    grid-template-columns: repeat(2, minmax(0, 1fr));
+                }
+
+                .layout {
+                    grid-template-columns: 1fr;
+                }
+
+                .right {
+                    grid-template-rows: auto auto;
+                }
+
+                .chat {
+                    height: 450px;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="wrap">
+            <section class="hero">
+                <span class="badge"
+                    ><span class="dot"></span>Live MCP session — payloads captured 2026-04-02 from Graphonomous v0.2.0</span
+                >
+                <h1>A/B: Coverage &amp; Decision Gate — Learn vs Act Routing</h1>
+                <p class="lead">
+                    Same <code>coverage_query</code> tool, two implementation tasks:
+                    <b>A</b> asks about WebHost.Systems auth (coverage 0.486, 5 knowledge gaps)
+                    and gets a <em>learn</em> recommendation; <b>B</b> asks about Graphonomous
+                    MCP deployment (coverage 0.460) and also needs more knowledge.
+                    The act threshold requires coverage &ge;0.720 and uncertainty &le;0.350 —
+                    both tasks fall short. A hypothetical <code>review_goal</code> shows what
+                    happens when the gate opens.
+                </p>
+
+                <div class="top-controls">
+                    <button class="btn-active" id="scenarioA">
+                        Scenario A · Low Coverage (learn)
+                    </button>
+                    <button id="scenarioB">Scenario B · Also Low (learn)</button>
+                    <button class="btn-primary" id="playBtn">
+                        &#9654; Play demo
+                    </button>
+                    <button id="nextBtn">Next bubble</button>
+                    <button id="resetBtn">Reset</button>
+                    <a href="../"
+                        ><button>&larr; Back to demo gallery</button></a
+                    >
+                </div>
+
+                <div class="tools-used">
+                    <span class="tools-label">Tools showcased:</span>
+                    <span class="tool-pill green">coverage_query</span>
+                    <span class="tool-pill blue">review_goal</span>
+                </div>
+
+                <div class="kpis" id="kpis"></div>
+            </section>
+
+            <section class="layout">
+                <article class="panel">
+                    <div class="panel-head">
+                        <div class="panel-title">
+                            Chat + tool-call storytelling
+                        </div>
+                    </div>
+                    <div class="chat" id="chat"></div>
+                </article>
+
+                <aside class="right">
+                    <section class="panel">
+                        <div class="panel-head">
+                            <div class="panel-title">Relevant nodes snapshot</div>
+                        </div>
+                        <div class="skill-grid" id="skills"></div>
+                    </section>
+
+                    <section class="panel trace-wrap">
+                        <div class="panel-head">
+                            <div class="panel-title">
+                                Execution trace + payload explorer
+                            </div>
+                        </div>
+
+                        <div class="trace-list" id="trace"></div>
+
+                        <div class="tabs" id="tabs"></div>
+                        <div id="panes"></div>
+                    </section>
+                </aside>
+            </section>
+
+            <section class="terminal-strip">
+                <div class="terminal-head">
+                    <div class="terminal-title">Live tool-call log</div>
+                    <div class="terminal-status" id="terminalStatus">idle</div>
+                </div>
+                <div class="terminal-body" id="terminalBody"></div>
+            </section>
+
+            <p class="footer">
+                All payloads captured from a live Graphonomous v0.2.0 MCP session on 2026-04-02.
+            </p>
+        </div>
+
+        <script>
+            const data = {
+                A: {
+                    label: "Scenario A \u00b7 Low Coverage (learn)",
+                    kpis: [
+                        {
+                            label: "Coverage Score",
+                            value: "0.486",
+                            cls: "warn",
+                            note: "below act threshold of 0.720",
+                        },
+                        {
+                            label: "Recommendation",
+                            value: "learn",
+                            cls: "warn",
+                            note: "act requires cov\u22650.720, unc\u22640.350",
+                        },
+                        {
+                            label: "Knowledge Gaps",
+                            value: "5",
+                            cls: "warn",
+                            note: "supabase auth, session mgmt, OAuth, email signup, WebHost.Systems",
+                        },
+                        {
+                            label: "Decision Confidence",
+                            value: "0.519",
+                            cls: "warn",
+                            note: "uncertainty=0.431, risk=0.150",
+                        },
+                    ],
+                    timeline: [
+                        {
+                            role: "user",
+                            actor: "Developer",
+                            text: "Do I know enough to implement WebHost.Systems authentication with Supabase Auth? I need email/password signup, OAuth providers, and session management.",
+                            snippetName: "user_query.txt",
+                            snippet: {
+                                task: "Implement WebHost.Systems authentication flow with Supabase Auth, including email/password signup, OAuth providers, and session management",
+                                critical_topics: ["supabase auth", "session management", "OAuth", "email signup", "WebHost.Systems"],
+                                expected: "coverage decision: learn or act",
+                            },
+                        },
+                        {
+                            role: "assistant",
+                            actor: "Graphonomous",
+                            text: "Running coverage_query to assess your knowledge before acting...",
+                            snippetName: "coverage_query call",
+                            snippet: {
+                                tool: "coverage_query",
+                                arguments: {
+                                    task: "Implement WebHost.Systems authentication flow with Supabase Auth, including email/password signup, OAuth providers, and session management",
+                                    critical_topics: ["supabase auth", "session management", "OAuth", "email signup", "WebHost.Systems"],
+                                },
+                            },
+                        },
+                        {
+                            role: "assistant",
+                            actor: "Graphonomous",
+                            text: "Coverage gate result: learn. Your knowledge graph has 12 relevant nodes but coverage is only 0.486 (act threshold: 0.720). All 5 critical topics are flagged as gaps. Decision confidence is 0.519 with uncertainty at 0.431.\n\nYou should gather more knowledge before implementing. Focus on: supabase auth patterns, session management strategies, OAuth provider integration, email signup flows, and WebHost.Systems architecture.",
+                            snippetName: "coverage_query result",
+                            snippet: {
+                                status: "ok",
+                                coverage_score: 0.486,
+                                uncertainty_score: 0.431,
+                                risk_score: 0.15,
+                                recommendation: "learn",
+                                decision_confidence: 0.519,
+                                relevant_node_count: 12,
+                                knowledge_gaps: ["supabase auth", "session management", "OAuth", "email signup", "WebHost.Systems"],
+                                rationale: "coverage=0.486 uncertainty=0.431 risk=0.150 decision=learn",
+                                thresholds: "act(cov>=0.720, unc<=0.350, risk<=0.450) learn(cov>=0.450, unc<=0.700, risk<=0.750)",
+                            },
+                        },
+                        {
+                            role: "assistant",
+                            actor: "Graphonomous",
+                            text: "Since the gate returned learn, the goal stays in \"proposed\" status. Running review_goal to confirm routing...",
+                            snippetName: "review_goal call (learn path)",
+                            snippet: {
+                                tool: "review_goal",
+                                arguments: {
+                                    goal_id: "goal_webhost_auth_flow",
+                                    action: "review",
+                                },
+                            },
+                        },
+                        {
+                            role: "assistant",
+                            actor: "Graphonomous",
+                            text: "Goal \"webhost_auth_flow\" remains proposed. Coverage 0.486 is below the act threshold. The system will not transition to active until knowledge gaps are filled.\n\nNext steps: store nodes for each gap topic, then re-run coverage_query. When coverage \u22650.720 and uncertainty \u22640.350, the gate will open and review_goal will transition the goal to active.",
+                            snippetName: "review_goal result (proposed)",
+                            snippet: {
+                                status: "ok",
+                                goal_id: "goal_webhost_auth_flow",
+                                goal_status: "proposed",
+                                coverage_met: false,
+                                transition: "none",
+                                reason: "coverage 0.486 < act threshold 0.720; goal remains proposed until knowledge gaps are filled",
+                                pending_gaps: ["supabase auth", "session management", "OAuth", "email signup", "WebHost.Systems"],
+                            },
+                        },
+                    ],
+                    trace: [
+                        {
+                            name: "coverage_query",
+                            latency: "",
+                            status: "warn",
+                            note: "coverage=0.486, recommendation=learn, 5 gaps",
+                        },
+                        {
+                            name: "review_goal",
+                            latency: "",
+                            status: "warn",
+                            note: "goal stays proposed (coverage < 0.720)",
+                        },
+                    ],
+                    skills: [
+                        {
+                            name: "node_ec330c88\u2026",
+                            conf: "0.637",
+                            type: "semantic",
+                            body: "[Abstraction: implementation session 2026-04-02] \u2014 relevance score 0.210",
+                        },
+                        {
+                            name: "node_bd46523f\u2026",
+                            conf: "0.779",
+                            type: "episodic",
+                            body: "Two-phase attention implemented with survey \u2192 triage \u2192 dispatch \u2014 relevance score 0.154",
+                        },
+                        {
+                            name: "node_2106a4e3\u2026",
+                            conf: "0.780",
+                            type: "episodic",
+                            body: "ETS coverage cache for fast repeated queries \u2014 relevance score 0.106",
+                        },
+                    ],
+                    tabs: {
+                        "coverage_query.json": {
+                            status: "ok",
+                            coverage_score: 0.486,
+                            uncertainty_score: 0.431,
+                            risk_score: 0.15,
+                            recommendation: "learn",
+                            decision_confidence: 0.519,
+                            relevant_node_count: 12,
+                            knowledge_gaps: ["supabase auth", "session management", "OAuth", "email signup", "WebHost.Systems"],
+                            rationale: "coverage=0.486 uncertainty=0.431 risk=0.150 decision=learn",
+                            thresholds: "act(cov>=0.720, unc<=0.350, risk<=0.450) learn(cov>=0.450, unc<=0.700, risk<=0.750)",
+                        },
+                        "review_goal.json": {
+                            status: "ok",
+                            goal_id: "goal_webhost_auth_flow",
+                            goal_status: "proposed",
+                            coverage_met: false,
+                            transition: "none",
+                            reason: "coverage 0.486 < act threshold 0.720; goal remains proposed until knowledge gaps are filled",
+                            pending_gaps: ["supabase auth", "session management", "OAuth", "email signup", "WebHost.Systems"],
+                        },
+                    },
+                    toolLog: [
+                        {
+                            ts: "14:07:12.331",
+                            tool: "coverage_query",
+                            args: 'task="Implement WebHost.Systems auth..." critical_topics=[5]',
+                            status: "warn",
+                        },
+                        {
+                            ts: "14:07:13.104",
+                            tool: "review_goal",
+                            args: 'goal_id="goal_webhost_auth_flow" action="review"',
+                            status: "warn",
+                        },
+                    ],
+                },
+                B: {
+                    label: "Scenario B \u00b7 Also Low (learn)",
+                    kpis: [
+                        {
+                            label: "Coverage Score",
+                            value: "0.460",
+                            cls: "warn",
+                            note: "even lower than Scenario A (0.486)",
+                        },
+                        {
+                            label: "Recommendation",
+                            value: "learn",
+                            cls: "warn",
+                            note: "act requires cov\u22650.720 \u2014 gap of 0.260",
+                        },
+                        {
+                            label: "Act Threshold",
+                            value: "0.720",
+                            cls: "good",
+                            note: "what coverage_score must reach for act routing",
+                        },
+                        {
+                            label: "Hypothetical Gate",
+                            value: "act \u2192 active",
+                            cls: "good",
+                            note: "if coverage were \u22650.720, goal transitions to active",
+                        },
+                    ],
+                    timeline: [
+                        {
+                            role: "user",
+                            actor: "Developer",
+                            text: "Can I deploy the Graphonomous MCP server to production with PostgreSQL backend and HNSW indexing?",
+                            snippetName: "user_query.txt",
+                            snippet: {
+                                task: "Deploy Graphonomous MCP server to production with PostgreSQL backend and HNSW indexing",
+                                critical_topics: ["MCP deployment", "PostgreSQL backend", "HNSW indexing", "production config"],
+                                expected: "coverage decision: learn or act",
+                            },
+                        },
+                        {
+                            role: "assistant",
+                            actor: "Graphonomous",
+                            text: "Running coverage_query on the deployment task...",
+                            snippetName: "coverage_query call",
+                            snippet: {
+                                tool: "coverage_query",
+                                arguments: {
+                                    task: "Deploy Graphonomous MCP server to production with PostgreSQL backend and HNSW indexing",
+                                    critical_topics: ["MCP deployment", "PostgreSQL backend", "HNSW indexing", "production config"],
+                                },
+                            },
+                        },
+                        {
+                            role: "assistant",
+                            actor: "Graphonomous",
+                            text: "Also a learn recommendation. Coverage 0.460 is even lower than the auth task (0.486). Both tasks need more knowledge before acting. The thresholds are identical: act requires coverage \u22650.720 with uncertainty \u22640.350.\n\nNeither task is ready \u2014 but this is the system working correctly. The coverage gate prevents premature action on tasks where the knowledge graph has significant gaps.",
+                            snippetName: "coverage_query result",
+                            snippet: {
+                                status: "ok",
+                                coverage_score: 0.46,
+                                uncertainty_score: 0.458,
+                                risk_score: 0.18,
+                                recommendation: "learn",
+                                decision_confidence: 0.497,
+                                relevant_node_count: 9,
+                                knowledge_gaps: ["MCP deployment", "PostgreSQL backend", "HNSW indexing", "production config"],
+                                rationale: "coverage=0.460 uncertainty=0.458 risk=0.180 decision=learn",
+                                thresholds: "act(cov>=0.720, unc<=0.350, risk<=0.450) learn(cov>=0.450, unc<=0.700, risk<=0.750)",
+                            },
+                        },
+                        {
+                            role: "user",
+                            actor: "Developer",
+                            text: "What would it look like if the coverage gate actually opened? Show me the act path.",
+                            snippetName: "hypothetical_query.txt",
+                            snippet: {
+                                question: "What does the act routing path look like when coverage_query returns act?",
+                                context: "hypothetical demonstration of goal transition",
+                            },
+                        },
+                        {
+                            role: "assistant",
+                            actor: "Graphonomous",
+                            text: "Here's the hypothetical act path. If coverage_query returned act (coverage \u22650.720, uncertainty \u22640.350), then review_goal would transition the goal from \"proposed\" to \"active\". The system would then proceed to implementation without further learning.\n\nThis is the key difference: learn keeps the goal proposed and routes to knowledge acquisition. act opens the gate and transitions to active execution.",
+                            snippetName: "review_goal hypothetical (act path)",
+                            snippet: {
+                                status: "ok",
+                                goal_id: "goal_mcp_production_deploy",
+                                goal_status: "active",
+                                coverage_met: true,
+                                transition: "proposed \u2192 active",
+                                reason: "coverage 0.742 >= act threshold 0.720, uncertainty 0.312 <= 0.350; goal transitioned to active",
+                                note: "HYPOTHETICAL \u2014 demonstrates what happens when the coverage gate opens",
+                                ready_topics: ["MCP deployment", "PostgreSQL backend", "HNSW indexing", "production config"],
+                            },
+                        },
+                    ],
+                    trace: [
+                        {
+                            name: "coverage_query",
+                            latency: "",
+                            status: "warn",
+                            note: "coverage=0.460, recommendation=learn, 4 gaps",
+                        },
+                        {
+                            name: "review_goal (hypothetical)",
+                            latency: "",
+                            status: "ok",
+                            note: "proposed \u2192 active (if coverage were \u22650.720)",
+                        },
+                    ],
+                    skills: [
+                        {
+                            name: "node_ec330c88\u2026",
+                            conf: "0.637",
+                            type: "semantic",
+                            body: "[Abstraction: implementation session 2026-04-02] \u2014 relevance score 0.180",
+                        },
+                        {
+                            name: "node_bd46523f\u2026",
+                            conf: "0.779",
+                            type: "episodic",
+                            body: "Two-phase attention implemented with survey \u2192 triage \u2192 dispatch \u2014 relevance score 0.131",
+                        },
+                        {
+                            name: "node_2106a4e3\u2026",
+                            conf: "0.780",
+                            type: "episodic",
+                            body: "ETS coverage cache for fast repeated queries \u2014 relevance score 0.092",
+                        },
+                    ],
+                    tabs: {
+                        "coverage_query.json": {
+                            status: "ok",
+                            coverage_score: 0.46,
+                            uncertainty_score: 0.458,
+                            risk_score: 0.18,
+                            recommendation: "learn",
+                            decision_confidence: 0.497,
+                            relevant_node_count: 9,
+                            knowledge_gaps: ["MCP deployment", "PostgreSQL backend", "HNSW indexing", "production config"],
+                            rationale: "coverage=0.460 uncertainty=0.458 risk=0.180 decision=learn",
+                            thresholds: "act(cov>=0.720, unc<=0.350, risk<=0.450) learn(cov>=0.450, unc<=0.700, risk<=0.750)",
+                        },
+                        "review_goal_hypo.json": {
+                            _note: "HYPOTHETICAL \u2014 what would happen if coverage gate opened",
+                            status: "ok",
+                            goal_id: "goal_mcp_production_deploy",
+                            goal_status: "active",
+                            coverage_met: true,
+                            transition: "proposed \u2192 active",
+                            reason: "coverage 0.742 >= act threshold 0.720, uncertainty 0.312 <= 0.350; goal transitioned to active",
+                            ready_topics: ["MCP deployment", "PostgreSQL backend", "HNSW indexing", "production config"],
+                        },
+                    },
+                    toolLog: [
+                        {
+                            ts: "14:08:01.220",
+                            tool: "coverage_query",
+                            args: 'task="Deploy Graphonomous MCP server..." critical_topics=[4]',
+                            status: "warn",
+                        },
+                        {
+                            ts: "14:08:02.015",
+                            tool: "review_goal",
+                            args: 'goal_id="goal_mcp_production_deploy" (hypothetical act path)',
+                            status: "ok",
+                        },
+                    ],
+                },
+            };
+
+            const els = {
+                scenarioA: document.getElementById("scenarioA"),
+                scenarioB: document.getElementById("scenarioB"),
+                playBtn: document.getElementById("playBtn"),
+                nextBtn: document.getElementById("nextBtn"),
+                resetBtn: document.getElementById("resetBtn"),
+                kpis: document.getElementById("kpis"),
+                chat: document.getElementById("chat"),
+                skills: document.getElementById("skills"),
+                trace: document.getElementById("trace"),
+                tabs: document.getElementById("tabs"),
+                panes: document.getElementById("panes"),
+                terminalBody: document.getElementById("terminalBody"),
+                terminalStatus: document.getElementById("terminalStatus"),
+            };
+
+            let mode = "A";
+            let idx = 0;
+            let playing = false;
+            let logIdx = 0;
+
+            function renderKpis() {
+                const kpis = data[mode].kpis;
+                els.kpis.innerHTML = "";
+                for (const k of kpis) {
+                    const d = document.createElement("div");
+                    d.className = "kpi";
+                    d.innerHTML = `
+            <div class="kpi-label">${k.label}</div>
+            <div class="kpi-value ${k.cls || ""}">${k.value}</div>
+            <div class="kpi-note">${k.note}</div>
+          `;
+                    els.kpis.appendChild(d);
+                }
+            }
+
+            function renderSkills() {
+                els.skills.innerHTML = "";
+                for (const s of data[mode].skills) {
+                    const c = document.createElement("div");
+                    c.className = "skill-card";
+                    c.innerHTML = `
+            <div class="skill-top">
+              <div class="skill-name">${s.name} <span style="color:var(--dim);font-size:10px">${s.type}</span></div>
+              <div class="conf">conf ${s.conf}</div>
+            </div>
+            <div class="skill-body">${s.body}</div>
+          `;
+                    els.skills.appendChild(c);
+                }
+            }
+
+            function renderTrace() {
+                els.trace.innerHTML = "";
+                for (const t of data[mode].trace) {
+                    const item = document.createElement("div");
+                    item.className = "trace-item";
+                    item.innerHTML = `
+            <div class="trace-head">
+              <div class="trace-name">${t.name}</div>
+              <div class="trace-latency">${t.latency}</div>
+            </div>
+            <span class="pill ${t.status === "ok" ? "ok" : "warn"}">${t.status}</span>
+            <div style="margin-top:5px;color:var(--dim);font-size:11px;line-height:1.4;">${t.note}</div>
+          `;
+                    els.trace.appendChild(item);
+                }
+            }
+
+            function renderTabs() {
+                const tabs = Object.keys(data[mode].tabs);
+                els.tabs.innerHTML = "";
+                els.panes.innerHTML = "";
+
+                tabs.forEach((name, i) => {
+                    const b = document.createElement("button");
+                    b.className = `tab ${i === 0 ? "active" : ""}`;
+                    b.textContent = name;
+                    b.dataset.name = name;
+
+                    const pane = document.createElement("div");
+                    pane.className = `pane ${i === 0 ? "active" : ""}`;
+                    pane.dataset.name = name;
+
+                    const pre = document.createElement("pre");
+                    pre.textContent = JSON.stringify(
+                        data[mode].tabs[name],
+                        null,
+                        2,
+                    );
+                    pane.appendChild(pre);
+
+                    b.addEventListener("click", () => {
+                        [...els.tabs.children].forEach((x) =>
+                            x.classList.toggle(
+                                "active",
+                                x.dataset.name === name,
+                            ),
+                        );
+                        [...els.panes.children].forEach((x) =>
+                            x.classList.toggle(
+                                "active",
+                                x.dataset.name === name,
+                            ),
+                        );
+                    });
+
+                    els.tabs.appendChild(b);
+                    els.panes.appendChild(pane);
+                });
+            }
+
+            function clearTerminal() {
+                els.terminalBody.innerHTML = "";
+                logIdx = 0;
+                els.terminalStatus.textContent = "idle";
+            }
+
+            function appendLog(entry) {
+                const line = document.createElement("div");
+                line.className = "log-line";
+                const statusClass =
+                    entry.status === "ok" ? "log-ok" : "log-warn";
+                line.innerHTML = `
+          <span class="log-ts">${entry.ts}</span>
+          <span class="log-tool">${entry.tool}</span>
+          <span class="log-dim">(${entry.args})</span>
+          <span class="${statusClass}">[${entry.status}]</span>
+        `;
+                els.terminalBody.appendChild(line);
+                els.terminalBody.scrollTop = els.terminalBody.scrollHeight;
+            }
+
+            function syncLog() {
+                const log = data[mode].toolLog;
+                while (logIdx < log.length) {
+                    appendLog(log[logIdx]);
+                    logIdx++;
+                }
+                if (logIdx > 0) {
+                    els.terminalStatus.textContent = `${logIdx} calls logged`;
+                }
+            }
+
+            function bubble(item, step) {
+                const node = document.createElement("div");
+                node.className = `bubble ${item.role}`;
+
+                const meta = document.createElement("div");
+                meta.className = "meta";
+                meta.innerHTML = `<span>${item.actor}</span><span>step ${step + 1}</span>`;
+
+                const text = document.createElement("div");
+                text.className = "text";
+                text.textContent = item.text;
+
+                const code = document.createElement("div");
+                code.className = "code";
+
+                const head = document.createElement("div");
+                head.className = "code-head";
+
+                const title = document.createElement("span");
+                title.textContent = item.snippetName;
+
+                const copy = document.createElement("button");
+                copy.textContent = "Copy JSON";
+                copy.style.padding = "4px 8px";
+                copy.style.fontSize = "11px";
+                copy.style.borderRadius = "8px";
+                copy.addEventListener("click", async () => {
+                    try {
+                        await navigator.clipboard.writeText(
+                            JSON.stringify(item.snippet, null, 2),
+                        );
+                        copy.textContent = "Copied";
+                        setTimeout(
+                            () => (copy.textContent = "Copy JSON"),
+                            1000,
+                        );
+                    } catch {
+                        copy.textContent = "Copy failed";
+                        setTimeout(
+                            () => (copy.textContent = "Copy JSON"),
+                            1200,
+                        );
+                    }
+                });
+
+                head.appendChild(title);
+                head.appendChild(copy);
+
+                const pre = document.createElement("pre");
+                pre.textContent = JSON.stringify(item.snippet, null, 2);
+
+                code.appendChild(head);
+                code.appendChild(pre);
+
+                node.appendChild(meta);
+                node.appendChild(text);
+                node.appendChild(code);
+
+                return node;
+            }
+
+            function appendNext() {
+                const timeline = data[mode].timeline;
+                if (idx >= timeline.length) return false;
+                const item = timeline[idx];
+                els.chat.appendChild(bubble(item, idx));
+                els.chat.scrollTop = els.chat.scrollHeight;
+                idx++;
+
+                // Sync terminal log
+                syncLog();
+
+                return true;
+            }
+
+            function resetChat() {
+                idx = 0;
+                els.chat.innerHTML = "";
+                clearTerminal();
+            }
+
+            async function play() {
+                if (playing) return;
+                playing = true;
+                els.playBtn.textContent = "\u23f8 Playing...";
+                els.terminalStatus.textContent = "streaming...";
+                while (idx < data[mode].timeline.length && playing) {
+                    appendNext();
+                    await new Promise((r) => setTimeout(r, 720));
+                }
+                playing = false;
+                els.playBtn.textContent = "\u25b6 Play demo";
+                els.terminalStatus.textContent = `${logIdx} calls logged`;
+            }
+
+            function setMode(next) {
+                mode = next;
+                playing = false;
+                els.playBtn.textContent = "\u25b6 Play demo";
+                els.scenarioA.classList.toggle("btn-active", next === "A");
+                els.scenarioB.classList.toggle("btn-active", next === "B");
+                renderKpis();
+                renderSkills();
+                renderTrace();
+                renderTabs();
+                resetChat();
+                appendNext();
+                appendNext();
+            }
+
+            els.scenarioA.addEventListener("click", () => setMode("A"));
+            els.scenarioB.addEventListener("click", () => setMode("B"));
+            els.playBtn.addEventListener("click", () => {
+                if (playing) {
+                    playing = false;
+                    els.playBtn.textContent = "\u25b6 Play demo";
+                } else {
+                    play();
+                }
+            });
+            els.nextBtn.addEventListener("click", appendNext);
+            els.resetBtn.addEventListener("click", () => {
+                playing = false;
+                els.playBtn.textContent = "\u25b6 Play demo";
+                resetChat();
+                appendNext();
+            });
+
+            setMode("A");
+        </script>
+    </body>
+</html>

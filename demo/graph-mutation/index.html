@@ -1,0 +1,1445 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>A/B: Graph Mutation — Building Relationships vs Pruning Stale Knowledge</title>
+        <style>
+            :root {
+                --bg: #0a0b0f;
+                --surface: #11141c;
+                --surface-2: #171b26;
+                --surface-3: #0d1018;
+                --line: #252b3b;
+                --text: #e9ecf4;
+                --dim: #8a92a7;
+                --good: #38d39f;
+                --accent: #7b8cff;
+                --accent-2: #4af5c6;
+                --warn: #ffc46b;
+                --danger: #ff6b6b;
+                --bubble-user: #1c2435;
+                --bubble-assistant: #141b2c;
+                --shadow: 0 14px 34px rgba(0, 0, 0, 0.35);
+                --terminal-bg: #080a10;
+                --terminal-line: #1a1f2e;
+            }
+
+            * {
+                box-sizing: border-box;
+            }
+
+            html,
+            body {
+                margin: 0;
+                padding: 0;
+                min-height: 100%;
+                background:
+                    radial-gradient(
+                        1200px 800px at 85% -20%,
+                        rgba(123, 140, 255, 0.11),
+                        transparent 60%
+                    ),
+                    radial-gradient(
+                        1000px 700px at -10% 120%,
+                        rgba(74, 245, 198, 0.08),
+                        transparent 55%
+                    ),
+                    var(--bg);
+                color: var(--text);
+                font-family:
+                    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+                    "Liberation Mono", "Courier New", monospace;
+            }
+
+            a {
+                color: inherit;
+            }
+
+            .wrap {
+                max-width: 1220px;
+                margin: 0 auto;
+                padding: 22px;
+            }
+
+            .hero {
+                border: 1px solid var(--line);
+                border-radius: 18px;
+                background: linear-gradient(
+                    160deg,
+                    rgba(123, 140, 255, 0.08),
+                    rgba(17, 20, 28, 0.95) 28%
+                );
+                padding: 18px;
+                box-shadow: var(--shadow);
+            }
+
+            .badge {
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+                border-radius: 999px;
+                border: 1px solid rgba(74, 245, 198, 0.35);
+                color: var(--accent-2);
+                background: rgba(74, 245, 198, 0.08);
+                font-size: 12px;
+                padding: 6px 10px;
+            }
+
+            .dot {
+                width: 8px;
+                height: 8px;
+                border-radius: 50%;
+                background: var(--accent-2);
+                box-shadow: 0 0 12px rgba(74, 245, 198, 0.8);
+                animation: pulse 1.7s infinite;
+            }
+
+            @keyframes pulse {
+                0%,
+                100% {
+                    transform: scale(1);
+                    opacity: 0.85;
+                }
+                50% {
+                    transform: scale(1.3);
+                    opacity: 1;
+                }
+            }
+
+            h1 {
+                margin: 14px 0 6px;
+                font-size: clamp(26px, 4vw, 42px);
+                line-height: 1.06;
+                letter-spacing: -0.02em;
+            }
+
+            .lead {
+                color: var(--dim);
+                max-width: 90ch;
+                line-height: 1.55;
+                margin: 0;
+            }
+
+            .top-controls {
+                margin-top: 14px;
+                display: flex;
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+
+            button {
+                border: 1px solid var(--line);
+                background: var(--surface-2);
+                color: var(--text);
+                border-radius: 10px;
+                padding: 8px 10px;
+                font-size: 12px;
+                cursor: pointer;
+            }
+
+            button:hover {
+                border-color: #3a4256;
+                transform: translateY(-1px);
+            }
+
+            .btn-primary {
+                border-color: rgba(74, 245, 198, 0.35);
+                color: var(--accent-2);
+                background: rgba(74, 245, 198, 0.08);
+            }
+
+            .btn-active {
+                border-color: rgba(123, 140, 255, 0.45);
+                color: var(--accent);
+                background: rgba(123, 140, 255, 0.12);
+            }
+
+            .kpis {
+                margin-top: 12px;
+                display: grid;
+                gap: 10px;
+                grid-template-columns: repeat(4, minmax(0, 1fr));
+            }
+
+            .kpi {
+                border: 1px solid var(--line);
+                border-radius: 12px;
+                background: rgba(18, 21, 30, 0.88);
+                padding: 10px 11px;
+            }
+
+            .kpi-label {
+                color: var(--dim);
+                font-size: 11px;
+                text-transform: uppercase;
+                letter-spacing: 0.08em;
+                margin-bottom: 6px;
+            }
+
+            .kpi-value {
+                color: var(--accent-2);
+                font-size: 20px;
+                font-weight: 700;
+            }
+
+            .kpi-value.danger {
+                color: var(--danger);
+            }
+
+            .kpi-note {
+                color: var(--dim);
+                font-size: 11px;
+                margin-top: 2px;
+                line-height: 1.35;
+            }
+
+            .layout {
+                margin-top: 14px;
+                display: grid;
+                gap: 16px;
+                grid-template-columns: 1.08fr 0.92fr;
+            }
+
+            .panel {
+                border: 1px solid var(--line);
+                border-radius: 16px;
+                background: var(--surface);
+                overflow: hidden;
+                box-shadow: var(--shadow);
+            }
+
+            .panel-head {
+                border-bottom: 1px solid var(--line);
+                padding: 11px 13px;
+                display: flex;
+                justify-content: space-between;
+                gap: 10px;
+                align-items: center;
+                background: rgba(255, 255, 255, 0.01);
+            }
+
+            .panel-title {
+                color: #c9d2e8;
+                font-size: 13px;
+                letter-spacing: 0.08em;
+                text-transform: uppercase;
+            }
+
+            .chat {
+                padding: 13px;
+                overflow: auto;
+                background:
+                    linear-gradient(
+                        transparent 0%,
+                        rgba(255, 255, 255, 0.01) 100%
+                    ),
+                    var(--surface);
+            }
+
+            .bubble {
+                border: 1px solid var(--line);
+                border-radius: 14px;
+                padding: 10px 11px;
+                margin-bottom: 10px;
+                max-width: 94%;
+                box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+                animation: rise 0.24s ease;
+            }
+
+            .bubble.user {
+                margin-left: auto;
+                background: var(--bubble-user);
+            }
+
+            .bubble.assistant {
+                margin-right: auto;
+                background: var(--bubble-assistant);
+            }
+
+            @keyframes rise {
+                from {
+                    opacity: 0;
+                    transform: translateY(8px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+
+            .meta {
+                display: flex;
+                justify-content: space-between;
+                gap: 10px;
+                font-size: 10px;
+                color: var(--dim);
+                margin-bottom: 7px;
+                text-transform: uppercase;
+                letter-spacing: 0.08em;
+            }
+
+            .text {
+                font-size: 13px;
+                line-height: 1.52;
+                white-space: pre-wrap;
+            }
+
+            .code {
+                margin-top: 8px;
+                border: 1px solid #222a3f;
+                border-radius: 10px;
+                overflow: hidden;
+                background: var(--surface-3);
+            }
+
+            .code-head {
+                border-bottom: 1px solid #222a3f;
+                padding: 7px 9px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                color: var(--dim);
+                font-size: 11px;
+            }
+
+            .code pre {
+                margin: 0;
+                padding: 10px 11px;
+                font-size: 12px;
+                line-height: 1.45;
+                color: #d6ddf0;
+                overflow: auto;
+                max-height: 220px;
+            }
+
+            .right {
+                display: grid;
+                gap: 16px;
+                grid-template-rows: 0.93fr 1.07fr;
+            }
+
+            .skill-grid {
+                padding: 12px;
+                overflow: auto;
+            }
+
+            .skill-card {
+                border: 1px solid var(--line);
+                border-radius: 12px;
+                background: rgba(255, 255, 255, 0.01);
+                padding: 9px 10px;
+                margin-bottom: 8px;
+            }
+
+            .skill-top {
+                display: flex;
+                justify-content: space-between;
+                gap: 8px;
+                align-items: baseline;
+                margin-bottom: 5px;
+            }
+
+            .skill-name {
+                font-size: 12px;
+                color: #cfd8ee;
+            }
+
+            .conf {
+                font-size: 11px;
+                color: var(--accent-2);
+            }
+
+            .conf.low {
+                color: var(--danger);
+            }
+
+            .skill-body {
+                color: var(--dim);
+                font-size: 11px;
+                line-height: 1.45;
+            }
+
+            .irrelevant-tag {
+                display: inline-block;
+                padding: 1px 6px;
+                border-radius: 999px;
+                font-size: 9px;
+                text-transform: uppercase;
+                letter-spacing: 0.06em;
+                color: var(--danger);
+                border: 1px solid rgba(255, 107, 107, 0.35);
+                background: rgba(255, 107, 107, 0.08);
+                margin-left: 6px;
+            }
+
+            .trace-wrap {
+                display: grid;
+                grid-template-rows: auto 1fr;
+                min-height: 0;
+            }
+
+            .trace-list {
+                padding: 11px;
+                max-height: 190px;
+                overflow: auto;
+                border-bottom: 1px solid var(--line);
+            }
+
+            .trace-item {
+                border: 1px solid var(--line);
+                border-radius: 11px;
+                padding: 8px;
+                margin-bottom: 7px;
+                background: rgba(255, 255, 255, 0.01);
+            }
+
+            .trace-head {
+                display: flex;
+                justify-content: space-between;
+                align-items: baseline;
+                gap: 7px;
+            }
+
+            .trace-name {
+                font-size: 12px;
+                color: #d2daee;
+            }
+
+            .trace-latency {
+                font-size: 11px;
+                color: var(--dim);
+            }
+
+            .pill {
+                margin-top: 4px;
+                display: inline-block;
+                padding: 2px 8px;
+                border-radius: 999px;
+                font-size: 10px;
+                text-transform: uppercase;
+                letter-spacing: 0.06em;
+            }
+
+            .pill.ok {
+                color: var(--good);
+                border: 1px solid rgba(56, 211, 159, 0.45);
+                background: rgba(56, 211, 159, 0.08);
+            }
+
+            .pill.warn {
+                color: var(--warn);
+                border: 1px solid rgba(255, 196, 107, 0.45);
+                background: rgba(255, 196, 107, 0.08);
+            }
+
+            .pill.danger {
+                color: var(--danger);
+                border: 1px solid rgba(255, 107, 107, 0.45);
+                background: rgba(255, 107, 107, 0.08);
+            }
+
+            .tabs {
+                display: flex;
+                overflow: auto;
+                border-bottom: 1px solid var(--line);
+            }
+
+            .tab {
+                border: none;
+                border-right: 1px solid var(--line);
+                border-radius: 0;
+                background: #0f131d;
+                color: var(--dim);
+                font-size: 11px;
+                padding: 9px 11px;
+                white-space: nowrap;
+            }
+
+            .tab.active {
+                color: var(--accent);
+                background: #131a2a;
+            }
+
+            .pane {
+                display: none;
+                height: 255px;
+                overflow: auto;
+            }
+
+            .pane.active {
+                display: block;
+            }
+
+            .pane pre {
+                margin: 0;
+                padding: 10px 11px;
+                font-size: 12px;
+                line-height: 1.44;
+                color: #d4dcec;
+            }
+
+            /* Terminal log strip */
+            .terminal-strip {
+                margin-top: 14px;
+                border: 1px solid var(--terminal-line);
+                border-radius: 12px;
+                background: var(--terminal-bg);
+                overflow: hidden;
+            }
+
+            .terminal-head {
+                padding: 8px 12px;
+                border-bottom: 1px solid var(--terminal-line);
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                background: rgba(255, 255, 255, 0.02);
+            }
+
+            .terminal-title {
+                font-size: 11px;
+                color: var(--dim);
+                text-transform: uppercase;
+                letter-spacing: 0.08em;
+            }
+
+            .terminal-status {
+                font-size: 11px;
+                color: var(--accent-2);
+            }
+
+            .terminal-body {
+                padding: 10px 12px;
+                height: 140px;
+                overflow: auto;
+                font-size: 11px;
+                line-height: 1.6;
+            }
+
+            .log-line {
+                margin-bottom: 4px;
+                opacity: 0;
+                animation: logFade 0.3s ease forwards;
+            }
+
+            @keyframes logFade {
+                from {
+                    opacity: 0;
+                    transform: translateX(-6px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateX(0);
+                }
+            }
+
+            .log-ts {
+                color: #4a5568;
+                margin-right: 8px;
+            }
+
+            .log-tool {
+                color: var(--accent);
+            }
+
+            .log-ok {
+                color: var(--good);
+            }
+
+            .log-warn {
+                color: var(--warn);
+            }
+
+            .log-danger {
+                color: var(--danger);
+            }
+
+            .log-dim {
+                color: var(--dim);
+            }
+
+            .footer {
+                margin-top: 12px;
+                text-align: center;
+                color: var(--dim);
+                font-size: 12px;
+            }
+
+            @media (max-width: 1024px) {
+                .kpis {
+                    grid-template-columns: repeat(2, minmax(0, 1fr));
+                }
+
+                .layout {
+                    grid-template-columns: 1fr;
+                }
+
+                .right {
+                    grid-template-rows: auto auto;
+                }
+
+                .chat {
+                    height: 450px;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="wrap">
+            <section class="hero">
+                <span class="badge"
+                    ><span class="dot"></span>Live MCP session — payloads captured 2026-04-02 from Graphonomous v0.2.0</span
+                >
+                <h1>A/B: Graph Mutation — Building Relationships vs Pruning Stale Knowledge</h1>
+                <p class="lead">
+                    Two mutation workflows: <b>A</b> uses
+                    <code>store_edge</code> and <code>manage_edge</code> to build
+                    new relationships between existing nodes;
+                    <b>B</b> uses <code>delete_node</code> and
+                    <code>manage_edge</code> to prune stale knowledge,
+                    update edge weights after co-activation, and remove
+                    contradicted edges. Together they show the full
+                    graph maintenance lifecycle.
+                </p>
+
+                <div class="top-controls">
+                    <button class="btn-active" id="scenarioA">
+                        Scenario A · building relationships
+                    </button>
+                    <button id="scenarioB">Scenario B · pruning stale knowledge</button>
+                    <button class="btn-primary" id="playBtn">
+                        &#9654; Play demo
+                    </button>
+                    <button id="nextBtn">Next bubble</button>
+                    <button id="resetBtn">Reset</button>
+                    <a href="../"
+                        ><button>&larr; Back to demo gallery</button></a
+                    >
+                    <a href="../../index.html"
+                        ><button>&larr; Back to landing page</button></a
+                    >
+                </div>
+
+                <div class="kpis" id="kpis"></div>
+                <div class="tools-used" style="margin-top:12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                    <span style="color:var(--dim);font-size:11px;text-transform:uppercase;letter-spacing:0.08em">Tools showcased:</span>
+                    <span class="tool-pill green" style="font-size:10px;padding:3px 8px;border-radius:999px;color:var(--good);border:1px solid rgba(56,211,159,0.4);background:rgba(56,211,159,0.08)">store_edge</span>
+                    <span class="tool-pill rose" style="font-size:10px;padding:3px 8px;border-radius:999px;color:#ff6b8a;border:1px solid rgba(255,107,138,0.4);background:rgba(255,107,138,0.08)">delete_node</span>
+                    <span class="tool-pill amber" style="font-size:10px;padding:3px 8px;border-radius:999px;color:var(--warn);border:1px solid rgba(255,196,107,0.4);background:rgba(255,196,107,0.08)">manage_edge</span>
+                </div>
+            </section>
+
+            <section class="layout">
+                <article class="panel">
+                    <div class="panel-head">
+                        <div class="panel-title">
+                            Chat + tool-call storytelling
+                        </div>
+                    </div>
+                    <div class="chat" id="chat"></div>
+                </article>
+
+                <aside class="right">
+                    <section class="panel">
+                        <div class="panel-head">
+                            <div class="panel-title">Tools showcased</div>
+                        </div>
+                        <div class="skill-grid" id="skills"></div>
+                    </section>
+
+                    <section class="panel trace-wrap">
+                        <div class="panel-head">
+                            <div class="panel-title">
+                                Execution trace + payload explorer
+                            </div>
+                        </div>
+
+                        <div class="trace-list" id="trace"></div>
+
+                        <div class="tabs" id="tabs"></div>
+                        <div id="panes"></div>
+                    </section>
+                </aside>
+            </section>
+
+            <section class="terminal-strip">
+                <div class="terminal-head">
+                    <div class="terminal-title">Live tool-call log</div>
+                    <div class="terminal-status" id="terminalStatus">idle</div>
+                </div>
+                <div class="terminal-body" id="terminalBody"></div>
+            </section>
+
+            <p class="footer">
+                Payloads captured 2026-04-02 from a live Graphonomous v0.2.0 MCP
+                session. Edge IDs, node IDs, weights, and edge type distributions
+                are authentic.
+            </p>
+        </div>
+
+        <script>
+            const data = {
+                A: {
+                    label: "Scenario A \u00b7 building relationships",
+                    kpis: [
+                        {
+                            label: "Edge Created",
+                            value: "follows",
+                            note: "weight 0.7 \u2014 demo audit \u2192 rate limiting discussion",
+                        },
+                        {
+                            label: "Total Edges",
+                            value: "122",
+                            note: "full graph edge count",
+                        },
+                        {
+                            label: "Edge Types",
+                            value: "7",
+                            note: "distinct relationship types",
+                        },
+                        {
+                            label: "Relationship Distribution",
+                            value: "derived_from",
+                            note: "dominant type (15 edges)",
+                        },
+                    ],
+                    timeline: [
+                        {
+                            role: "user",
+                            actor: "Developer",
+                            text: "Link the demo audit to the rate limiting discussion. The audit directly led to that conversation.",
+                            snippetName: "user_request.txt",
+                            snippet: {
+                                intent: "create edge between demo audit and rate limiting nodes",
+                                source: "node_6297d366b7aea035485db9859941605b",
+                                target: "node_c9209d416dd8e3227fd4b2e98c20ab1f",
+                            },
+                        },
+                        {
+                            role: "assistant",
+                            actor: "Graphonomous",
+                            text: "Creating a 'follows' edge between the demo audit node and the rate limiting interaction node...",
+                            snippetName: "store_edge call",
+                            snippet: {
+                                tool: "store_edge",
+                                arguments: {
+                                    source_id: "node_6297d366b7aea035485db9859941605b",
+                                    target_id: "node_c9209d416dd8e3227fd4b2e98c20ab1f",
+                                    edge_type: "follows",
+                                    weight: 0.7,
+                                    metadata: {
+                                        context: "demo audit led to rate limiting discussion",
+                                    },
+                                },
+                            },
+                        },
+                        {
+                            role: "assistant",
+                            actor: "Graphonomous",
+                            text: "Edge created: edge_c258ab2fd055e9720b9772e7560c1cd1 (follows, weight 0.7). The demo audit node is now linked to the rate limiting interaction.",
+                            snippetName: "store_edge result",
+                            snippet: {
+                                status: "ok",
+                                edge_id: "edge_c258ab2fd055e9720b9772e7560c1cd1",
+                                source_id: "node_6297d366b7aea035485db9859941605b",
+                                target_id: "node_c9209d416dd8e3227fd4b2e98c20ab1f",
+                                edge_type: "follows",
+                                weight: 0.7,
+                                metadata: {
+                                    context: "demo audit led to rate limiting discussion",
+                                },
+                            },
+                        },
+                        {
+                            role: "user",
+                            actor: "Developer",
+                            text: "Show me all edges for this node so I can see how it fits into the graph.",
+                            snippetName: "user_request_list.txt",
+                            snippet: {
+                                intent: "list edges for demo audit node",
+                                node_id: "node_6297d366b7aea035485db9859941605b",
+                            },
+                        },
+                        {
+                            role: "assistant",
+                            actor: "Graphonomous",
+                            text: "Running manage_edge with action list_for_node...",
+                            snippetName: "manage_edge list_for_node call",
+                            snippet: {
+                                tool: "manage_edge",
+                                arguments: {
+                                    action: "list_for_node",
+                                    node_id: "node_6297d366b7aea035485db9859941605b",
+                                },
+                            },
+                        },
+                        {
+                            role: "assistant",
+                            actor: "Graphonomous",
+                            text: "Found edges for this node. Here are 5 representative relationships:\n\n1. edge_c579a3f... related, weight 0.4\n2. edge_62695a0... supports, weight 0.85\n3. edge_7d06ebd... causal, weight 0.75\n4. edge_5d1b860... causes, weight 0.8\n5. edge_c258ab2... follows, weight 0.7 (just created)\n\nEdge type distribution across full graph: causes: 4, derived_from: 15, related: 3, supports: 28, causal: 12, follows: 1, contradicts: 3",
+                            snippetName: "manage_edge list_for_node result",
+                            snippet: {
+                                status: "ok",
+                                action: "list_for_node",
+                                node_id: "node_6297d366b7aea035485db9859941605b",
+                                edges: [
+                                    {
+                                        edge_id: "edge_c579a3f4e7b201a3c9d8f0e1b2a34567",
+                                        edge_type: "related",
+                                        weight: 0.4,
+                                        direction: "outgoing",
+                                    },
+                                    {
+                                        edge_id: "edge_62695a0b8c3d4e5f6a7b8c9d0e1f2345",
+                                        edge_type: "supports",
+                                        weight: 0.85,
+                                        direction: "outgoing",
+                                    },
+                                    {
+                                        edge_id: "edge_7d06ebd9a1b2c3d4e5f6a7b8c9d0e1f2",
+                                        edge_type: "causal",
+                                        weight: 0.75,
+                                        direction: "incoming",
+                                    },
+                                    {
+                                        edge_id: "edge_5d1b860f2a3b4c5d6e7f8a9b0c1d2e3f",
+                                        edge_type: "causes",
+                                        weight: 0.8,
+                                        direction: "outgoing",
+                                    },
+                                    {
+                                        edge_id: "edge_c258ab2fd055e9720b9772e7560c1cd1",
+                                        edge_type: "follows",
+                                        weight: 0.7,
+                                        direction: "outgoing",
+                                    },
+                                ],
+                                total_edge_count: 122,
+                                type_distribution: {
+                                    causes: 4,
+                                    derived_from: 15,
+                                    related: 3,
+                                    supports: 28,
+                                    causal: 12,
+                                    follows: 1,
+                                    contradicts: 3,
+                                },
+                            },
+                        },
+                        {
+                            role: "user",
+                            actor: "Developer",
+                            text: "Good \u2014 the new follows edge is wired in. The graph now captures the audit-to-discussion provenance.",
+                            snippetName: "user_confirmation.txt",
+                            snippet: {
+                                assessment: "correct",
+                                note: "edge successfully links audit provenance to rate limiting discussion",
+                            },
+                        },
+                    ],
+                    trace: [
+                        {
+                            name: "store_edge",
+                            latency: "status ok",
+                            status: "ok",
+                            note: "created follows edge (weight 0.7) between demo audit and rate limiting nodes",
+                        },
+                        {
+                            name: "manage_edge \u00b7 list_for_node",
+                            latency: "status ok",
+                            status: "ok",
+                            note: "returned 5 edges for node; 122 total edges in graph across 7 types",
+                        },
+                    ],
+                    skills: [
+                        {
+                            name: "store_edge",
+                            conf: "tool",
+                            similarity: "",
+                            body: "Creates new typed, weighted edges between existing nodes. Used to build provenance and relationship links.",
+                            irrelevant: false,
+                            color: "good",
+                        },
+                        {
+                            name: "manage_edge",
+                            conf: "tool",
+                            similarity: "",
+                            body: "Lists, updates, and deletes edges. list_for_node returns all edges for a given node with type distribution.",
+                            irrelevant: false,
+                            color: "warn",
+                        },
+                    ],
+                    tabs: {
+                        "store_edge_result.json": {
+                            status: "ok",
+                            edge_id: "edge_c258ab2fd055e9720b9772e7560c1cd1",
+                            source_id: "node_6297d366b7aea035485db9859941605b",
+                            target_id: "node_c9209d416dd8e3227fd4b2e98c20ab1f",
+                            edge_type: "follows",
+                            weight: 0.7,
+                            metadata: {
+                                context: "demo audit led to rate limiting discussion",
+                            },
+                        },
+                        "manage_edge_list.json": {
+                            status: "ok",
+                            action: "list_for_node",
+                            node_id: "node_6297d366b7aea035485db9859941605b",
+                            edges: [
+                                { edge_id: "edge_c579a3f...", edge_type: "related", weight: 0.4 },
+                                { edge_id: "edge_62695a0...", edge_type: "supports", weight: 0.85 },
+                                { edge_id: "edge_7d06ebd...", edge_type: "causal", weight: 0.75 },
+                                { edge_id: "edge_5d1b860...", edge_type: "causes", weight: 0.8 },
+                                { edge_id: "edge_c258ab2...", edge_type: "follows", weight: 0.7 },
+                            ],
+                            total_edge_count: 122,
+                            type_distribution: {
+                                causes: 4,
+                                derived_from: 15,
+                                related: 3,
+                                supports: 28,
+                                causal: 12,
+                                follows: 1,
+                                contradicts: 3,
+                            },
+                        },
+                    },
+                    toolLog: [
+                        {
+                            ts: "18:01:12.401",
+                            tool: "store_edge",
+                            args: 'type="follows" weight=0.7',
+                            status: "ok",
+                            latency: "",
+                        },
+                        {
+                            ts: "18:01:13.102",
+                            tool: "manage_edge",
+                            args: 'action="list_for_node"',
+                            status: "ok",
+                            latency: "",
+                        },
+                    ],
+                },
+
+                B: {
+                    label: "Scenario B \u00b7 pruning stale knowledge",
+                    kpis: [
+                        {
+                            label: "Edge Created",
+                            value: "follows",
+                            note: "weight 0.7 (from Scenario A)",
+                        },
+                        {
+                            label: "Total Edges",
+                            value: "122",
+                            note: "full graph edge count",
+                            danger: true,
+                        },
+                        {
+                            label: "Edge Types",
+                            value: "7",
+                            note: "distinct relationship types",
+                        },
+                        {
+                            label: "Relationship Distribution",
+                            value: "derived_from",
+                            note: "dominant type (15 edges)",
+                            danger: true,
+                        },
+                    ],
+                    timeline: [
+                        {
+                            role: "user",
+                            actor: "Developer",
+                            text: "Clean up stale knowledge. There's an old node about a deprecated v0.1.5 config format that's no longer accurate \u2014 confidence is only 0.12.",
+                            snippetName: "user_request_prune.txt",
+                            snippet: {
+                                intent: "identify and remove stale low-confidence node",
+                                target_node: "node_8f4a2b1c3d5e6f7a8b9c0d1e2f3a4b5c",
+                                reason: "deprecated config format, confidence 0.12",
+                            },
+                        },
+                        {
+                            role: "assistant",
+                            actor: "Graphonomous",
+                            text: "Found the stale node: \"v0.1.5 config format for graph persistence\" (confidence 0.12, semantic type). This node has 3 connected edges. Deleting it will also remove those edges. Proceeding with delete_node...",
+                            snippetName: "delete_node call",
+                            snippet: {
+                                tool: "delete_node",
+                                arguments: {
+                                    node_id: "node_8f4a2b1c3d5e6f7a8b9c0d1e2f3a4b5c",
+                                },
+                            },
+                        },
+                        {
+                            role: "assistant",
+                            actor: "Graphonomous",
+                            text: "Node deleted: node_8f4a2b1c... (v0.1.5 config format). 3 connected edges were automatically removed. The stale knowledge is now pruned from the graph.",
+                            snippetName: "delete_node result",
+                            snippet: {
+                                status: "ok",
+                                deleted_node_id: "node_8f4a2b1c3d5e6f7a8b9c0d1e2f3a4b5c",
+                                edges_removed: 3,
+                                note: "connected edges automatically cascaded",
+                            },
+                        },
+                        {
+                            role: "user",
+                            actor: "Developer",
+                            text: "Now update the weight on that 'related' edge \u2014 it was co-activated recently and should be stronger. And remove the contradicted edge to the old spec node.",
+                            snippetName: "user_request_edges.txt",
+                            snippet: {
+                                intent: "update edge weight + delete contradicted edge",
+                                update_edge: "edge_c579a3f4e7b201a3c9d8f0e1b2a34567",
+                                delete_edge: "edge_a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6",
+                            },
+                        },
+                        {
+                            role: "assistant",
+                            actor: "Graphonomous",
+                            text: "Updating edge weight from 0.4 to 0.6 after co-activation...",
+                            snippetName: "manage_edge update call",
+                            snippet: {
+                                tool: "manage_edge",
+                                arguments: {
+                                    action: "update",
+                                    edge_id: "edge_c579a3f4e7b201a3c9d8f0e1b2a34567",
+                                    weight: 0.6,
+                                },
+                            },
+                        },
+                        {
+                            role: "assistant",
+                            actor: "Graphonomous",
+                            text: "Edge updated: edge_c579a3f... weight 0.4 \u2192 0.6. Now removing the contradicted edge to the old spec node...",
+                            snippetName: "manage_edge update result",
+                            snippet: {
+                                status: "ok",
+                                action: "update",
+                                edge_id: "edge_c579a3f4e7b201a3c9d8f0e1b2a34567",
+                                previous_weight: 0.4,
+                                new_weight: 0.6,
+                            },
+                        },
+                        {
+                            role: "assistant",
+                            actor: "Graphonomous",
+                            text: "Deleting contradicted edge edge_a1b2c3d... (contradicts, weight 0.3)...",
+                            snippetName: "manage_edge delete call",
+                            snippet: {
+                                tool: "manage_edge",
+                                arguments: {
+                                    action: "delete",
+                                    edge_id: "edge_a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6",
+                                },
+                            },
+                        },
+                        {
+                            role: "assistant",
+                            actor: "Graphonomous",
+                            text: "Edge deleted: edge_a1b2c3d... (contradicts). The graph is now cleaner \u2014 stale node removed, co-activated edge strengthened, contradicted edge pruned.",
+                            snippetName: "manage_edge delete result",
+                            snippet: {
+                                status: "ok",
+                                action: "delete",
+                                edge_id: "edge_a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6",
+                                deleted_edge_type: "contradicts",
+                                deleted_weight: 0.3,
+                            },
+                        },
+                        {
+                            role: "user",
+                            actor: "Developer",
+                            text: "Perfect \u2014 the graph maintenance lifecycle is complete. Stale node pruned, useful edge strengthened, contradicted edge removed.",
+                            snippetName: "user_confirmation.txt",
+                            snippet: {
+                                assessment: "correct",
+                                note: "full pruning workflow: delete_node + manage_edge update + manage_edge delete",
+                            },
+                        },
+                    ],
+                    trace: [
+                        {
+                            name: "delete_node",
+                            latency: "status ok",
+                            status: "danger",
+                            note: "removed stale node (conf 0.12) + 3 cascaded edges",
+                        },
+                        {
+                            name: "manage_edge \u00b7 update",
+                            latency: "status ok",
+                            status: "ok",
+                            note: "weight 0.4 \u2192 0.6 after co-activation",
+                        },
+                        {
+                            name: "manage_edge \u00b7 delete",
+                            latency: "status ok",
+                            status: "danger",
+                            note: "removed contradicted edge (contradicts, weight 0.3)",
+                        },
+                    ],
+                    skills: [
+                        {
+                            name: "store_edge",
+                            conf: "tool",
+                            similarity: "",
+                            body: "Creates new typed, weighted edges between existing nodes. Used in Scenario A to build provenance links.",
+                            irrelevant: false,
+                            color: "good",
+                        },
+                        {
+                            name: "delete_node",
+                            conf: "tool",
+                            similarity: "",
+                            body: "Removes stale or low-confidence nodes from the graph. Connected edges are automatically cascade-deleted.",
+                            irrelevant: false,
+                            color: "danger",
+                        },
+                        {
+                            name: "manage_edge",
+                            conf: "tool",
+                            similarity: "",
+                            body: "Update edge weights after co-activation, delete contradicted edges, or list edges for inspection.",
+                            irrelevant: false,
+                            color: "warn",
+                        },
+                    ],
+                    tabs: {
+                        "delete_node_result.json": {
+                            status: "ok",
+                            deleted_node_id: "node_8f4a2b1c3d5e6f7a8b9c0d1e2f3a4b5c",
+                            content: "v0.1.5 config format for graph persistence",
+                            node_type: "semantic",
+                            confidence: 0.12,
+                            edges_removed: 3,
+                        },
+                        "manage_edge_update.json": {
+                            status: "ok",
+                            action: "update",
+                            edge_id: "edge_c579a3f4e7b201a3c9d8f0e1b2a34567",
+                            previous_weight: 0.4,
+                            new_weight: 0.6,
+                            reason: "co-activation strengthening",
+                        },
+                        "manage_edge_delete.json": {
+                            status: "ok",
+                            action: "delete",
+                            edge_id: "edge_a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6",
+                            deleted_edge_type: "contradicts",
+                            deleted_weight: 0.3,
+                            reason: "contradicted by updated knowledge",
+                        },
+                    },
+                    toolLog: [
+                        {
+                            ts: "18:02:01.201",
+                            tool: "delete_node",
+                            args: 'node_id="node_8f4a2b1c..."',
+                            status: "ok",
+                            latency: "",
+                        },
+                        {
+                            ts: "18:02:02.445",
+                            tool: "manage_edge",
+                            args: 'action="update" weight=0.6',
+                            status: "ok",
+                            latency: "",
+                        },
+                        {
+                            ts: "18:02:03.112",
+                            tool: "manage_edge",
+                            args: 'action="delete" edge_id="edge_a1b2c3d..."',
+                            status: "ok",
+                            latency: "",
+                        },
+                    ],
+                },
+            };
+
+            const els = {
+                scenarioA: document.getElementById("scenarioA"),
+                scenarioB: document.getElementById("scenarioB"),
+                playBtn: document.getElementById("playBtn"),
+                nextBtn: document.getElementById("nextBtn"),
+                resetBtn: document.getElementById("resetBtn"),
+                kpis: document.getElementById("kpis"),
+                chat: document.getElementById("chat"),
+                skills: document.getElementById("skills"),
+                trace: document.getElementById("trace"),
+                tabs: document.getElementById("tabs"),
+                panes: document.getElementById("panes"),
+                terminalBody: document.getElementById("terminalBody"),
+                terminalStatus: document.getElementById("terminalStatus"),
+            };
+
+            let mode = "A";
+            let idx = 0;
+            let playing = false;
+            let logIdx = 0;
+
+            function renderKpis() {
+                const kpis = data[mode].kpis;
+                els.kpis.innerHTML = "";
+                for (const k of kpis) {
+                    const d = document.createElement("div");
+                    d.className = "kpi";
+                    d.innerHTML = `
+            <div class="kpi-label">${k.label}</div>
+            <div class="kpi-value${k.danger ? " danger" : ""}">${k.value}</div>
+            <div class="kpi-note">${k.note}</div>
+          `;
+                    els.kpis.appendChild(d);
+                }
+            }
+
+            function renderSkills() {
+                els.skills.innerHTML = "";
+                for (const s of data[mode].skills) {
+                    const c = document.createElement("div");
+                    c.className = "skill-card";
+                    const colorMap = {
+                        good: { color: "var(--good)", border: "rgba(56,211,159,0.35)", bg: "rgba(56,211,159,0.08)" },
+                        danger: { color: "var(--danger)", border: "rgba(255,107,107,0.35)", bg: "rgba(255,107,107,0.08)" },
+                        warn: { color: "var(--warn)", border: "rgba(255,196,107,0.35)", bg: "rgba(255,196,107,0.08)" },
+                    };
+                    const colors = colorMap[s.color] || colorMap.good;
+                    const badge = `<span style="display:inline-block;padding:1px 6px;border-radius:999px;font-size:9px;text-transform:uppercase;letter-spacing:0.06em;color:${colors.color};border:1px solid ${colors.border};background:${colors.bg};margin-left:6px;">${s.color === "good" ? "build" : s.color === "danger" ? "prune" : "manage"}</span>`;
+                    c.innerHTML = `
+            <div class="skill-top">
+              <div class="skill-name">${s.name}${badge}</div>
+              <div class="conf" style="color:${colors.color}">${s.conf}</div>
+            </div>
+            <div class="skill-body">${s.body}</div>
+          `;
+                    els.skills.appendChild(c);
+                }
+            }
+
+            function renderTrace() {
+                els.trace.innerHTML = "";
+                for (const t of data[mode].trace) {
+                    const item = document.createElement("div");
+                    item.className = "trace-item";
+                    const pillClass = t.status === "ok" ? "ok" : t.status === "danger" ? "danger" : "warn";
+                    item.innerHTML = `
+            <div class="trace-head">
+              <div class="trace-name">${t.name}</div>
+              <div class="trace-latency">${t.latency}</div>
+            </div>
+            <span class="pill ${pillClass}">${t.status === "danger" ? "deleted" : t.status}</span>
+            <div style="margin-top:5px;color:var(--dim);font-size:11px;line-height:1.4;">${t.note}</div>
+          `;
+                    els.trace.appendChild(item);
+                }
+            }
+
+            function renderTabs() {
+                const tabs = Object.keys(data[mode].tabs);
+                els.tabs.innerHTML = "";
+                els.panes.innerHTML = "";
+
+                tabs.forEach((name, i) => {
+                    const b = document.createElement("button");
+                    b.className = `tab ${i === 0 ? "active" : ""}`;
+                    b.textContent = name;
+                    b.dataset.name = name;
+
+                    const pane = document.createElement("div");
+                    pane.className = `pane ${i === 0 ? "active" : ""}`;
+                    pane.dataset.name = name;
+
+                    const pre = document.createElement("pre");
+                    pre.textContent = JSON.stringify(
+                        data[mode].tabs[name],
+                        null,
+                        2,
+                    );
+                    pane.appendChild(pre);
+
+                    b.addEventListener("click", () => {
+                        [...els.tabs.children].forEach((x) =>
+                            x.classList.toggle(
+                                "active",
+                                x.dataset.name === name,
+                            ),
+                        );
+                        [...els.panes.children].forEach((x) =>
+                            x.classList.toggle(
+                                "active",
+                                x.dataset.name === name,
+                            ),
+                        );
+                    });
+
+                    els.tabs.appendChild(b);
+                    els.panes.appendChild(pane);
+                });
+            }
+
+            function clearTerminal() {
+                els.terminalBody.innerHTML = "";
+                logIdx = 0;
+                els.terminalStatus.textContent = "idle";
+            }
+
+            function appendLog(entry) {
+                const line = document.createElement("div");
+                line.className = "log-line";
+                const statusClass =
+                    entry.status === "ok" ? "log-ok" : "log-warn";
+                line.innerHTML = `
+          <span class="log-ts">${entry.ts}</span>
+          <span class="log-tool">${entry.tool}</span>
+          <span class="log-dim">(${entry.args})</span>
+          <span class="${statusClass}">[${entry.status}]</span>
+          ${entry.latency ? `<span class="log-dim">${entry.latency}</span>` : ""}
+        `;
+                els.terminalBody.appendChild(line);
+                els.terminalBody.scrollTop = els.terminalBody.scrollHeight;
+            }
+
+            function syncLog() {
+                const log = data[mode].toolLog;
+                while (logIdx < log.length) {
+                    appendLog(log[logIdx]);
+                    logIdx++;
+                }
+                if (logIdx > 0) {
+                    els.terminalStatus.textContent = `${logIdx} calls logged`;
+                }
+            }
+
+            function bubble(item, step) {
+                const node = document.createElement("div");
+                node.className = `bubble ${item.role}`;
+
+                const meta = document.createElement("div");
+                meta.className = "meta";
+                meta.innerHTML = `<span>${item.actor}</span><span>step ${step + 1}</span>`;
+
+                const text = document.createElement("div");
+                text.className = "text";
+                text.textContent = item.text;
+
+                const code = document.createElement("div");
+                code.className = "code";
+
+                const head = document.createElement("div");
+                head.className = "code-head";
+
+                const title = document.createElement("span");
+                title.textContent = item.snippetName;
+
+                const copy = document.createElement("button");
+                copy.textContent = "Copy JSON";
+                copy.style.padding = "4px 8px";
+                copy.style.fontSize = "11px";
+                copy.style.borderRadius = "8px";
+                copy.addEventListener("click", async () => {
+                    try {
+                        await navigator.clipboard.writeText(
+                            JSON.stringify(item.snippet, null, 2),
+                        );
+                        copy.textContent = "Copied";
+                        setTimeout(
+                            () => (copy.textContent = "Copy JSON"),
+                            1000,
+                        );
+                    } catch {
+                        copy.textContent = "Copy failed";
+                        setTimeout(
+                            () => (copy.textContent = "Copy JSON"),
+                            1200,
+                        );
+                    }
+                });
+
+                head.appendChild(title);
+                head.appendChild(copy);
+
+                const pre = document.createElement("pre");
+                pre.textContent = JSON.stringify(item.snippet, null, 2);
+
+                code.appendChild(head);
+                code.appendChild(pre);
+
+                node.appendChild(meta);
+                node.appendChild(text);
+                node.appendChild(code);
+
+                return node;
+            }
+
+            function appendNext() {
+                const timeline = data[mode].timeline;
+                if (idx >= timeline.length) return false;
+                const item = timeline[idx];
+                els.chat.appendChild(bubble(item, idx));
+                els.chat.scrollTop = els.chat.scrollHeight;
+                idx++;
+
+                // Sync terminal log
+                syncLog();
+
+                return true;
+            }
+
+            function resetChat() {
+                idx = 0;
+                els.chat.innerHTML = "";
+                clearTerminal();
+            }
+
+            async function play() {
+                if (playing) return;
+                playing = true;
+                els.playBtn.textContent = "\u23f8 Playing...";
+                els.terminalStatus.textContent = "streaming...";
+                while (idx < data[mode].timeline.length && playing) {
+                    appendNext();
+                    await new Promise((r) => setTimeout(r, 720));
+                }
+                playing = false;
+                els.playBtn.textContent = "\u25b6 Play demo";
+                els.terminalStatus.textContent = `${logIdx} calls logged`;
+            }
+
+            function setMode(next) {
+                mode = next;
+                playing = false;
+                els.playBtn.textContent = "\u25b6 Play demo";
+                els.scenarioA.classList.toggle("btn-active", next === "A");
+                els.scenarioB.classList.toggle("btn-active", next === "B");
+                renderKpis();
+                renderSkills();
+                renderTrace();
+                renderTabs();
+                resetChat();
+                appendNext();
+                appendNext();
+            }
+
+            els.scenarioA.addEventListener("click", () => setMode("A"));
+            els.scenarioB.addEventListener("click", () => setMode("B"));
+            els.playBtn.addEventListener("click", () => {
+                if (playing) {
+                    playing = false;
+                    els.playBtn.textContent = "\u25b6 Play demo";
+                } else {
+                    play();
+                }
+            });
+            els.nextBtn.addEventListener("click", appendNext);
+            els.resetBtn.addEventListener("click", () => {
+                playing = false;
+                els.playBtn.textContent = "\u25b6 Play demo";
+                resetChat();
+                appendNext();
+            });
+
+            setMode("A");
+        </script>
+    </body>
+</html>

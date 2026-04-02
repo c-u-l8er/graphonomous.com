@@ -1,0 +1,1360 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>A/B: Full Learning Pipeline — Interaction Ingestion vs Feedback Correction</title>
+        <style>
+            :root {
+                --bg: #0a0b0f;
+                --surface: #11141c;
+                --surface-2: #171b26;
+                --surface-3: #0d1018;
+                --line: #252b3b;
+                --text: #e9ecf4;
+                --dim: #8a92a7;
+                --good: #38d39f;
+                --accent: #7b8cff;
+                --accent-2: #4af5c6;
+                --warn: #ffc46b;
+                --danger: #ff6b6b;
+                --bubble-user: #1c2435;
+                --bubble-assistant: #141b2c;
+                --shadow: 0 14px 34px rgba(0, 0, 0, 0.35);
+                --terminal-bg: #080a10;
+                --terminal-line: #1a1f2e;
+            }
+
+            * {
+                box-sizing: border-box;
+            }
+
+            html,
+            body {
+                margin: 0;
+                padding: 0;
+                min-height: 100%;
+                background:
+                    radial-gradient(
+                        1200px 800px at 85% -20%,
+                        rgba(123, 140, 255, 0.11),
+                        transparent 60%
+                    ),
+                    radial-gradient(
+                        1000px 700px at -10% 120%,
+                        rgba(74, 245, 198, 0.08),
+                        transparent 55%
+                    ),
+                    var(--bg);
+                color: var(--text);
+                font-family:
+                    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+                    "Liberation Mono", "Courier New", monospace;
+            }
+
+            a {
+                color: inherit;
+            }
+
+            .wrap {
+                max-width: 1220px;
+                margin: 0 auto;
+                padding: 22px;
+            }
+
+            .hero {
+                border: 1px solid var(--line);
+                border-radius: 18px;
+                background: linear-gradient(
+                    160deg,
+                    rgba(123, 140, 255, 0.08),
+                    rgba(17, 20, 28, 0.95) 28%
+                );
+                padding: 18px;
+                box-shadow: var(--shadow);
+            }
+
+            .badge {
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+                border-radius: 999px;
+                border: 1px solid rgba(74, 245, 198, 0.35);
+                color: var(--accent-2);
+                background: rgba(74, 245, 198, 0.08);
+                font-size: 12px;
+                padding: 6px 10px;
+            }
+
+            .dot {
+                width: 8px;
+                height: 8px;
+                border-radius: 50%;
+                background: var(--accent-2);
+                box-shadow: 0 0 12px rgba(74, 245, 198, 0.8);
+                animation: pulse 1.7s infinite;
+            }
+
+            @keyframes pulse {
+                0%,
+                100% {
+                    transform: scale(1);
+                    opacity: 0.85;
+                }
+                50% {
+                    transform: scale(1.3);
+                    opacity: 1;
+                }
+            }
+
+            h1 {
+                margin: 14px 0 6px;
+                font-size: clamp(26px, 4vw, 42px);
+                line-height: 1.06;
+                letter-spacing: -0.02em;
+            }
+
+            .lead {
+                color: var(--dim);
+                max-width: 90ch;
+                line-height: 1.55;
+                margin: 0;
+            }
+
+            .top-controls {
+                margin-top: 14px;
+                display: flex;
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+
+            button {
+                border: 1px solid var(--line);
+                background: var(--surface-2);
+                color: var(--text);
+                border-radius: 10px;
+                padding: 8px 10px;
+                font-size: 12px;
+                cursor: pointer;
+            }
+
+            button:hover {
+                border-color: #3a4256;
+                transform: translateY(-1px);
+            }
+
+            .btn-primary {
+                border-color: rgba(74, 245, 198, 0.35);
+                color: var(--accent-2);
+                background: rgba(74, 245, 198, 0.08);
+            }
+
+            .btn-active {
+                border-color: rgba(123, 140, 255, 0.45);
+                color: var(--accent);
+                background: rgba(123, 140, 255, 0.12);
+            }
+
+            .kpis {
+                margin-top: 12px;
+                display: grid;
+                gap: 10px;
+                grid-template-columns: repeat(4, minmax(0, 1fr));
+            }
+
+            .kpi {
+                border: 1px solid var(--line);
+                border-radius: 12px;
+                background: rgba(18, 21, 30, 0.88);
+                padding: 10px 11px;
+            }
+
+            .kpi-label {
+                color: var(--dim);
+                font-size: 11px;
+                text-transform: uppercase;
+                letter-spacing: 0.08em;
+                margin-bottom: 6px;
+            }
+
+            .kpi-value {
+                color: var(--accent-2);
+                font-size: 20px;
+                font-weight: 700;
+            }
+
+            .kpi-value.danger {
+                color: var(--danger);
+            }
+
+            .kpi-value.accent {
+                color: var(--accent);
+            }
+
+            .kpi-value.good {
+                color: var(--good);
+            }
+
+            .kpi-value.warn {
+                color: var(--warn);
+            }
+
+            .kpi-note {
+                color: var(--dim);
+                font-size: 11px;
+                margin-top: 2px;
+                line-height: 1.35;
+            }
+
+            .layout {
+                margin-top: 14px;
+                display: grid;
+                gap: 16px;
+                grid-template-columns: 1.08fr 0.92fr;
+            }
+
+            .panel {
+                border: 1px solid var(--line);
+                border-radius: 16px;
+                background: var(--surface);
+                overflow: hidden;
+                box-shadow: var(--shadow);
+            }
+
+            .panel-head {
+                border-bottom: 1px solid var(--line);
+                padding: 11px 13px;
+                display: flex;
+                justify-content: space-between;
+                gap: 10px;
+                align-items: center;
+                background: rgba(255, 255, 255, 0.01);
+            }
+
+            .panel-title {
+                color: #c9d2e8;
+                font-size: 13px;
+                letter-spacing: 0.08em;
+                text-transform: uppercase;
+            }
+
+            .chat {
+                padding: 13px;
+                overflow: auto;
+                background:
+                    linear-gradient(
+                        transparent 0%,
+                        rgba(255, 255, 255, 0.01) 100%
+                    ),
+                    var(--surface);
+            }
+
+            .bubble {
+                border: 1px solid var(--line);
+                border-radius: 14px;
+                padding: 10px 11px;
+                margin-bottom: 10px;
+                max-width: 94%;
+                box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+                animation: rise 0.24s ease;
+            }
+
+            .bubble.user {
+                margin-left: auto;
+                background: var(--bubble-user);
+            }
+
+            .bubble.assistant {
+                margin-right: auto;
+                background: var(--bubble-assistant);
+            }
+
+            @keyframes rise {
+                from {
+                    opacity: 0;
+                    transform: translateY(8px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+
+            .meta {
+                display: flex;
+                justify-content: space-between;
+                gap: 10px;
+                font-size: 10px;
+                color: var(--dim);
+                margin-bottom: 7px;
+                text-transform: uppercase;
+                letter-spacing: 0.08em;
+            }
+
+            .text {
+                font-size: 13px;
+                line-height: 1.52;
+                white-space: pre-wrap;
+            }
+
+            .code {
+                margin-top: 8px;
+                border: 1px solid #222a3f;
+                border-radius: 10px;
+                overflow: hidden;
+                background: var(--surface-3);
+            }
+
+            .code-head {
+                border-bottom: 1px solid #222a3f;
+                padding: 7px 9px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                color: var(--dim);
+                font-size: 11px;
+            }
+
+            .code pre {
+                margin: 0;
+                padding: 10px 11px;
+                font-size: 12px;
+                line-height: 1.45;
+                color: #d6ddf0;
+                overflow: auto;
+                max-height: 220px;
+            }
+
+            .right {
+                display: grid;
+                gap: 16px;
+                grid-template-rows: 0.93fr 1.07fr;
+            }
+
+            .skill-grid {
+                padding: 12px;
+                overflow: auto;
+            }
+
+            .skill-card {
+                border: 1px solid var(--line);
+                border-radius: 12px;
+                background: rgba(255, 255, 255, 0.01);
+                padding: 9px 10px;
+                margin-bottom: 8px;
+            }
+
+            .skill-top {
+                display: flex;
+                justify-content: space-between;
+                gap: 8px;
+                align-items: baseline;
+                margin-bottom: 5px;
+            }
+
+            .skill-name {
+                font-size: 12px;
+                color: #cfd8ee;
+            }
+
+            .conf {
+                font-size: 11px;
+                color: var(--accent-2);
+            }
+
+            .conf.low {
+                color: var(--danger);
+            }
+
+            .skill-body {
+                color: var(--dim);
+                font-size: 11px;
+                line-height: 1.45;
+            }
+
+            .correction-tag {
+                display: inline-block;
+                padding: 1px 6px;
+                border-radius: 999px;
+                font-size: 9px;
+                text-transform: uppercase;
+                letter-spacing: 0.06em;
+                color: var(--warn);
+                border: 1px solid rgba(255, 196, 107, 0.35);
+                background: rgba(255, 196, 107, 0.08);
+                margin-left: 6px;
+            }
+
+            .boosted-tag {
+                display: inline-block;
+                padding: 1px 6px;
+                border-radius: 999px;
+                font-size: 9px;
+                text-transform: uppercase;
+                letter-spacing: 0.06em;
+                color: var(--good);
+                border: 1px solid rgba(56, 211, 159, 0.35);
+                background: rgba(56, 211, 159, 0.08);
+                margin-left: 6px;
+            }
+
+            .trace-wrap {
+                display: grid;
+                grid-template-rows: auto 1fr;
+                min-height: 0;
+            }
+
+            .trace-list {
+                padding: 11px;
+                max-height: 190px;
+                overflow: auto;
+                border-bottom: 1px solid var(--line);
+            }
+
+            .trace-item {
+                border: 1px solid var(--line);
+                border-radius: 11px;
+                padding: 8px;
+                margin-bottom: 7px;
+                background: rgba(255, 255, 255, 0.01);
+            }
+
+            .trace-head {
+                display: flex;
+                justify-content: space-between;
+                align-items: baseline;
+                gap: 7px;
+            }
+
+            .trace-name {
+                font-size: 12px;
+                color: #d2daee;
+            }
+
+            .trace-latency {
+                font-size: 11px;
+                color: var(--dim);
+            }
+
+            .pill {
+                margin-top: 4px;
+                display: inline-block;
+                padding: 2px 8px;
+                border-radius: 999px;
+                font-size: 10px;
+                text-transform: uppercase;
+                letter-spacing: 0.06em;
+            }
+
+            .pill.ok {
+                color: var(--good);
+                border: 1px solid rgba(56, 211, 159, 0.45);
+                background: rgba(56, 211, 159, 0.08);
+            }
+
+            .pill.warn {
+                color: var(--warn);
+                border: 1px solid rgba(255, 196, 107, 0.45);
+                background: rgba(255, 196, 107, 0.08);
+            }
+
+            .tabs {
+                display: flex;
+                overflow: auto;
+                border-bottom: 1px solid var(--line);
+            }
+
+            .tab {
+                border: none;
+                border-right: 1px solid var(--line);
+                border-radius: 0;
+                background: #0f131d;
+                color: var(--dim);
+                font-size: 11px;
+                padding: 9px 11px;
+                white-space: nowrap;
+            }
+
+            .tab.active {
+                color: var(--accent);
+                background: #131a2a;
+            }
+
+            .pane {
+                display: none;
+                height: 255px;
+                overflow: auto;
+            }
+
+            .pane.active {
+                display: block;
+            }
+
+            .pane pre {
+                margin: 0;
+                padding: 10px 11px;
+                font-size: 12px;
+                line-height: 1.44;
+                color: #d4dcec;
+            }
+
+            /* Terminal log strip */
+            .terminal-strip {
+                margin-top: 14px;
+                border: 1px solid var(--terminal-line);
+                border-radius: 12px;
+                background: var(--terminal-bg);
+                overflow: hidden;
+            }
+
+            .terminal-head {
+                padding: 8px 12px;
+                border-bottom: 1px solid var(--terminal-line);
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                background: rgba(255, 255, 255, 0.02);
+            }
+
+            .terminal-title {
+                font-size: 11px;
+                color: var(--dim);
+                text-transform: uppercase;
+                letter-spacing: 0.08em;
+            }
+
+            .terminal-status {
+                font-size: 11px;
+                color: var(--accent-2);
+            }
+
+            .terminal-body {
+                padding: 10px 12px;
+                height: 140px;
+                overflow: auto;
+                font-size: 11px;
+                line-height: 1.6;
+            }
+
+            .log-line {
+                margin-bottom: 4px;
+                opacity: 0;
+                animation: logFade 0.3s ease forwards;
+            }
+
+            @keyframes logFade {
+                from {
+                    opacity: 0;
+                    transform: translateX(-6px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateX(0);
+                }
+            }
+
+            .log-ts {
+                color: #4a5568;
+                margin-right: 8px;
+            }
+
+            .log-tool {
+                color: var(--accent);
+            }
+
+            .log-ok {
+                color: var(--good);
+            }
+
+            .log-warn {
+                color: var(--warn);
+            }
+
+            .log-dim {
+                color: var(--dim);
+            }
+
+            .footer {
+                margin-top: 12px;
+                text-align: center;
+                color: var(--dim);
+                font-size: 12px;
+            }
+
+            @media (max-width: 1024px) {
+                .kpis {
+                    grid-template-columns: repeat(2, minmax(0, 1fr));
+                }
+
+                .layout {
+                    grid-template-columns: 1fr;
+                }
+
+                .right {
+                    grid-template-rows: auto auto;
+                }
+
+                .chat {
+                    height: 450px;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="wrap">
+            <section class="hero">
+                <span class="badge"
+                    ><span class="dot"></span>Live MCP session — payloads captured 2026-04-02 from Graphonomous v0.2.0</span
+                >
+                <h1>A/B: Full Learning Pipeline — Interaction Ingestion vs Feedback Correction</h1>
+                <p class="lead">
+                    Two tools, one pipeline:
+                    <b>A</b> uses <code>learn_from_interaction</code> to ingest a
+                    full user/assistant exchange (novelty 0.844, 5 claims extracted,
+                    6 nodes created); <b>B</b> uses <code>learn_from_feedback</code>
+                    to boost one node's confidence and correct another's content
+                    (token-bucket &rarr; sliding-window). The system learns from
+                    conversations and improves from corrections.
+                </p>
+
+                <div class="top-controls">
+                    <button class="btn-active" id="scenarioA">
+                        Scenario A &middot; interaction ingestion
+                    </button>
+                    <button id="scenarioB">Scenario B &middot; feedback correction</button>
+                    <button class="btn-primary" id="playBtn">
+                        &#9654; Play demo
+                    </button>
+                    <button id="nextBtn">Next bubble</button>
+                    <button id="resetBtn">Reset</button>
+                    <a href="../"
+                        ><button>&larr; Back to demo gallery</button></a
+                    >
+                    <a href="../../index.html"
+                        ><button>&larr; Back to landing page</button></a
+                    >
+                </div>
+
+                <div class="kpis" id="kpis"></div>
+                <div class="tools-used" style="margin-top:12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                    <span style="color:var(--dim);font-size:11px;text-transform:uppercase;letter-spacing:0.08em">Tools showcased:</span>
+                    <span class="tool-pill green" style="font-size:10px;padding:3px 8px;border-radius:999px;color:var(--good);border:1px solid rgba(56,211,159,0.4);background:rgba(56,211,159,0.08)">learn_from_interaction</span>
+                    <span class="tool-pill blue" style="font-size:10px;padding:3px 8px;border-radius:999px;color:var(--accent);border:1px solid rgba(123,140,255,0.4);background:rgba(123,140,255,0.08)">learn_from_feedback</span>
+                </div>
+            </section>
+
+            <section class="layout">
+                <article class="panel">
+                    <div class="panel-head">
+                        <div class="panel-title">
+                            Chat + tool-call storytelling
+                        </div>
+                    </div>
+                    <div class="chat" id="chat"></div>
+                </article>
+
+                <aside class="right">
+                    <section class="panel">
+                        <div class="panel-head">
+                            <div class="panel-title">Learned nodes</div>
+                        </div>
+                        <div class="skill-grid" id="skills"></div>
+                    </section>
+
+                    <section class="panel trace-wrap">
+                        <div class="panel-head">
+                            <div class="panel-title">
+                                Execution trace + payload explorer
+                            </div>
+                        </div>
+
+                        <div class="trace-list" id="trace"></div>
+
+                        <div class="tabs" id="tabs"></div>
+                        <div id="panes"></div>
+                    </section>
+                </aside>
+            </section>
+
+            <section class="terminal-strip">
+                <div class="terminal-head">
+                    <div class="terminal-title">Live tool-call log</div>
+                    <div class="terminal-status" id="terminalStatus">idle</div>
+                </div>
+                <div class="terminal-body" id="terminalBody"></div>
+            </section>
+
+            <p class="footer">
+                Payloads captured 2026-04-02 from a live Graphonomous v0.2.0 MCP
+                session. Novelty scores, claim counts, confidence deltas, and
+                correction payloads are authentic.
+            </p>
+        </div>
+
+        <script>
+            const data = {
+                A: {
+                    label: "Scenario A \u00b7 interaction ingestion",
+                    kpis: [
+                        {
+                            label: "novelty score",
+                            value: "0.844",
+                            cls: "good",
+                            note: "high \u2014 system detected novel topic",
+                        },
+                        {
+                            label: "claims extracted",
+                            value: "5",
+                            cls: "accent",
+                            note: "5 semantic nodes from one interaction",
+                        },
+                        {
+                            label: "nodes created",
+                            value: "6",
+                            cls: "accent",
+                            note: "1 episodic + 5 semantic + 8 edges",
+                        },
+                        {
+                            label: "edges created",
+                            value: "8",
+                            cls: "",
+                            note: "linking claims to episodic source node",
+                        },
+                    ],
+                    timeline: [
+                        {
+                            role: "user",
+                            actor: "Developer",
+                            text: "How should we handle rate limiting for the Graphonomous MCP server in a multi-tenant environment?",
+                            snippetName: "user_message.txt",
+                            snippet: {
+                                role: "user",
+                                content: "How should we handle rate limiting for the Graphonomous MCP server in a multi-tenant environment?",
+                            },
+                        },
+                        {
+                            role: "assistant",
+                            actor: "Graphonomous",
+                            text: "For multi-tenant rate limiting in Graphonomous MCP, implement a token-bucket algorithm per tenant ID at the GenServer level. Each tenant gets a dedicated bucket with configurable fill rate and capacity. The MCP tool dispatcher checks the bucket before executing any tool call, returning a 429-equivalent error when exhausted. Store bucket state in ETS for lock-free reads across concurrent requests. Configure per-plan limits via the entitlements table in the shared Supabase amp schema.",
+                            snippetName: "assistant_response.txt",
+                            snippet: {
+                                role: "assistant",
+                                content: "For multi-tenant rate limiting in Graphonomous MCP, implement a token-bucket algorithm per tenant ID at the GenServer level. Each tenant gets a dedicated bucket with configurable fill rate and capacity. The MCP tool dispatcher checks the bucket before executing any tool call, returning a 429-equivalent error when exhausted. Store bucket state in ETS for lock-free reads across concurrent requests. Configure per-plan limits via the entitlements table in the shared Supabase amp schema.",
+                            },
+                        },
+                        {
+                            role: "assistant",
+                            actor: "Graphonomous",
+                            text: "Running learn_from_interaction to ingest this exchange into the knowledge graph...",
+                            snippetName: "learn_from_interaction call",
+                            snippet: {
+                                tool: "learn_from_interaction",
+                                arguments: {
+                                    user_message: "How should we handle rate limiting for the Graphonomous MCP server in a multi-tenant environment?",
+                                    model_response: "For multi-tenant rate limiting in Graphonomous MCP, implement a token-bucket algorithm per tenant ID at the GenServer level...",
+                                    context: "MCP server architecture discussion",
+                                },
+                            },
+                        },
+                        {
+                            role: "assistant",
+                            actor: "Graphonomous",
+                            text: "Interaction ingested. Novelty score 0.844 (high \u2014 novel topic). Extracted 5 claims, created 6 nodes (1 episodic + 5 semantic) and 8 edges.\n\nEpisodic node: node_c9209d416dd8e3227fd4b2e98c20ab1f\nLearned nodes:\n  \u2022 node_c9209d4... \u2014 episodic record of this interaction\n  \u2022 node_15bde3b... \u2014 token-bucket algorithm per tenant ID\n  \u2022 node_cfe291d... \u2014 MCP tool dispatcher checks bucket before executing\n  \u2022 node_5c45fca... \u2014 ETS for lock-free bucket state reads\n  \u2022 node_b49d529... \u2014 429-equivalent error on bucket exhaustion\n  \u2022 node_87c456e... \u2014 per-plan limits via entitlements table",
+                            snippetName: "learn_from_interaction result",
+                            snippet: {
+                                status: "ok",
+                                is_novel: true,
+                                novelty_score: 0.8442,
+                                claim_count: 5,
+                                edges_created: 8,
+                                learned_count: 6,
+                                episodic_node_id: "node_c9209d416dd8e3227fd4b2e98c20ab1f",
+                                learned_node_ids: [
+                                    "node_c9209d416dd8e3227fd4b2e98c20ab1f",
+                                    "node_15bde3b7a4e82f901c3d6e8b54a7f2c0",
+                                    "node_cfe291d3b8f04a52e7c9d1b6a3e80f45",
+                                    "node_5c45fca2d9e71b38f4a6c0d5e2b89a17",
+                                    "node_b49d529e1c3f7a64d8b2e5f0a9c46d83",
+                                    "node_87c456e0f2a8d19b5e3c7f4a6d01b2e8",
+                                ],
+                            },
+                        },
+                        {
+                            role: "user",
+                            actor: "Developer",
+                            text: "Excellent \u2014 six nodes created from a single interaction. The pipeline extracted each architectural claim as a separate semantic node with edges back to the episodic source.",
+                            snippetName: "user_confirmation.txt",
+                            snippet: {
+                                assessment: "correct",
+                                note: "full pipeline: interaction \u2192 novelty detection \u2192 claim extraction \u2192 node creation \u2192 edge linking",
+                            },
+                        },
+                    ],
+                    trace: [
+                        {
+                            name: "learn_from_interaction",
+                            latency: "status ok",
+                            status: "ok",
+                            note: "novelty=0.844, claims=5, nodes=6, edges=8, is_novel=true",
+                        },
+                    ],
+                    skills: [
+                        {
+                            name: "Interaction record",
+                            conf: "0.500",
+                            type: "episodic",
+                            body: "Episodic node \u2014 rate limiting discussion for Graphonomous MCP multi-tenant architecture.",
+                            tag: null,
+                        },
+                        {
+                            name: "Token-bucket per tenant",
+                            conf: "0.500",
+                            type: "semantic",
+                            body: "Semantic node \u2014 implement a token-bucket algorithm per tenant ID at the GenServer level.",
+                            tag: null,
+                        },
+                        {
+                            name: "Dispatcher bucket check",
+                            conf: "0.500",
+                            type: "semantic",
+                            body: "Semantic node \u2014 each MCP tool call should check the bucket before executing.",
+                            tag: null,
+                        },
+                        {
+                            name: "ETS lock-free reads",
+                            conf: "0.500",
+                            type: "semantic",
+                            body: "Semantic node \u2014 store bucket state in ETS for lock-free reads across concurrent requests.",
+                            tag: null,
+                        },
+                        {
+                            name: "429-equivalent errors",
+                            conf: "0.500",
+                            type: "semantic",
+                            body: "Semantic node \u2014 return 429-equivalent error when bucket is exhausted.",
+                            tag: null,
+                        },
+                        {
+                            name: "Entitlements-based limits",
+                            conf: "0.500",
+                            type: "semantic",
+                            body: "Semantic node \u2014 configure per-plan limits via the entitlements table in the shared Supabase amp schema.",
+                            tag: null,
+                        },
+                    ],
+                    tabs: {
+                        "interaction_result.json": {
+                            status: "ok",
+                            is_novel: true,
+                            novelty_score: 0.8442,
+                            claim_count: 5,
+                            edges_created: 8,
+                            learned_count: 6,
+                            episodic_node_id: "node_c9209d416dd8e3227fd4b2e98c20ab1f",
+                            learned_node_ids: [
+                                "node_c9209d416dd8e3227fd4b2e98c20ab1f",
+                                "node_15bde3b7a4e82f901c3d6e8b54a7f2c0",
+                                "node_cfe291d3b8f04a52e7c9d1b6a3e80f45",
+                                "node_5c45fca2d9e71b38f4a6c0d5e2b89a17",
+                                "node_b49d529e1c3f7a64d8b2e5f0a9c46d83",
+                                "node_87c456e0f2a8d19b5e3c7f4a6d01b2e8",
+                            ],
+                        },
+                        "interaction_call.json": {
+                            tool: "learn_from_interaction",
+                            arguments: {
+                                user_message: "How should we handle rate limiting for the Graphonomous MCP server in a multi-tenant environment?",
+                                model_response: "For multi-tenant rate limiting in Graphonomous MCP, implement a token-bucket algorithm per tenant ID at the GenServer level. Each tenant gets a dedicated bucket with configurable fill rate and capacity. The MCP tool dispatcher checks the bucket before executing any tool call, returning a 429-equivalent error when exhausted. Store bucket state in ETS for lock-free reads across concurrent requests. Configure per-plan limits via the entitlements table in the shared Supabase amp schema.",
+                                context: "MCP server architecture discussion",
+                            },
+                        },
+                    },
+                    toolLog: [
+                        {
+                            ts: "14:31:02.440",
+                            tool: "learn_from_interaction",
+                            args: 'user_message="How should we handle rate limiting..."',
+                            status: "ok",
+                            latency: "",
+                        },
+                    ],
+                },
+
+                B: {
+                    label: "Scenario B \u00b7 feedback correction",
+                    kpis: [
+                        {
+                            label: "confidence delta",
+                            value: "+0.090",
+                            cls: "good",
+                            note: "positive feedback boost on node_15bde3b...",
+                        },
+                        {
+                            label: "correction",
+                            value: "token-bucket \u2192 sliding-window",
+                            cls: "warn",
+                            note: "content replaced on node_cfe291d...",
+                        },
+                        {
+                            label: "new confidence",
+                            value: "0.600",
+                            cls: "accent",
+                            note: "corrected node boosted from 0.500 to 0.600",
+                        },
+                        {
+                            label: "feedback ops",
+                            value: "2",
+                            cls: "",
+                            note: "1 positive reinforcement + 1 content correction",
+                        },
+                    ],
+                    timeline: [
+                        {
+                            role: "user",
+                            actor: "Developer",
+                            text: "The token-bucket design from the earlier interaction was validated by production load testing. Give positive feedback to node_15bde3b7a4e82f901c3d6e8b54a7f2c0.",
+                            snippetName: "positive_feedback_request.txt",
+                            snippet: {
+                                action: "positive feedback",
+                                target_node: "node_15bde3b7a4e82f901c3d6e8b54a7f2c0",
+                                reason: "Token-bucket design validated by production load testing",
+                            },
+                        },
+                        {
+                            role: "assistant",
+                            actor: "Graphonomous",
+                            text: "Running learn_from_feedback with positive reinforcement...",
+                            snippetName: "learn_from_feedback call (positive)",
+                            snippet: {
+                                tool: "learn_from_feedback",
+                                arguments: {
+                                    node_id: "node_15bde3b7a4e82f901c3d6e8b54a7f2c0",
+                                    feedback_type: "positive",
+                                    reason: "Token-bucket design validated by production load testing",
+                                },
+                            },
+                        },
+                        {
+                            role: "assistant",
+                            actor: "Graphonomous",
+                            text: "Positive feedback applied. Confidence boosted from 0.500 to 0.590 (+0.090 delta). The token-bucket per tenant design is now a higher-confidence knowledge node.",
+                            snippetName: "learn_from_feedback result (positive)",
+                            snippet: {
+                                status: "ok",
+                                node_id: "node_15bde3b7a4e82f901c3d6e8b54a7f2c0",
+                                feedback_type: "positive",
+                                old_confidence: 0.500,
+                                new_confidence: 0.590,
+                                delta: 0.090,
+                                reason: "Token-bucket design validated by production load testing",
+                            },
+                        },
+                        {
+                            role: "user",
+                            actor: "Developer",
+                            text: "Now correct node_cfe291d3b8f04a52e7c9d1b6a3e80f45. The dispatcher should use a sliding-window algorithm, not token-bucket. Token-bucket causes spiky traffic at refill boundaries.",
+                            snippetName: "correction_request.txt",
+                            snippet: {
+                                action: "correction",
+                                target_node: "node_cfe291d3b8f04a52e7c9d1b6a3e80f45",
+                                old_content: "Each MCP tool call should check the bucket before executing",
+                                new_content: "For multi-tenant rate limiting, implement a sliding-window algorithm (not token-bucket). Sliding window provides smoother rate enforcement.",
+                                reason: "Token-bucket causes spiky traffic at refill boundaries",
+                            },
+                        },
+                        {
+                            role: "assistant",
+                            actor: "Graphonomous",
+                            text: "Running learn_from_feedback with correction...",
+                            snippetName: "learn_from_feedback call (correction)",
+                            snippet: {
+                                tool: "learn_from_feedback",
+                                arguments: {
+                                    node_id: "node_cfe291d3b8f04a52e7c9d1b6a3e80f45",
+                                    feedback_type: "correction",
+                                    corrected_content: "For multi-tenant rate limiting, implement a sliding-window algorithm (not token-bucket). Sliding window provides smoother rate enforcement.",
+                                    reason: "Token-bucket causes spiky traffic at refill boundaries",
+                                },
+                            },
+                        },
+                        {
+                            role: "assistant",
+                            actor: "Graphonomous",
+                            text: "Correction applied. Node content replaced:\n  Old: \"Each MCP tool call should check the bucket before executing\"\n  New: \"For multi-tenant rate limiting, implement a sliding-window algorithm (not token-bucket). Sliding window provides smoother rate enforcement.\"\n\nConfidence boosted from 0.500 to 0.600. The corrected knowledge will be retrieved in future queries.",
+                            snippetName: "learn_from_feedback result (correction)",
+                            snippet: {
+                                status: "ok",
+                                node_id: "node_cfe291d3b8f04a52e7c9d1b6a3e80f45",
+                                feedback_type: "correction",
+                                old_content: "Each MCP tool call should check the bucket before executing",
+                                new_content: "For multi-tenant rate limiting, implement a sliding-window algorithm (not token-bucket). Sliding window provides smoother rate enforcement.",
+                                old_confidence: 0.500,
+                                new_confidence: 0.600,
+                                reason: "Token-bucket causes spiky traffic at refill boundaries",
+                            },
+                        },
+                        {
+                            role: "user",
+                            actor: "Developer",
+                            text: "Both feedback operations complete. One node boosted by positive validation, another corrected with better architectural guidance. The graph now reflects production-tested knowledge.",
+                            snippetName: "user_summary.txt",
+                            snippet: {
+                                assessment: "correct",
+                                note: "feedback loop: positive reinforcement + content correction applied to nodes from prior interaction",
+                            },
+                        },
+                    ],
+                    trace: [
+                        {
+                            name: "learn_from_feedback (positive)",
+                            latency: "status ok",
+                            status: "ok",
+                            note: "node_15bde3b... confidence 0.500 \u2192 0.590 (+0.090)",
+                        },
+                        {
+                            name: "learn_from_feedback (correction)",
+                            latency: "status ok",
+                            status: "ok",
+                            note: "node_cfe291d... content replaced, confidence 0.500 \u2192 0.600",
+                        },
+                    ],
+                    skills: [
+                        {
+                            name: "Token-bucket per tenant",
+                            conf: "0.590",
+                            type: "semantic",
+                            body: "Semantic node \u2014 implement a token-bucket algorithm per tenant ID at the GenServer level. Validated by production load testing.",
+                            tag: "boosted",
+                        },
+                        {
+                            name: "Sliding-window rate limiting",
+                            conf: "0.600",
+                            type: "semantic",
+                            body: "Semantic node \u2014 for multi-tenant rate limiting, implement a sliding-window algorithm (not token-bucket). Sliding window provides smoother rate enforcement.",
+                            tag: "corrected",
+                        },
+                    ],
+                    tabs: {
+                        "feedback_positive.json": {
+                            status: "ok",
+                            node_id: "node_15bde3b7a4e82f901c3d6e8b54a7f2c0",
+                            feedback_type: "positive",
+                            old_confidence: 0.500,
+                            new_confidence: 0.590,
+                            delta: 0.090,
+                            reason: "Token-bucket design validated by production load testing",
+                        },
+                        "feedback_correction.json": {
+                            status: "ok",
+                            node_id: "node_cfe291d3b8f04a52e7c9d1b6a3e80f45",
+                            feedback_type: "correction",
+                            old_content: "Each MCP tool call should check the bucket before executing",
+                            new_content: "For multi-tenant rate limiting, implement a sliding-window algorithm (not token-bucket). Sliding window provides smoother rate enforcement.",
+                            old_confidence: 0.500,
+                            new_confidence: 0.600,
+                            reason: "Token-bucket causes spiky traffic at refill boundaries",
+                        },
+                    },
+                    toolLog: [
+                        {
+                            ts: "14:32:11.802",
+                            tool: "learn_from_feedback",
+                            args: 'node_id="node_15bde3b..." feedback_type="positive"',
+                            status: "ok",
+                            latency: "",
+                        },
+                        {
+                            ts: "14:32:14.305",
+                            tool: "learn_from_feedback",
+                            args: 'node_id="node_cfe291d..." feedback_type="correction"',
+                            status: "ok",
+                            latency: "",
+                        },
+                    ],
+                },
+            };
+
+            const els = {
+                scenarioA: document.getElementById("scenarioA"),
+                scenarioB: document.getElementById("scenarioB"),
+                playBtn: document.getElementById("playBtn"),
+                nextBtn: document.getElementById("nextBtn"),
+                resetBtn: document.getElementById("resetBtn"),
+                kpis: document.getElementById("kpis"),
+                chat: document.getElementById("chat"),
+                skills: document.getElementById("skills"),
+                trace: document.getElementById("trace"),
+                tabs: document.getElementById("tabs"),
+                panes: document.getElementById("panes"),
+                terminalBody: document.getElementById("terminalBody"),
+                terminalStatus: document.getElementById("terminalStatus"),
+            };
+
+            let mode = "A";
+            let idx = 0;
+            let playing = false;
+            let logIdx = 0;
+
+            function renderKpis() {
+                const kpis = data[mode].kpis;
+                els.kpis.innerHTML = "";
+                for (const k of kpis) {
+                    const d = document.createElement("div");
+                    d.className = "kpi";
+                    const cls = k.cls ? " " + k.cls : "";
+                    d.innerHTML = `
+            <div class="kpi-label">${k.label}</div>
+            <div class="kpi-value${cls}">${k.value}</div>
+            <div class="kpi-note">${k.note}</div>
+          `;
+                    els.kpis.appendChild(d);
+                }
+            }
+
+            function renderSkills() {
+                els.skills.innerHTML = "";
+                for (const s of data[mode].skills) {
+                    const c = document.createElement("div");
+                    c.className = "skill-card";
+                    let tag = "";
+                    if (s.tag === "corrected") {
+                        tag = '<span class="correction-tag">corrected</span>';
+                    } else if (s.tag === "boosted") {
+                        tag = '<span class="boosted-tag">boosted</span>';
+                    }
+                    c.innerHTML = `
+            <div class="skill-top">
+              <div class="skill-name">${s.name}${tag}</div>
+              <div class="conf">conf ${s.conf} &middot; ${s.type}</div>
+            </div>
+            <div class="skill-body">${s.body}</div>
+          `;
+                    els.skills.appendChild(c);
+                }
+            }
+
+            function renderTrace() {
+                els.trace.innerHTML = "";
+                for (const t of data[mode].trace) {
+                    const item = document.createElement("div");
+                    item.className = "trace-item";
+                    item.innerHTML = `
+            <div class="trace-head">
+              <div class="trace-name">${t.name}</div>
+              <div class="trace-latency">${t.latency}</div>
+            </div>
+            <span class="pill ${t.status === "ok" ? "ok" : "warn"}">${t.status}</span>
+            <div style="margin-top:5px;color:var(--dim);font-size:11px;line-height:1.4;">${t.note}</div>
+          `;
+                    els.trace.appendChild(item);
+                }
+            }
+
+            function renderTabs() {
+                const tabs = Object.keys(data[mode].tabs);
+                els.tabs.innerHTML = "";
+                els.panes.innerHTML = "";
+
+                tabs.forEach((name, i) => {
+                    const b = document.createElement("button");
+                    b.className = `tab ${i === 0 ? "active" : ""}`;
+                    b.textContent = name;
+                    b.dataset.name = name;
+
+                    const pane = document.createElement("div");
+                    pane.className = `pane ${i === 0 ? "active" : ""}`;
+                    pane.dataset.name = name;
+
+                    const pre = document.createElement("pre");
+                    pre.textContent = JSON.stringify(
+                        data[mode].tabs[name],
+                        null,
+                        2,
+                    );
+                    pane.appendChild(pre);
+
+                    b.addEventListener("click", () => {
+                        [...els.tabs.children].forEach((x) =>
+                            x.classList.toggle(
+                                "active",
+                                x.dataset.name === name,
+                            ),
+                        );
+                        [...els.panes.children].forEach((x) =>
+                            x.classList.toggle(
+                                "active",
+                                x.dataset.name === name,
+                            ),
+                        );
+                    });
+
+                    els.tabs.appendChild(b);
+                    els.panes.appendChild(pane);
+                });
+            }
+
+            function clearTerminal() {
+                els.terminalBody.innerHTML = "";
+                logIdx = 0;
+                els.terminalStatus.textContent = "idle";
+            }
+
+            function appendLog(entry) {
+                const line = document.createElement("div");
+                line.className = "log-line";
+                const statusClass =
+                    entry.status === "ok" ? "log-ok" : "log-warn";
+                line.innerHTML = `
+          <span class="log-ts">${entry.ts}</span>
+          <span class="log-tool">${entry.tool}</span>
+          <span class="log-dim">(${entry.args})</span>
+          <span class="${statusClass}">[${entry.status}]</span>
+          ${entry.latency ? `<span class="log-dim">${entry.latency}</span>` : ""}
+        `;
+                els.terminalBody.appendChild(line);
+                els.terminalBody.scrollTop = els.terminalBody.scrollHeight;
+            }
+
+            function syncLog() {
+                const log = data[mode].toolLog;
+                while (logIdx < log.length) {
+                    appendLog(log[logIdx]);
+                    logIdx++;
+                }
+                if (logIdx > 0) {
+                    els.terminalStatus.textContent = `${logIdx} calls logged`;
+                }
+            }
+
+            function bubble(item, step) {
+                const node = document.createElement("div");
+                node.className = `bubble ${item.role}`;
+
+                const meta = document.createElement("div");
+                meta.className = "meta";
+                meta.innerHTML = `<span>${item.actor}</span><span>step ${step + 1}</span>`;
+
+                const text = document.createElement("div");
+                text.className = "text";
+                text.textContent = item.text;
+
+                const code = document.createElement("div");
+                code.className = "code";
+
+                const head = document.createElement("div");
+                head.className = "code-head";
+
+                const title = document.createElement("span");
+                title.textContent = item.snippetName;
+
+                const copy = document.createElement("button");
+                copy.textContent = "Copy JSON";
+                copy.style.padding = "4px 8px";
+                copy.style.fontSize = "11px";
+                copy.style.borderRadius = "8px";
+                copy.addEventListener("click", async () => {
+                    try {
+                        await navigator.clipboard.writeText(
+                            JSON.stringify(item.snippet, null, 2),
+                        );
+                        copy.textContent = "Copied";
+                        setTimeout(
+                            () => (copy.textContent = "Copy JSON"),
+                            1000,
+                        );
+                    } catch {
+                        copy.textContent = "Copy failed";
+                        setTimeout(
+                            () => (copy.textContent = "Copy JSON"),
+                            1200,
+                        );
+                    }
+                });
+
+                head.appendChild(title);
+                head.appendChild(copy);
+
+                const pre = document.createElement("pre");
+                pre.textContent = JSON.stringify(item.snippet, null, 2);
+
+                code.appendChild(head);
+                code.appendChild(pre);
+
+                node.appendChild(meta);
+                node.appendChild(text);
+                node.appendChild(code);
+
+                return node;
+            }
+
+            function appendNext() {
+                const timeline = data[mode].timeline;
+                if (idx >= timeline.length) return false;
+                const item = timeline[idx];
+                els.chat.appendChild(bubble(item, idx));
+                els.chat.scrollTop = els.chat.scrollHeight;
+                idx++;
+
+                // Sync terminal log
+                syncLog();
+
+                return true;
+            }
+
+            function resetChat() {
+                idx = 0;
+                els.chat.innerHTML = "";
+                clearTerminal();
+            }
+
+            async function play() {
+                if (playing) return;
+                playing = true;
+                els.playBtn.textContent = "\u23f8 Playing...";
+                els.terminalStatus.textContent = "streaming...";
+                while (idx < data[mode].timeline.length && playing) {
+                    appendNext();
+                    await new Promise((r) => setTimeout(r, 720));
+                }
+                playing = false;
+                els.playBtn.textContent = "\u25b6 Play demo";
+                els.terminalStatus.textContent = `${logIdx} calls logged`;
+            }
+
+            function setMode(next) {
+                mode = next;
+                playing = false;
+                els.playBtn.textContent = "\u25b6 Play demo";
+                els.scenarioA.classList.toggle("btn-active", next === "A");
+                els.scenarioB.classList.toggle("btn-active", next === "B");
+                renderKpis();
+                renderSkills();
+                renderTrace();
+                renderTabs();
+                resetChat();
+                appendNext();
+                appendNext();
+            }
+
+            els.scenarioA.addEventListener("click", () => setMode("A"));
+            els.scenarioB.addEventListener("click", () => setMode("B"));
+            els.playBtn.addEventListener("click", () => {
+                if (playing) {
+                    playing = false;
+                    els.playBtn.textContent = "\u25b6 Play demo";
+                } else {
+                    play();
+                }
+            });
+            els.nextBtn.addEventListener("click", appendNext);
+            els.resetBtn.addEventListener("click", () => {
+                playing = false;
+                els.playBtn.textContent = "\u25b6 Play demo";
+                resetChat();
+                appendNext();
+            });
+
+            setMode("A");
+        </script>
+    </body>
+</html>

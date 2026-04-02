@@ -1,0 +1,1326 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>A/B: Consolidation — Before &amp; After Graph Maintenance</title>
+        <style>
+            :root {
+                --bg: #0a0b0f;
+                --surface: #11141c;
+                --surface-2: #171b26;
+                --surface-3: #0d1018;
+                --line: #252b3b;
+                --text: #e9ecf4;
+                --dim: #8a92a7;
+                --good: #38d39f;
+                --accent: #7b8cff;
+                --accent-2: #4af5c6;
+                --warn: #ffc46b;
+                --bubble-user: #1c2435;
+                --bubble-assistant: #141b2c;
+                --shadow: 0 14px 34px rgba(0, 0, 0, 0.35);
+                --terminal-bg: #080a10;
+                --terminal-line: #1a1f2e;
+            }
+
+            * {
+                box-sizing: border-box;
+            }
+
+            html,
+            body {
+                margin: 0;
+                padding: 0;
+                min-height: 100%;
+                background:
+                    radial-gradient(
+                        1200px 800px at 85% -20%,
+                        rgba(123, 140, 255, 0.11),
+                        transparent 60%
+                    ),
+                    radial-gradient(
+                        1000px 700px at -10% 120%,
+                        rgba(74, 245, 198, 0.08),
+                        transparent 55%
+                    ),
+                    var(--bg);
+                color: var(--text);
+                font-family:
+                    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+                    "Liberation Mono", "Courier New", monospace;
+            }
+
+            a {
+                color: inherit;
+            }
+
+            .wrap {
+                max-width: 1220px;
+                margin: 0 auto;
+                padding: 22px;
+            }
+
+            .hero {
+                border: 1px solid var(--line);
+                border-radius: 18px;
+                background: linear-gradient(
+                    160deg,
+                    rgba(123, 140, 255, 0.08),
+                    rgba(17, 20, 28, 0.95) 28%
+                );
+                padding: 18px;
+                box-shadow: var(--shadow);
+            }
+
+            .badge {
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+                border-radius: 999px;
+                border: 1px solid rgba(74, 245, 198, 0.35);
+                color: var(--accent-2);
+                background: rgba(74, 245, 198, 0.08);
+                font-size: 12px;
+                padding: 6px 10px;
+            }
+
+            .dot {
+                width: 8px;
+                height: 8px;
+                border-radius: 50%;
+                background: var(--accent-2);
+                box-shadow: 0 0 12px rgba(74, 245, 198, 0.8);
+                animation: pulse 1.7s infinite;
+            }
+
+            @keyframes pulse {
+                0%,
+                100% {
+                    transform: scale(1);
+                    opacity: 0.85;
+                }
+                50% {
+                    transform: scale(1.3);
+                    opacity: 1;
+                }
+            }
+
+            h1 {
+                margin: 14px 0 6px;
+                font-size: clamp(26px, 4vw, 42px);
+                line-height: 1.06;
+                letter-spacing: -0.02em;
+            }
+
+            .lead {
+                color: var(--dim);
+                max-width: 90ch;
+                line-height: 1.55;
+                margin: 0;
+            }
+
+            .top-controls {
+                margin-top: 14px;
+                display: flex;
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+
+            button {
+                border: 1px solid var(--line);
+                background: var(--surface-2);
+                color: var(--text);
+                border-radius: 10px;
+                padding: 8px 10px;
+                font-size: 12px;
+                cursor: pointer;
+            }
+
+            button:hover {
+                border-color: #3a4256;
+                transform: translateY(-1px);
+            }
+
+            .btn-primary {
+                border-color: rgba(74, 245, 198, 0.35);
+                color: var(--accent-2);
+                background: rgba(74, 245, 198, 0.08);
+            }
+
+            .btn-active {
+                border-color: rgba(123, 140, 255, 0.45);
+                color: var(--accent);
+                background: rgba(123, 140, 255, 0.12);
+            }
+
+            .kpis {
+                margin-top: 12px;
+                display: grid;
+                gap: 10px;
+                grid-template-columns: repeat(4, minmax(0, 1fr));
+            }
+
+            .kpi {
+                border: 1px solid var(--line);
+                border-radius: 12px;
+                background: rgba(18, 21, 30, 0.88);
+                padding: 10px 11px;
+            }
+
+            .kpi-label {
+                color: var(--dim);
+                font-size: 11px;
+                text-transform: uppercase;
+                letter-spacing: 0.08em;
+                margin-bottom: 6px;
+            }
+
+            .kpi-value {
+                color: var(--accent-2);
+                font-size: 20px;
+                font-weight: 700;
+            }
+
+            .kpi-note {
+                color: var(--dim);
+                font-size: 11px;
+                margin-top: 2px;
+                line-height: 1.35;
+            }
+
+            .layout {
+                margin-top: 14px;
+                display: grid;
+                gap: 16px;
+                grid-template-columns: 1.08fr 0.92fr;
+            }
+
+            .panel {
+                border: 1px solid var(--line);
+                border-radius: 16px;
+                background: var(--surface);
+                overflow: hidden;
+                box-shadow: var(--shadow);
+            }
+
+            .panel-head {
+                border-bottom: 1px solid var(--line);
+                padding: 11px 13px;
+                display: flex;
+                justify-content: space-between;
+                gap: 10px;
+                align-items: center;
+                background: rgba(255, 255, 255, 0.01);
+            }
+
+            .panel-title {
+                color: #c9d2e8;
+                font-size: 13px;
+                letter-spacing: 0.08em;
+                text-transform: uppercase;
+            }
+
+            .chat {
+                padding: 13px;
+                overflow: auto;
+                background:
+                    linear-gradient(
+                        transparent 0%,
+                        rgba(255, 255, 255, 0.01) 100%
+                    ),
+                    var(--surface);
+            }
+
+            .bubble {
+                border: 1px solid var(--line);
+                border-radius: 14px;
+                padding: 10px 11px;
+                margin-bottom: 10px;
+                max-width: 94%;
+                box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+                animation: rise 0.24s ease;
+            }
+
+            .bubble.user {
+                margin-left: auto;
+                background: var(--bubble-user);
+            }
+
+            .bubble.assistant {
+                margin-right: auto;
+                background: var(--bubble-assistant);
+            }
+
+            @keyframes rise {
+                from {
+                    opacity: 0;
+                    transform: translateY(8px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+
+            .meta {
+                display: flex;
+                justify-content: space-between;
+                gap: 10px;
+                font-size: 10px;
+                color: var(--dim);
+                margin-bottom: 7px;
+                text-transform: uppercase;
+                letter-spacing: 0.08em;
+            }
+
+            .text {
+                font-size: 13px;
+                line-height: 1.52;
+                white-space: pre-wrap;
+            }
+
+            .code {
+                margin-top: 8px;
+                border: 1px solid #222a3f;
+                border-radius: 10px;
+                overflow: hidden;
+                background: var(--surface-3);
+            }
+
+            .code-head {
+                border-bottom: 1px solid #222a3f;
+                padding: 7px 9px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                color: var(--dim);
+                font-size: 11px;
+            }
+
+            .code pre {
+                margin: 0;
+                padding: 10px 11px;
+                font-size: 12px;
+                line-height: 1.45;
+                color: #d6ddf0;
+                overflow: auto;
+                max-height: 220px;
+            }
+
+            .right {
+                display: grid;
+                gap: 16px;
+                grid-template-rows: 0.93fr 1.07fr;
+            }
+
+            .skill-grid {
+                padding: 12px;
+                overflow: auto;
+            }
+
+            .skill-card {
+                border: 1px solid var(--line);
+                border-radius: 12px;
+                background: rgba(255, 255, 255, 0.01);
+                padding: 9px 10px;
+                margin-bottom: 8px;
+            }
+
+            .skill-top {
+                display: flex;
+                justify-content: space-between;
+                gap: 8px;
+                align-items: baseline;
+                margin-bottom: 5px;
+            }
+
+            .skill-name {
+                font-size: 12px;
+                color: #cfd8ee;
+            }
+
+            .conf {
+                font-size: 11px;
+                color: var(--accent-2);
+            }
+
+            .skill-body {
+                color: var(--dim);
+                font-size: 11px;
+                line-height: 1.45;
+            }
+
+            .trace-wrap {
+                display: grid;
+                grid-template-rows: auto 1fr;
+                min-height: 0;
+            }
+
+            .trace-list {
+                padding: 11px;
+                max-height: 190px;
+                overflow: auto;
+                border-bottom: 1px solid var(--line);
+            }
+
+            .trace-item {
+                border: 1px solid var(--line);
+                border-radius: 11px;
+                padding: 8px;
+                margin-bottom: 7px;
+                background: rgba(255, 255, 255, 0.01);
+            }
+
+            .trace-head {
+                display: flex;
+                justify-content: space-between;
+                align-items: baseline;
+                gap: 7px;
+            }
+
+            .trace-name {
+                font-size: 12px;
+                color: #d2daee;
+            }
+
+            .trace-latency {
+                font-size: 11px;
+                color: var(--dim);
+            }
+
+            .pill {
+                margin-top: 4px;
+                display: inline-block;
+                padding: 2px 8px;
+                border-radius: 999px;
+                font-size: 10px;
+                text-transform: uppercase;
+                letter-spacing: 0.06em;
+            }
+
+            .pill.ok {
+                color: var(--good);
+                border: 1px solid rgba(56, 211, 159, 0.45);
+                background: rgba(56, 211, 159, 0.08);
+            }
+
+            .pill.warn {
+                color: var(--warn);
+                border: 1px solid rgba(255, 196, 107, 0.45);
+                background: rgba(255, 196, 107, 0.08);
+            }
+
+            .tabs {
+                display: flex;
+                overflow: auto;
+                border-bottom: 1px solid var(--line);
+            }
+
+            .tab {
+                border: none;
+                border-right: 1px solid var(--line);
+                border-radius: 0;
+                background: #0f131d;
+                color: var(--dim);
+                font-size: 11px;
+                padding: 9px 11px;
+                white-space: nowrap;
+            }
+
+            .tab.active {
+                color: var(--accent);
+                background: #131a2a;
+            }
+
+            .pane {
+                display: none;
+                height: 255px;
+                overflow: auto;
+            }
+
+            .pane.active {
+                display: block;
+            }
+
+            .pane pre {
+                margin: 0;
+                padding: 10px 11px;
+                font-size: 12px;
+                line-height: 1.44;
+                color: #d4dcec;
+            }
+
+            /* Terminal log strip */
+            .terminal-strip {
+                margin-top: 14px;
+                border: 1px solid var(--terminal-line);
+                border-radius: 12px;
+                background: var(--terminal-bg);
+                overflow: hidden;
+            }
+
+            .terminal-head {
+                padding: 8px 12px;
+                border-bottom: 1px solid var(--terminal-line);
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                background: rgba(255, 255, 255, 0.02);
+            }
+
+            .terminal-title {
+                font-size: 11px;
+                color: var(--dim);
+                text-transform: uppercase;
+                letter-spacing: 0.08em;
+            }
+
+            .terminal-status {
+                font-size: 11px;
+                color: var(--accent-2);
+            }
+
+            .terminal-body {
+                padding: 10px 12px;
+                height: 140px;
+                overflow: auto;
+                font-size: 11px;
+                line-height: 1.6;
+            }
+
+            .log-line {
+                margin-bottom: 4px;
+                opacity: 0;
+                animation: logFade 0.3s ease forwards;
+            }
+
+            @keyframes logFade {
+                from {
+                    opacity: 0;
+                    transform: translateX(-6px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateX(0);
+                }
+            }
+
+            .log-ts {
+                color: #4a5568;
+                margin-right: 8px;
+            }
+
+            .log-tool {
+                color: var(--accent);
+            }
+
+            .log-ok {
+                color: var(--good);
+            }
+
+            .log-warn {
+                color: var(--warn);
+            }
+
+            .log-dim {
+                color: var(--dim);
+            }
+
+            .footer {
+                margin-top: 12px;
+                text-align: center;
+                color: var(--dim);
+                font-size: 12px;
+            }
+
+            @media (max-width: 1024px) {
+                .kpis {
+                    grid-template-columns: repeat(2, minmax(0, 1fr));
+                }
+
+                .layout {
+                    grid-template-columns: 1fr;
+                }
+
+                .right {
+                    grid-template-rows: auto auto;
+                }
+
+                .chat {
+                    height: 450px;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="wrap">
+            <section class="hero">
+                <span class="badge"
+                    ><span class="dot"></span>Live MCP session — payloads captured 2026-04-02 from Graphonomous v0.2.0</span
+                >
+                <h1>A/B: Consolidation — Before &amp; After Graph Maintenance</h1>
+                <p class="lead">
+                    Same knowledge graph, before and after running the 7-stage
+                    consolidation pipeline: <b>A</b> shows raw graph statistics
+                    before consolidation; <b>B</b> shows the graph after decay,
+                    pruning, co-activation strengthening, and abstraction
+                    generation. The consolidator runs automatically every 5
+                    minutes (300,000ms).
+                </p>
+
+                <div class="top-controls">
+                    <button class="btn-active" id="scenarioA">
+                        Scenario A &middot; before consolidation
+                    </button>
+                    <button id="scenarioB">Scenario B &middot; after consolidation</button>
+                    <button class="btn-primary" id="playBtn">
+                        &#9654; Play demo
+                    </button>
+                    <button id="nextBtn">Next bubble</button>
+                    <button id="resetBtn">Reset</button>
+                    <a href="../index.html"
+                        ><button>&larr; Back to all demos</button></a
+                    >
+                    <a href="../../index.html"
+                        ><button>&larr; Back to landing page</button></a
+                    >
+                </div>
+
+                <div class="kpis" id="kpis"></div>
+            </section>
+
+            <section class="layout">
+                <article class="panel">
+                    <div class="panel-head">
+                        <div class="panel-title">
+                            Chat + tool-call storytelling
+                        </div>
+                    </div>
+                    <div class="chat" id="chat"></div>
+                </article>
+
+                <aside class="right">
+                    <section class="panel">
+                        <div class="panel-head">
+                            <div class="panel-title" id="skillsPanelTitle">Type distribution</div>
+                        </div>
+                        <div class="skill-grid" id="skills"></div>
+                    </section>
+
+                    <section class="panel trace-wrap">
+                        <div class="panel-head">
+                            <div class="panel-title">
+                                Execution trace + payload explorer
+                            </div>
+                        </div>
+
+                        <div class="trace-list" id="trace"></div>
+
+                        <div class="tabs" id="tabs"></div>
+                        <div id="panes"></div>
+                    </section>
+                </aside>
+            </section>
+
+            <section class="terminal-strip">
+                <div class="terminal-head">
+                    <div class="terminal-title">Live tool-call log</div>
+                    <div class="terminal-status" id="terminalStatus">idle</div>
+                </div>
+                <div class="terminal-body" id="terminalBody"></div>
+            </section>
+
+            <p class="footer">
+                Payloads captured 2026-04-02 from a live Graphonomous v0.2.0 MCP
+                session. Cycle counts, decay rates, confidence deltas, and health
+                status are authentic.
+            </p>
+        </div>
+
+        <script>
+            const data = {
+                A: {
+                    label: "Scenario A \u00b7 before consolidation",
+                    skillsPanelTitle: "Type distribution",
+                    kpis: [
+                        {
+                            label: "total nodes",
+                            value: "19",
+                            note: "9 episodic, 6 semantic, 4 procedural",
+                        },
+                        {
+                            label: "total edges",
+                            value: "7",
+                            note: "4 causes, 3 derived_from",
+                        },
+                        {
+                            label: "avg confidence",
+                            value: "0.401",
+                            note: "range 0.104 \u2013 0.814",
+                        },
+                        {
+                            label: "orphan nodes",
+                            value: "12",
+                            note: "63% of nodes have no edges",
+                        },
+                    ],
+                    timeline: [
+                        {
+                            role: "user",
+                            actor: "Developer",
+                            text: "Show me the current state of the knowledge graph.",
+                            snippetName: "user_request.txt",
+                            snippet: {
+                                request: "graph health snapshot with full distributions",
+                            },
+                        },
+                        {
+                            role: "assistant",
+                            actor: "Graphonomous",
+                            text: "Running graph_stats with full distributions...",
+                            snippetName: "graph_stats call",
+                            snippet: {
+                                tool: "graph_stats",
+                                arguments: { include_distributions: true },
+                            },
+                        },
+                        {
+                            role: "assistant",
+                            actor: "Graphonomous",
+                            text: "Graph health snapshot:\n\u2022 19 nodes (9 episodic, 6 semantic, 4 procedural)\n\u2022 7 edges (4 causes, 3 derived_from)\n\u2022 Avg confidence: 0.401 (range 0.104 \u2013 0.814)\n\u2022 12 orphan nodes (no edges)\n\u2022 Timescales: 8 fast, 11 medium\n\u2022 Sources: 8 manual, 10 inference, 1 consolidation\n\n63% of nodes are orphans \u2014 they have knowledge but no connections to other nodes. The consolidation pipeline could help by detecting similar nodes and generating edges.",
+                            snippetName: "graph_stats result",
+                            snippet: {
+                                status: "ok",
+                                node_count: 19,
+                                edge_count: 7,
+                                avg_confidence: 0.4005,
+                                min_confidence: 0.1041,
+                                max_confidence: 0.8135,
+                                orphan_node_count: 12,
+                                type_distribution: {
+                                    episodic: 9,
+                                    procedural: 4,
+                                    semantic: 6,
+                                },
+                                relationship_distribution: {
+                                    causes: 4,
+                                    derived_from: 3,
+                                },
+                                source_distribution: {
+                                    consolidation: 1,
+                                    inference: 10,
+                                    manual: 8,
+                                },
+                                timescale_distribution: {
+                                    fast: 8,
+                                    medium: 11,
+                                },
+                            },
+                        },
+                        {
+                            role: "user",
+                            actor: "Developer",
+                            text: "That's a lot of orphans. Run consolidation.",
+                            snippetName: "consolidation_request.txt",
+                            snippet: {
+                                request: "trigger consolidation pipeline",
+                            },
+                        },
+                    ],
+                    trace: [
+                        {
+                            name: "graph_stats",
+                            latency: "\u2014",
+                            status: "ok",
+                            note: "19 nodes, 7 edges, 12 orphans, avg conf 0.401",
+                        },
+                    ],
+                    skills: [
+                        {
+                            name: "Episodic nodes",
+                            conf: "9",
+                            body: "9 episodic memory nodes capturing interaction events",
+                        },
+                        {
+                            name: "Semantic nodes",
+                            conf: "6",
+                            body: "6 semantic abstraction nodes (includes 1 from prior consolidation)",
+                        },
+                        {
+                            name: "Procedural nodes",
+                            conf: "4",
+                            body: "4 procedural skill nodes with step-by-step instructions",
+                        },
+                        {
+                            name: "Orphan nodes",
+                            conf: "12",
+                            body: "63% of nodes have zero edges \u2014 isolated knowledge with no graph connections",
+                        },
+                    ],
+                    tabs: {
+                        "graph_stats_before.json": {
+                            status: "ok",
+                            node_count: 19,
+                            edge_count: 7,
+                            avg_confidence: 0.4005,
+                            min_confidence: 0.1041,
+                            max_confidence: 0.8135,
+                            orphan_node_count: 12,
+                            type_distribution: {
+                                episodic: 9,
+                                procedural: 4,
+                                semantic: 6,
+                            },
+                            relationship_distribution: {
+                                causes: 4,
+                                derived_from: 3,
+                            },
+                            source_distribution: {
+                                consolidation: 1,
+                                inference: 10,
+                                manual: 8,
+                            },
+                            timescale_distribution: {
+                                fast: 8,
+                                medium: 11,
+                            },
+                        },
+                    },
+                    toolLog: [
+                        {
+                            ts: "17:26:01.101",
+                            tool: "graph_stats",
+                            args: "include_distributions=true",
+                            status: "ok",
+                            latency: "\u2014",
+                        },
+                    ],
+                },
+
+                B: {
+                    label: "Scenario B \u00b7 after consolidation",
+                    skillsPanelTitle: "Consolidation pipeline stages",
+                    kpis: [
+                        {
+                            label: "total nodes",
+                            value: "19",
+                            note: "0 nodes pruned (min conf 0.102 > threshold 0.10)",
+                        },
+                        {
+                            label: "total edges",
+                            value: "7",
+                            note: "no edges pruned or merged this cycle",
+                        },
+                        {
+                            label: "avg confidence",
+                            value: "0.393",
+                            note: "decayed from 0.401 (\u22120.008 via 0.02 decay rate)",
+                        },
+                        {
+                            label: "cycle count",
+                            value: "2",
+                            note: "consolidation cycle #2, interval 300,000ms",
+                        },
+                    ],
+                    timeline: [
+                        {
+                            role: "user",
+                            actor: "Developer",
+                            text: "Run consolidation and show me the results.",
+                            snippetName: "consolidation_request.txt",
+                            snippet: {
+                                request: "run consolidation pipeline with status",
+                            },
+                        },
+                        {
+                            role: "assistant",
+                            actor: "Graphonomous",
+                            text: "Triggering consolidation pipeline with 3-second wait...",
+                            snippetName: "run_consolidation call",
+                            snippet: {
+                                tool: "run_consolidation",
+                                arguments: {
+                                    action: "run_and_status",
+                                    wait_ms: 3000,
+                                },
+                            },
+                        },
+                        {
+                            role: "assistant",
+                            actor: "Graphonomous",
+                            text: "Consolidation complete (cycle #2). The 7-stage pipeline ran:\n\n1. Decay \u2014 applied 0.02 decay rate to all node confidences\n2. Prune weak nodes \u2014 removed nodes below 0.10 threshold\n3. Prune weak edges \u2014 removed edges below 0.10 threshold\n4. Strengthen co-activated \u2014 boosted edges with co-activation (+0.05)\n5. Merge similar nodes \u2014 merged nodes above 0.95 cosine similarity\n6. Promote timescale \u2014 promoted frequently-accessed nodes\n7. Generate abstractions \u2014 clustered episodic nodes into semantic abstractions\n\nAll 7 subsystems healthy: attention, consolidator, goal_graph, graph, learner, orchestrator, retriever.",
+                            snippetName: "run_consolidation result",
+                            snippet: {
+                                status: "ok",
+                                result: {
+                                    consolidator: {
+                                        cycle_count: 2,
+                                        decay_rate: 0.02,
+                                        prune_threshold: 0.1,
+                                        edge_prune_threshold: 0.1,
+                                        coactivation_boost: 0.05,
+                                        merge_similarity: 0.95,
+                                        promotion_access_threshold: 5,
+                                        interval_ms: 300000,
+                                        last_run_at: "2026-04-02T18:15:42.170183Z",
+                                    },
+                                    health: {
+                                        graph: "up",
+                                        retriever: "up",
+                                        learner: "up",
+                                        consolidator: "up",
+                                        goal_graph: "up",
+                                        attention: "up",
+                                        orchestrator: "up",
+                                    },
+                                },
+                            },
+                        },
+                        {
+                            role: "assistant",
+                            actor: "Graphonomous",
+                            text: "Post-consolidation stats: avg confidence dropped from 0.401 \u2192 0.393 (\u22120.008) due to decay. Max confidence 0.814 \u2192 0.797. Min confidence 0.104 \u2192 0.102. No nodes were pruned because the lowest confidence (0.102) is still above the prune threshold (0.10). This is the continual learning signal \u2014 confidence naturally decays, and only nodes reinforced through learn_from_outcome maintain high confidence.",
+                            snippetName: "graph_stats post-consolidation",
+                            snippet: {
+                                status: "ok",
+                                node_count: 19,
+                                edge_count: 7,
+                                avg_confidence: 0.3925,
+                                min_confidence: 0.1020,
+                                max_confidence: 0.7973,
+                                orphan_node_count: 12,
+                                type_distribution: {
+                                    episodic: 9,
+                                    procedural: 4,
+                                    semantic: 6,
+                                },
+                                relationship_distribution: {
+                                    causes: 4,
+                                    derived_from: 3,
+                                },
+                                source_distribution: {
+                                    consolidation: 1,
+                                    inference: 10,
+                                    manual: 8,
+                                },
+                                timescale_distribution: {
+                                    fast: 8,
+                                    medium: 11,
+                                },
+                            },
+                        },
+                        {
+                            role: "user",
+                            actor: "Developer",
+                            text: "The decay is the key insight \u2014 unused knowledge fades, reinforced knowledge persists. That's what makes this continual learning, not just a database.",
+                            snippetName: "insight.txt",
+                            snippet: {
+                                insight: "confidence decay is the continual learning signal",
+                                mechanism: "unused knowledge fades, reinforced knowledge persists",
+                            },
+                        },
+                    ],
+                    trace: [
+                        {
+                            name: "run_consolidation",
+                            latency: "~3.1 s",
+                            status: "ok",
+                            note: "cycle #2, 7-stage pipeline, all 7 subsystems healthy",
+                        },
+                        {
+                            name: "graph_stats (post)",
+                            latency: "\u2014",
+                            status: "ok",
+                            note: "19 nodes, 7 edges, avg conf decayed 0.401\u21920.393, 0 nodes pruned",
+                        },
+                    ],
+                    skills: [
+                        {
+                            name: "1. Decay",
+                            conf: "0.02",
+                            body: "Apply decay rate to all node confidences each cycle",
+                        },
+                        {
+                            name: "2. Prune weak nodes",
+                            conf: "0.10",
+                            body: "Remove nodes with confidence below threshold",
+                        },
+                        {
+                            name: "3. Prune weak edges",
+                            conf: "0.10",
+                            body: "Remove edges with confidence below threshold",
+                        },
+                        {
+                            name: "4. Strengthen co-activated",
+                            conf: "0.05",
+                            body: "Boost edge confidence for co-activated node pairs",
+                        },
+                        {
+                            name: "5. Merge similar nodes",
+                            conf: "0.95",
+                            body: "Merge nodes above cosine similarity threshold",
+                        },
+                        {
+                            name: "6. Promote timescale",
+                            conf: "5",
+                            body: "Promote frequently-accessed nodes (access threshold)",
+                        },
+                        {
+                            name: "7. Generate abstractions",
+                            conf: "\u2014",
+                            body: "Cluster episodic nodes into semantic abstractions",
+                        },
+                    ],
+                    tabs: {
+                        "consolidation_result.json": {
+                            status: "ok",
+                            result: {
+                                consolidator: {
+                                    cycle_count: 2,
+                                    decay_rate: 0.02,
+                                    prune_threshold: 0.1,
+                                    edge_prune_threshold: 0.1,
+                                    coactivation_boost: 0.05,
+                                    merge_similarity: 0.95,
+                                    promotion_access_threshold: 5,
+                                    interval_ms: 300000,
+                                    last_run_at: "2026-04-02T18:15:42.170183Z",
+                                },
+                                health: {
+                                    graph: "up",
+                                    retriever: "up",
+                                    learner: "up",
+                                    consolidator: "up",
+                                    goal_graph: "up",
+                                    attention: "up",
+                                    orchestrator: "up",
+                                },
+                            },
+                        },
+                        "graph_stats_after.json": {
+                            status: "ok",
+                            node_count: 19,
+                            edge_count: 7,
+                            avg_confidence: 0.3925,
+                            min_confidence: 0.1020,
+                            max_confidence: 0.7973,
+                            orphan_node_count: 12,
+                            type_distribution: {
+                                episodic: 9,
+                                procedural: 4,
+                                semantic: 6,
+                            },
+                            relationship_distribution: {
+                                causes: 4,
+                                derived_from: 3,
+                            },
+                            source_distribution: {
+                                consolidation: 1,
+                                inference: 10,
+                                manual: 8,
+                            },
+                            timescale_distribution: {
+                                fast: 8,
+                                medium: 11,
+                            },
+                        },
+                    },
+                    toolLog: [
+                        {
+                            ts: "17:26:02.201",
+                            tool: "run_consolidation",
+                            args: "action=run_and_status wait_ms=3000",
+                            status: "ok",
+                            latency: "~3.1s",
+                        },
+                        {
+                            ts: "17:26:05.340",
+                            tool: "graph_stats",
+                            args: "include_distributions=true",
+                            status: "ok",
+                            latency: "\u2014",
+                        },
+                    ],
+                },
+            };
+
+            const els = {
+                scenarioA: document.getElementById("scenarioA"),
+                scenarioB: document.getElementById("scenarioB"),
+                playBtn: document.getElementById("playBtn"),
+                nextBtn: document.getElementById("nextBtn"),
+                resetBtn: document.getElementById("resetBtn"),
+                kpis: document.getElementById("kpis"),
+                chat: document.getElementById("chat"),
+                skills: document.getElementById("skills"),
+                skillsPanelTitle: document.getElementById("skillsPanelTitle"),
+                trace: document.getElementById("trace"),
+                tabs: document.getElementById("tabs"),
+                panes: document.getElementById("panes"),
+                terminalBody: document.getElementById("terminalBody"),
+                terminalStatus: document.getElementById("terminalStatus"),
+            };
+
+            let mode = "A";
+            let idx = 0;
+            let playing = false;
+            let logIdx = 0;
+
+            function renderKpis() {
+                const kpis = data[mode].kpis;
+                els.kpis.innerHTML = "";
+                for (const k of kpis) {
+                    const d = document.createElement("div");
+                    d.className = "kpi";
+                    d.innerHTML = `
+            <div class="kpi-label">${k.label}</div>
+            <div class="kpi-value">${k.value}</div>
+            <div class="kpi-note">${k.note}</div>
+          `;
+                    els.kpis.appendChild(d);
+                }
+            }
+
+            function renderSkills() {
+                els.skills.innerHTML = "";
+                els.skillsPanelTitle.textContent = data[mode].skillsPanelTitle;
+                for (const s of data[mode].skills) {
+                    const c = document.createElement("div");
+                    c.className = "skill-card";
+                    c.innerHTML = `
+            <div class="skill-top">
+              <div class="skill-name">${s.name}</div>
+              <div class="conf">${s.conf}</div>
+            </div>
+            <div class="skill-body">${s.body}</div>
+          `;
+                    els.skills.appendChild(c);
+                }
+            }
+
+            function renderTrace() {
+                els.trace.innerHTML = "";
+                for (const t of data[mode].trace) {
+                    const item = document.createElement("div");
+                    item.className = "trace-item";
+                    item.innerHTML = `
+            <div class="trace-head">
+              <div class="trace-name">${t.name}</div>
+              <div class="trace-latency">${t.latency}</div>
+            </div>
+            <span class="pill ${t.status === "ok" ? "ok" : "warn"}">${t.status}</span>
+            <div style="margin-top:5px;color:var(--dim);font-size:11px;line-height:1.4;">${t.note}</div>
+          `;
+                    els.trace.appendChild(item);
+                }
+            }
+
+            function renderTabs() {
+                const tabs = Object.keys(data[mode].tabs);
+                els.tabs.innerHTML = "";
+                els.panes.innerHTML = "";
+
+                tabs.forEach((name, i) => {
+                    const b = document.createElement("button");
+                    b.className = `tab ${i === 0 ? "active" : ""}`;
+                    b.textContent = name;
+                    b.dataset.name = name;
+
+                    const pane = document.createElement("div");
+                    pane.className = `pane ${i === 0 ? "active" : ""}`;
+                    pane.dataset.name = name;
+
+                    const pre = document.createElement("pre");
+                    pre.textContent = JSON.stringify(
+                        data[mode].tabs[name],
+                        null,
+                        2,
+                    );
+                    pane.appendChild(pre);
+
+                    b.addEventListener("click", () => {
+                        [...els.tabs.children].forEach((x) =>
+                            x.classList.toggle(
+                                "active",
+                                x.dataset.name === name,
+                            ),
+                        );
+                        [...els.panes.children].forEach((x) =>
+                            x.classList.toggle(
+                                "active",
+                                x.dataset.name === name,
+                            ),
+                        );
+                    });
+
+                    els.tabs.appendChild(b);
+                    els.panes.appendChild(pane);
+                });
+            }
+
+            function clearTerminal() {
+                els.terminalBody.innerHTML = "";
+                logIdx = 0;
+                els.terminalStatus.textContent = "idle";
+            }
+
+            function appendLog(entry) {
+                const line = document.createElement("div");
+                line.className = "log-line";
+                const statusClass =
+                    entry.status === "ok" ? "log-ok" : "log-warn";
+                line.innerHTML = `
+          <span class="log-ts">${entry.ts}</span>
+          <span class="log-tool">${entry.tool}</span>
+          <span class="log-dim">(${entry.args})</span>
+          <span class="${statusClass}">[${entry.status}]</span>
+          <span class="log-dim">${entry.latency}</span>
+        `;
+                els.terminalBody.appendChild(line);
+                els.terminalBody.scrollTop = els.terminalBody.scrollHeight;
+            }
+
+            function syncLog() {
+                const log = data[mode].toolLog;
+                while (logIdx < log.length) {
+                    appendLog(log[logIdx]);
+                    logIdx++;
+                }
+                if (logIdx > 0) {
+                    els.terminalStatus.textContent = `${logIdx} calls logged`;
+                }
+            }
+
+            function bubble(item, step) {
+                const node = document.createElement("div");
+                node.className = `bubble ${item.role}`;
+
+                const meta = document.createElement("div");
+                meta.className = "meta";
+                meta.innerHTML = `<span>${item.actor}</span><span>step ${step + 1}</span>`;
+
+                const text = document.createElement("div");
+                text.className = "text";
+                text.textContent = item.text;
+
+                const code = document.createElement("div");
+                code.className = "code";
+
+                const head = document.createElement("div");
+                head.className = "code-head";
+
+                const title = document.createElement("span");
+                title.textContent = item.snippetName;
+
+                const copy = document.createElement("button");
+                copy.textContent = "Copy JSON";
+                copy.style.padding = "4px 8px";
+                copy.style.fontSize = "11px";
+                copy.style.borderRadius = "8px";
+                copy.addEventListener("click", async () => {
+                    try {
+                        await navigator.clipboard.writeText(
+                            JSON.stringify(item.snippet, null, 2),
+                        );
+                        copy.textContent = "Copied";
+                        setTimeout(
+                            () => (copy.textContent = "Copy JSON"),
+                            1000,
+                        );
+                    } catch {
+                        copy.textContent = "Copy failed";
+                        setTimeout(
+                            () => (copy.textContent = "Copy JSON"),
+                            1200,
+                        );
+                    }
+                });
+
+                head.appendChild(title);
+                head.appendChild(copy);
+
+                const pre = document.createElement("pre");
+                pre.textContent = JSON.stringify(item.snippet, null, 2);
+
+                code.appendChild(head);
+                code.appendChild(pre);
+
+                node.appendChild(meta);
+                node.appendChild(text);
+                node.appendChild(code);
+
+                return node;
+            }
+
+            function appendNext() {
+                const timeline = data[mode].timeline;
+                if (idx >= timeline.length) return false;
+                const item = timeline[idx];
+                els.chat.appendChild(bubble(item, idx));
+                els.chat.scrollTop = els.chat.scrollHeight;
+                idx++;
+
+                // Sync terminal log
+                syncLog();
+
+                return true;
+            }
+
+            function resetChat() {
+                idx = 0;
+                els.chat.innerHTML = "";
+                clearTerminal();
+            }
+
+            async function play() {
+                if (playing) return;
+                playing = true;
+                els.playBtn.textContent = "\u23f8 Playing...";
+                els.terminalStatus.textContent = "streaming...";
+                while (idx < data[mode].timeline.length && playing) {
+                    appendNext();
+                    await new Promise((r) => setTimeout(r, 720));
+                }
+                playing = false;
+                els.playBtn.textContent = "\u25b6 Play demo";
+                els.terminalStatus.textContent = `${logIdx} calls logged`;
+            }
+
+            function setMode(next) {
+                mode = next;
+                playing = false;
+                els.playBtn.textContent = "\u25b6 Play demo";
+                els.scenarioA.classList.toggle("btn-active", next === "A");
+                els.scenarioB.classList.toggle("btn-active", next === "B");
+                renderKpis();
+                renderSkills();
+                renderTrace();
+                renderTabs();
+                resetChat();
+                appendNext();
+                appendNext();
+            }
+
+            els.scenarioA.addEventListener("click", () => setMode("A"));
+            els.scenarioB.addEventListener("click", () => setMode("B"));
+            els.playBtn.addEventListener("click", () => {
+                if (playing) {
+                    playing = false;
+                    els.playBtn.textContent = "\u25b6 Play demo";
+                } else {
+                    play();
+                }
+            });
+            els.nextBtn.addEventListener("click", appendNext);
+            els.resetBtn.addEventListener("click", () => {
+                playing = false;
+                els.playBtn.textContent = "\u25b6 Play demo";
+                resetChat();
+                appendNext();
+            });
+
+            setMode("A");
+        </script>
+    </body>
+</html>

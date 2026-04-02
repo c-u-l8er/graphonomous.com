@@ -1,0 +1,1295 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>A/B: Novelty Detection — Known Concept vs Novel Concept</title>
+        <style>
+            :root {
+                --bg: #0a0b0f;
+                --surface: #11141c;
+                --surface-2: #171b26;
+                --surface-3: #0d1018;
+                --line: #252b3b;
+                --text: #e9ecf4;
+                --dim: #8a92a7;
+                --good: #38d39f;
+                --accent: #7b8cff;
+                --accent-2: #4af5c6;
+                --warn: #ffc46b;
+                --danger: #ff6b6b;
+                --bubble-user: #1c2435;
+                --bubble-assistant: #141b2c;
+                --shadow: 0 14px 34px rgba(0, 0, 0, 0.35);
+                --terminal-bg: #080a10;
+                --terminal-line: #1a1f2e;
+            }
+
+            * {
+                box-sizing: border-box;
+            }
+
+            html,
+            body {
+                margin: 0;
+                padding: 0;
+                min-height: 100%;
+                background:
+                    radial-gradient(
+                        1200px 800px at 85% -20%,
+                        rgba(123, 140, 255, 0.11),
+                        transparent 60%
+                    ),
+                    radial-gradient(
+                        1000px 700px at -10% 120%,
+                        rgba(74, 245, 198, 0.08),
+                        transparent 55%
+                    ),
+                    var(--bg);
+                color: var(--text);
+                font-family:
+                    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+                    "Liberation Mono", "Courier New", monospace;
+            }
+
+            a {
+                color: inherit;
+            }
+
+            .wrap {
+                max-width: 1220px;
+                margin: 0 auto;
+                padding: 22px;
+            }
+
+            .hero {
+                border: 1px solid var(--line);
+                border-radius: 18px;
+                background: linear-gradient(
+                    160deg,
+                    rgba(123, 140, 255, 0.08),
+                    rgba(17, 20, 28, 0.95) 28%
+                );
+                padding: 18px;
+                box-shadow: var(--shadow);
+            }
+
+            .badge {
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+                border-radius: 999px;
+                border: 1px solid rgba(74, 245, 198, 0.35);
+                color: var(--accent-2);
+                background: rgba(74, 245, 198, 0.08);
+                font-size: 12px;
+                padding: 6px 10px;
+            }
+
+            .dot {
+                width: 8px;
+                height: 8px;
+                border-radius: 50%;
+                background: var(--accent-2);
+                box-shadow: 0 0 12px rgba(74, 245, 198, 0.8);
+                animation: pulse 1.7s infinite;
+            }
+
+            @keyframes pulse {
+                0%,
+                100% {
+                    transform: scale(1);
+                    opacity: 0.85;
+                }
+                50% {
+                    transform: scale(1.3);
+                    opacity: 1;
+                }
+            }
+
+            h1 {
+                margin: 14px 0 6px;
+                font-size: clamp(26px, 4vw, 42px);
+                line-height: 1.06;
+                letter-spacing: -0.02em;
+            }
+
+            .lead {
+                color: var(--dim);
+                max-width: 90ch;
+                line-height: 1.55;
+                margin: 0;
+            }
+
+            .top-controls {
+                margin-top: 14px;
+                display: flex;
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+
+            button {
+                border: 1px solid var(--line);
+                background: var(--surface-2);
+                color: var(--text);
+                border-radius: 10px;
+                padding: 8px 10px;
+                font-size: 12px;
+                cursor: pointer;
+            }
+
+            button:hover {
+                border-color: #3a4256;
+                transform: translateY(-1px);
+            }
+
+            .btn-primary {
+                border-color: rgba(74, 245, 198, 0.35);
+                color: var(--accent-2);
+                background: rgba(74, 245, 198, 0.08);
+            }
+
+            .btn-active {
+                border-color: rgba(123, 140, 255, 0.45);
+                color: var(--accent);
+                background: rgba(123, 140, 255, 0.12);
+            }
+
+            .kpis {
+                margin-top: 12px;
+                display: grid;
+                gap: 10px;
+                grid-template-columns: repeat(4, minmax(0, 1fr));
+            }
+
+            .kpi {
+                border: 1px solid var(--line);
+                border-radius: 12px;
+                background: rgba(18, 21, 30, 0.88);
+                padding: 10px 11px;
+            }
+
+            .kpi-label {
+                color: var(--dim);
+                font-size: 11px;
+                text-transform: uppercase;
+                letter-spacing: 0.08em;
+                margin-bottom: 6px;
+            }
+
+            .kpi-value {
+                color: var(--accent-2);
+                font-size: 20px;
+                font-weight: 700;
+            }
+
+            .kpi-value.danger {
+                color: var(--danger);
+            }
+
+            .kpi-note {
+                color: var(--dim);
+                font-size: 11px;
+                margin-top: 2px;
+                line-height: 1.35;
+            }
+
+            .layout {
+                margin-top: 14px;
+                display: grid;
+                gap: 16px;
+                grid-template-columns: 1.08fr 0.92fr;
+            }
+
+            .panel {
+                border: 1px solid var(--line);
+                border-radius: 16px;
+                background: var(--surface);
+                overflow: hidden;
+                box-shadow: var(--shadow);
+            }
+
+            .panel-head {
+                border-bottom: 1px solid var(--line);
+                padding: 11px 13px;
+                display: flex;
+                justify-content: space-between;
+                gap: 10px;
+                align-items: center;
+                background: rgba(255, 255, 255, 0.01);
+            }
+
+            .panel-title {
+                color: #c9d2e8;
+                font-size: 13px;
+                letter-spacing: 0.08em;
+                text-transform: uppercase;
+            }
+
+            .chat {
+                padding: 13px;
+                overflow: auto;
+                background:
+                    linear-gradient(
+                        transparent 0%,
+                        rgba(255, 255, 255, 0.01) 100%
+                    ),
+                    var(--surface);
+            }
+
+            .bubble {
+                border: 1px solid var(--line);
+                border-radius: 14px;
+                padding: 10px 11px;
+                margin-bottom: 10px;
+                max-width: 94%;
+                box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+                animation: rise 0.24s ease;
+            }
+
+            .bubble.user {
+                margin-left: auto;
+                background: var(--bubble-user);
+            }
+
+            .bubble.assistant {
+                margin-right: auto;
+                background: var(--bubble-assistant);
+            }
+
+            @keyframes rise {
+                from {
+                    opacity: 0;
+                    transform: translateY(8px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+
+            .meta {
+                display: flex;
+                justify-content: space-between;
+                gap: 10px;
+                font-size: 10px;
+                color: var(--dim);
+                margin-bottom: 7px;
+                text-transform: uppercase;
+                letter-spacing: 0.08em;
+            }
+
+            .text {
+                font-size: 13px;
+                line-height: 1.52;
+                white-space: pre-wrap;
+            }
+
+            .code {
+                margin-top: 8px;
+                border: 1px solid #222a3f;
+                border-radius: 10px;
+                overflow: hidden;
+                background: var(--surface-3);
+            }
+
+            .code-head {
+                border-bottom: 1px solid #222a3f;
+                padding: 7px 9px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                color: var(--dim);
+                font-size: 11px;
+            }
+
+            .code pre {
+                margin: 0;
+                padding: 10px 11px;
+                font-size: 12px;
+                line-height: 1.45;
+                color: #d6ddf0;
+                overflow: auto;
+                max-height: 220px;
+            }
+
+            .right {
+                display: grid;
+                gap: 16px;
+                grid-template-rows: 0.93fr 1.07fr;
+            }
+
+            .skill-grid {
+                padding: 12px;
+                overflow: auto;
+            }
+
+            .skill-card {
+                border: 1px solid var(--line);
+                border-radius: 12px;
+                background: rgba(255, 255, 255, 0.01);
+                padding: 9px 10px;
+                margin-bottom: 8px;
+            }
+
+            .skill-top {
+                display: flex;
+                justify-content: space-between;
+                gap: 8px;
+                align-items: baseline;
+                margin-bottom: 5px;
+            }
+
+            .skill-name {
+                font-size: 12px;
+                color: #cfd8ee;
+            }
+
+            .conf {
+                font-size: 11px;
+                color: var(--accent-2);
+            }
+
+            .conf.low {
+                color: var(--danger);
+            }
+
+            .skill-body {
+                color: var(--dim);
+                font-size: 11px;
+                line-height: 1.45;
+            }
+
+            .irrelevant-tag {
+                display: inline-block;
+                padding: 1px 6px;
+                border-radius: 999px;
+                font-size: 9px;
+                text-transform: uppercase;
+                letter-spacing: 0.06em;
+                color: var(--danger);
+                border: 1px solid rgba(255, 107, 107, 0.35);
+                background: rgba(255, 107, 107, 0.08);
+                margin-left: 6px;
+            }
+
+            .trace-wrap {
+                display: grid;
+                grid-template-rows: auto 1fr;
+                min-height: 0;
+            }
+
+            .trace-list {
+                padding: 11px;
+                max-height: 190px;
+                overflow: auto;
+                border-bottom: 1px solid var(--line);
+            }
+
+            .trace-item {
+                border: 1px solid var(--line);
+                border-radius: 11px;
+                padding: 8px;
+                margin-bottom: 7px;
+                background: rgba(255, 255, 255, 0.01);
+            }
+
+            .trace-head {
+                display: flex;
+                justify-content: space-between;
+                align-items: baseline;
+                gap: 7px;
+            }
+
+            .trace-name {
+                font-size: 12px;
+                color: #d2daee;
+            }
+
+            .trace-latency {
+                font-size: 11px;
+                color: var(--dim);
+            }
+
+            .pill {
+                margin-top: 4px;
+                display: inline-block;
+                padding: 2px 8px;
+                border-radius: 999px;
+                font-size: 10px;
+                text-transform: uppercase;
+                letter-spacing: 0.06em;
+            }
+
+            .pill.ok {
+                color: var(--good);
+                border: 1px solid rgba(56, 211, 159, 0.45);
+                background: rgba(56, 211, 159, 0.08);
+            }
+
+            .pill.warn {
+                color: var(--warn);
+                border: 1px solid rgba(255, 196, 107, 0.45);
+                background: rgba(255, 196, 107, 0.08);
+            }
+
+            .tabs {
+                display: flex;
+                overflow: auto;
+                border-bottom: 1px solid var(--line);
+            }
+
+            .tab {
+                border: none;
+                border-right: 1px solid var(--line);
+                border-radius: 0;
+                background: #0f131d;
+                color: var(--dim);
+                font-size: 11px;
+                padding: 9px 11px;
+                white-space: nowrap;
+            }
+
+            .tab.active {
+                color: var(--accent);
+                background: #131a2a;
+            }
+
+            .pane {
+                display: none;
+                height: 255px;
+                overflow: auto;
+            }
+
+            .pane.active {
+                display: block;
+            }
+
+            .pane pre {
+                margin: 0;
+                padding: 10px 11px;
+                font-size: 12px;
+                line-height: 1.44;
+                color: #d4dcec;
+            }
+
+            /* Terminal log strip */
+            .terminal-strip {
+                margin-top: 14px;
+                border: 1px solid var(--terminal-line);
+                border-radius: 12px;
+                background: var(--terminal-bg);
+                overflow: hidden;
+            }
+
+            .terminal-head {
+                padding: 8px 12px;
+                border-bottom: 1px solid var(--terminal-line);
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                background: rgba(255, 255, 255, 0.02);
+            }
+
+            .terminal-title {
+                font-size: 11px;
+                color: var(--dim);
+                text-transform: uppercase;
+                letter-spacing: 0.08em;
+            }
+
+            .terminal-status {
+                font-size: 11px;
+                color: var(--accent-2);
+            }
+
+            .terminal-body {
+                padding: 10px 12px;
+                height: 140px;
+                overflow: auto;
+                font-size: 11px;
+                line-height: 1.6;
+            }
+
+            .log-line {
+                margin-bottom: 4px;
+                opacity: 0;
+                animation: logFade 0.3s ease forwards;
+            }
+
+            @keyframes logFade {
+                from {
+                    opacity: 0;
+                    transform: translateX(-6px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateX(0);
+                }
+            }
+
+            .log-ts {
+                color: #4a5568;
+                margin-right: 8px;
+            }
+
+            .log-tool {
+                color: var(--accent);
+            }
+
+            .log-ok {
+                color: var(--good);
+            }
+
+            .log-warn {
+                color: var(--warn);
+            }
+
+            .log-dim {
+                color: var(--dim);
+            }
+
+            .footer {
+                margin-top: 12px;
+                text-align: center;
+                color: var(--dim);
+                font-size: 12px;
+            }
+
+            @media (max-width: 1024px) {
+                .kpis {
+                    grid-template-columns: repeat(2, minmax(0, 1fr));
+                }
+
+                .layout {
+                    grid-template-columns: 1fr;
+                }
+
+                .right {
+                    grid-template-rows: auto auto;
+                }
+
+                .chat {
+                    height: 450px;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="wrap">
+            <section class="hero">
+                <span class="badge"
+                    ><span class="dot"></span>Live MCP session — payloads captured 2026-04-02 from Graphonomous v0.2.0</span
+                >
+                <h1>A/B: Novelty Detection — Known Concept vs Novel Concept</h1>
+                <p class="lead">
+                    Same <code>learn_detect_novelty</code> tool, two queries:
+                    <b>A</b> asks about Graphonomous itself (well-covered in the
+                    graph, novelty score 0.190); <b>B</b> asks about quantum error
+                    correction (completely novel, novelty score 0.915). The system
+                    knows what it knows — and what it doesn't.
+                </p>
+
+                <div class="top-controls">
+                    <button class="btn-active" id="scenarioA">
+                        Scenario A · known concept
+                    </button>
+                    <button id="scenarioB">Scenario B · novel concept</button>
+                    <button class="btn-primary" id="playBtn">
+                        ▶ Play demo
+                    </button>
+                    <button id="nextBtn">Next bubble</button>
+                    <button id="resetBtn">Reset</button>
+                    <a href="../index.html"
+                        ><button>← Back to all demos</button></a
+                    >
+                    <a href="../../index.html"
+                        ><button>← Back to landing page</button></a
+                    >
+                </div>
+
+                <div class="kpis" id="kpis"></div>
+            </section>
+
+            <section class="layout">
+                <article class="panel">
+                    <div class="panel-head">
+                        <div class="panel-title">
+                            Chat + tool-call storytelling
+                        </div>
+                    </div>
+                    <div class="chat" id="chat"></div>
+                </article>
+
+                <aside class="right">
+                    <section class="panel">
+                        <div class="panel-head">
+                            <div class="panel-title">Nearest nodes</div>
+                        </div>
+                        <div class="skill-grid" id="skills"></div>
+                    </section>
+
+                    <section class="panel trace-wrap">
+                        <div class="panel-head">
+                            <div class="panel-title">
+                                Execution trace + payload explorer
+                            </div>
+                        </div>
+
+                        <div class="trace-list" id="trace"></div>
+
+                        <div class="tabs" id="tabs"></div>
+                        <div id="panes"></div>
+                    </section>
+                </aside>
+            </section>
+
+            <section class="terminal-strip">
+                <div class="terminal-head">
+                    <div class="terminal-title">Live tool-call log</div>
+                    <div class="terminal-status" id="terminalStatus">idle</div>
+                </div>
+                <div class="terminal-body" id="terminalBody"></div>
+            </section>
+
+            <p class="footer">
+                Payloads captured 2026-04-02 from a live Graphonomous v0.2.0 MCP
+                session. Novelty scores, similarity values, and nearest nodes are
+                authentic.
+            </p>
+        </div>
+
+        <script>
+            const data = {
+                A: {
+                    label: "Scenario A · known concept",
+                    kpis: [
+                        {
+                            label: "novelty score",
+                            value: "0.190",
+                            note: "well below threshold (0.35) \u2014 known concept",
+                        },
+                        {
+                            label: "is novel",
+                            value: "false",
+                            note: "graph has extensive coverage",
+                        },
+                        {
+                            label: "max similarity",
+                            value: "0.810",
+                            note: "strong match to existing episodic node",
+                        },
+                        {
+                            label: "nearest nodes",
+                            value: "3",
+                            note: "all highly relevant matches",
+                        },
+                    ],
+                    timeline: [
+                        {
+                            role: "user",
+                            actor: "Developer",
+                            text: "Is the concept 'Graphonomous continual learning knowledge graph topology' novel to your graph?",
+                            snippetName: "user_query.txt",
+                            snippet: {
+                                query: "Graphonomous continual learning knowledge graph topology",
+                                tool: "learn_detect_novelty",
+                            },
+                        },
+                        {
+                            role: "assistant",
+                            actor: "Graphonomous",
+                            text: "Running learn_detect_novelty...",
+                            snippetName: "learn_detect_novelty call",
+                            snippet: {
+                                tool: "learn_detect_novelty",
+                                arguments: {
+                                    query: "Graphonomous continual learning knowledge graph topology",
+                                    limit: 3,
+                                },
+                            },
+                        },
+                        {
+                            role: "assistant",
+                            actor: "Graphonomous",
+                            text: "Not novel (novelty=0.190, threshold=0.35). Max similarity 0.810 \u2014 the graph has extensive coverage of this concept. Top match: episodic node about Graphonomous v0.2.0 npm publication (similarity 0.810, confidence 0.634).",
+                            snippetName: "learn_detect_novelty result",
+                            snippet: {
+                                status: "ok",
+                                threshold: 0.35,
+                                query: "Graphonomous continual learning knowledge graph topology",
+                                is_novel: false,
+                                novelty_score: 0.1897,
+                                max_similarity: 0.8103,
+                                nearest_node_count: 3,
+                                nearest_nodes: [
+                                    {
+                                        node_type: "episodic",
+                                        content: "Graphonomous v0.2.0 published to npm...",
+                                        confidence: 0.6342,
+                                        node_id: "node_e801bc0b231bf500921f325a09395f1b",
+                                        similarity: 0.8103,
+                                    },
+                                    {
+                                        node_type: "episodic",
+                                        content: "Graphonomous v0.2.0 spec compliance...",
+                                        confidence: 0.3006,
+                                        node_id: "node_c0302329010316dbba93f061e078e658",
+                                        similarity: 0.8018,
+                                    },
+                                    {
+                                        node_type: "semantic",
+                                        content: "Graphonomous v0.1.12 spec compliance audit...",
+                                        confidence: 0.2906,
+                                        node_id: "node_ab00bc02d7a7cc0692d1914fa00ff988",
+                                        similarity: 0.7971,
+                                    },
+                                ],
+                            },
+                        },
+                        {
+                            role: "user",
+                            actor: "Developer",
+                            text: "Good — the system correctly recognizes it has deep coverage here.",
+                            snippetName: "user_confirmation.txt",
+                            snippet: {
+                                assessment: "correct",
+                                note: "system knows what it knows",
+                            },
+                        },
+                    ],
+                    trace: [
+                        {
+                            name: "learn_detect_novelty",
+                            latency: "status ok",
+                            status: "ok",
+                            note: "novelty=0.190, is_novel=false, max_sim=0.810, 3 nearest nodes",
+                        },
+                    ],
+                    skills: [
+                        {
+                            name: "v0.2.0 npm publication",
+                            conf: "0.634",
+                            similarity: "0.810",
+                            body: "Episodic node \u2014 Graphonomous v0.2.0 published to npm. Strong match.",
+                            irrelevant: false,
+                        },
+                        {
+                            name: "v0.2.0 spec compliance",
+                            conf: "0.301",
+                            similarity: "0.802",
+                            body: "Episodic node \u2014 Graphonomous v0.2.0 spec compliance implementation. High similarity.",
+                            irrelevant: false,
+                        },
+                        {
+                            name: "v0.1.12 spec audit",
+                            conf: "0.291",
+                            similarity: "0.797",
+                            body: "Semantic node \u2014 Graphonomous v0.1.12 spec compliance audit. Closely related.",
+                            irrelevant: false,
+                        },
+                    ],
+                    tabs: {
+                        "novelty_known.json": {
+                            status: "ok",
+                            threshold: 0.35,
+                            query: "Graphonomous continual learning knowledge graph topology",
+                            is_novel: false,
+                            novelty_score: 0.1897,
+                            max_similarity: 0.8103,
+                            nearest_node_count: 3,
+                            nearest_nodes: [
+                                {
+                                    node_type: "episodic",
+                                    content: "Graphonomous v0.2.0 published to npm...",
+                                    confidence: 0.6342,
+                                    node_id: "node_e801bc0b231bf500921f325a09395f1b",
+                                    similarity: 0.8103,
+                                },
+                                {
+                                    node_type: "episodic",
+                                    content: "Graphonomous v0.2.0 spec compliance...",
+                                    confidence: 0.3006,
+                                    node_id: "node_c0302329010316dbba93f061e078e658",
+                                    similarity: 0.8018,
+                                },
+                                {
+                                    node_type: "semantic",
+                                    content: "Graphonomous v0.1.12 spec compliance audit...",
+                                    confidence: 0.2906,
+                                    node_id: "node_ab00bc02d7a7cc0692d1914fa00ff988",
+                                    similarity: 0.7971,
+                                },
+                            ],
+                        },
+                    },
+                    toolLog: [
+                        {
+                            ts: "17:24:01.101",
+                            tool: "learn_detect_novelty",
+                            args: 'query="Graphonomous continual learning..."',
+                            status: "ok",
+                            latency: "",
+                        },
+                    ],
+                },
+
+                B: {
+                    label: "Scenario B · novel concept",
+                    kpis: [
+                        {
+                            label: "novelty score",
+                            value: "0.915",
+                            note: "far above threshold (0.35) \u2014 completely novel",
+                            danger: true,
+                        },
+                        {
+                            label: "is novel",
+                            value: "true",
+                            note: "graph has zero relevant knowledge",
+                            danger: true,
+                        },
+                        {
+                            label: "max similarity",
+                            value: "0.085",
+                            note: "nearest nodes are completely unrelated",
+                            danger: true,
+                        },
+                        {
+                            label: "nearest nodes",
+                            value: "3",
+                            note: "all irrelevant matches",
+                            danger: true,
+                        },
+                    ],
+                    timeline: [
+                        {
+                            role: "user",
+                            actor: "Developer",
+                            text: "Is the concept 'quantum error correction for distributed graph federation protocols' novel to your graph?",
+                            snippetName: "user_query.txt",
+                            snippet: {
+                                query: "quantum error correction for distributed graph federation protocols",
+                                tool: "learn_detect_novelty",
+                            },
+                        },
+                        {
+                            role: "assistant",
+                            actor: "Graphonomous",
+                            text: "Running learn_detect_novelty...",
+                            snippetName: "learn_detect_novelty call",
+                            snippet: {
+                                tool: "learn_detect_novelty",
+                                arguments: {
+                                    query: "quantum error correction for distributed graph federation protocols",
+                                    limit: 3,
+                                },
+                            },
+                        },
+                        {
+                            role: "assistant",
+                            actor: "Graphonomous",
+                            text: "Highly novel! Novelty score 0.915 (threshold 0.35). Max similarity only 0.085 \u2014 the graph has no relevant knowledge about quantum error correction. Nearest nodes are completely unrelated (Demo.html updated, Product Quality, Feature Flag Path Trace). This is a clear signal to learn before acting.",
+                            snippetName: "learn_detect_novelty result",
+                            snippet: {
+                                status: "ok",
+                                threshold: 0.35,
+                                query: "quantum error correction for distributed graph federation protocols",
+                                is_novel: true,
+                                novelty_score: 0.9151,
+                                max_similarity: 0.0849,
+                                nearest_node_count: 3,
+                                nearest_nodes: [
+                                    {
+                                        node_type: "episodic",
+                                        content: "Demo.html updated with real...",
+                                        confidence: 0.7504,
+                                        node_id: "node_a5baadc44e0f2ff3cebbc207fe5db8a0",
+                                        similarity: 0.0734,
+                                    },
+                                    {
+                                        node_type: "semantic",
+                                        content: "Product Quality...",
+                                        confidence: 0.5955,
+                                        node_id: "node_03ad47a10848c311f26e897aabecdafe",
+                                        similarity: 0.0779,
+                                    },
+                                    {
+                                        node_type: "procedural",
+                                        content: "Skill: Feature Flag Path Trace...",
+                                        confidence: 0.4845,
+                                        node_id: "node_d13eaf96e1f72502c3347bede27681d2",
+                                        similarity: 0.0849,
+                                    },
+                                ],
+                            },
+                        },
+                        {
+                            role: "user",
+                            actor: "Developer",
+                            text: "Perfect — the system knows it has zero relevant knowledge and signals learn-before-act.",
+                            snippetName: "user_confirmation.txt",
+                            snippet: {
+                                assessment: "correct",
+                                note: "system knows what it doesn't know",
+                            },
+                        },
+                    ],
+                    trace: [
+                        {
+                            name: "learn_detect_novelty",
+                            latency: "status ok",
+                            status: "ok",
+                            note: "novelty=0.915, is_novel=true, max_sim=0.085, 3 nearest (all irrelevant)",
+                        },
+                    ],
+                    skills: [
+                        {
+                            name: "Demo.html updated",
+                            conf: "0.750",
+                            similarity: "0.073",
+                            body: "Episodic node \u2014 Demo.html updated with real data. Completely unrelated to quantum error correction.",
+                            irrelevant: true,
+                        },
+                        {
+                            name: "Product Quality",
+                            conf: "0.596",
+                            similarity: "0.078",
+                            body: "Semantic node \u2014 Higher product quality leads to increased customer satisfaction. No connection to the query.",
+                            irrelevant: true,
+                        },
+                        {
+                            name: "Feature Flag Path Trace",
+                            conf: "0.485",
+                            similarity: "0.085",
+                            body: "Procedural node \u2014 Trace a feature flag's influence on code paths. Entirely different domain.",
+                            irrelevant: true,
+                        },
+                    ],
+                    tabs: {
+                        "novelty_novel.json": {
+                            status: "ok",
+                            threshold: 0.35,
+                            query: "quantum error correction for distributed graph federation protocols",
+                            is_novel: true,
+                            novelty_score: 0.9151,
+                            max_similarity: 0.0849,
+                            nearest_node_count: 3,
+                            nearest_nodes: [
+                                {
+                                    node_type: "episodic",
+                                    content: "Demo.html updated with real...",
+                                    confidence: 0.7504,
+                                    node_id: "node_a5baadc44e0f2ff3cebbc207fe5db8a0",
+                                    similarity: 0.0734,
+                                },
+                                {
+                                    node_type: "semantic",
+                                    content: "Product Quality...",
+                                    confidence: 0.5955,
+                                    node_id: "node_03ad47a10848c311f26e897aabecdafe",
+                                    similarity: 0.0779,
+                                },
+                                {
+                                    node_type: "procedural",
+                                    content: "Skill: Feature Flag Path Trace...",
+                                    confidence: 0.4845,
+                                    node_id: "node_d13eaf96e1f72502c3347bede27681d2",
+                                    similarity: 0.0849,
+                                },
+                            ],
+                        },
+                    },
+                    toolLog: [
+                        {
+                            ts: "17:24:02.201",
+                            tool: "learn_detect_novelty",
+                            args: 'query="quantum error correction..."',
+                            status: "ok",
+                            latency: "",
+                        },
+                    ],
+                },
+            };
+
+            const els = {
+                scenarioA: document.getElementById("scenarioA"),
+                scenarioB: document.getElementById("scenarioB"),
+                playBtn: document.getElementById("playBtn"),
+                nextBtn: document.getElementById("nextBtn"),
+                resetBtn: document.getElementById("resetBtn"),
+                kpis: document.getElementById("kpis"),
+                chat: document.getElementById("chat"),
+                skills: document.getElementById("skills"),
+                trace: document.getElementById("trace"),
+                tabs: document.getElementById("tabs"),
+                panes: document.getElementById("panes"),
+                terminalBody: document.getElementById("terminalBody"),
+                terminalStatus: document.getElementById("terminalStatus"),
+            };
+
+            let mode = "A";
+            let idx = 0;
+            let playing = false;
+            let logIdx = 0;
+
+            function renderKpis() {
+                const kpis = data[mode].kpis;
+                els.kpis.innerHTML = "";
+                for (const k of kpis) {
+                    const d = document.createElement("div");
+                    d.className = "kpi";
+                    d.innerHTML = `
+            <div class="kpi-label">${k.label}</div>
+            <div class="kpi-value${k.danger ? " danger" : ""}">${k.value}</div>
+            <div class="kpi-note">${k.note}</div>
+          `;
+                    els.kpis.appendChild(d);
+                }
+            }
+
+            function renderSkills() {
+                els.skills.innerHTML = "";
+                for (const s of data[mode].skills) {
+                    const c = document.createElement("div");
+                    c.className = "skill-card";
+                    const tag = s.irrelevant
+                        ? '<span class="irrelevant-tag">irrelevant</span>'
+                        : "";
+                    const confClass = s.irrelevant ? "conf low" : "conf";
+                    c.innerHTML = `
+            <div class="skill-top">
+              <div class="skill-name">${s.name}${tag}</div>
+              <div class="${confClass}">conf ${s.conf} · sim ${s.similarity}</div>
+            </div>
+            <div class="skill-body">${s.body}</div>
+          `;
+                    els.skills.appendChild(c);
+                }
+            }
+
+            function renderTrace() {
+                els.trace.innerHTML = "";
+                for (const t of data[mode].trace) {
+                    const item = document.createElement("div");
+                    item.className = "trace-item";
+                    item.innerHTML = `
+            <div class="trace-head">
+              <div class="trace-name">${t.name}</div>
+              <div class="trace-latency">${t.latency}</div>
+            </div>
+            <span class="pill ${t.status === "ok" ? "ok" : "warn"}">${t.status}</span>
+            <div style="margin-top:5px;color:var(--dim);font-size:11px;line-height:1.4;">${t.note}</div>
+          `;
+                    els.trace.appendChild(item);
+                }
+            }
+
+            function renderTabs() {
+                const tabs = Object.keys(data[mode].tabs);
+                els.tabs.innerHTML = "";
+                els.panes.innerHTML = "";
+
+                tabs.forEach((name, i) => {
+                    const b = document.createElement("button");
+                    b.className = `tab ${i === 0 ? "active" : ""}`;
+                    b.textContent = name;
+                    b.dataset.name = name;
+
+                    const pane = document.createElement("div");
+                    pane.className = `pane ${i === 0 ? "active" : ""}`;
+                    pane.dataset.name = name;
+
+                    const pre = document.createElement("pre");
+                    pre.textContent = JSON.stringify(
+                        data[mode].tabs[name],
+                        null,
+                        2,
+                    );
+                    pane.appendChild(pre);
+
+                    b.addEventListener("click", () => {
+                        [...els.tabs.children].forEach((x) =>
+                            x.classList.toggle(
+                                "active",
+                                x.dataset.name === name,
+                            ),
+                        );
+                        [...els.panes.children].forEach((x) =>
+                            x.classList.toggle(
+                                "active",
+                                x.dataset.name === name,
+                            ),
+                        );
+                    });
+
+                    els.tabs.appendChild(b);
+                    els.panes.appendChild(pane);
+                });
+            }
+
+            function clearTerminal() {
+                els.terminalBody.innerHTML = "";
+                logIdx = 0;
+                els.terminalStatus.textContent = "idle";
+            }
+
+            function appendLog(entry) {
+                const line = document.createElement("div");
+                line.className = "log-line";
+                const statusClass =
+                    entry.status === "ok" ? "log-ok" : "log-warn";
+                line.innerHTML = `
+          <span class="log-ts">${entry.ts}</span>
+          <span class="log-tool">${entry.tool}</span>
+          <span class="log-dim">(${entry.args})</span>
+          <span class="${statusClass}">[${entry.status}]</span>
+          ${entry.latency ? `<span class="log-dim">${entry.latency}</span>` : ""}
+        `;
+                els.terminalBody.appendChild(line);
+                els.terminalBody.scrollTop = els.terminalBody.scrollHeight;
+            }
+
+            function syncLog() {
+                const log = data[mode].toolLog;
+                while (logIdx < log.length) {
+                    appendLog(log[logIdx]);
+                    logIdx++;
+                }
+                if (logIdx > 0) {
+                    els.terminalStatus.textContent = `${logIdx} calls logged`;
+                }
+            }
+
+            function bubble(item, step) {
+                const node = document.createElement("div");
+                node.className = `bubble ${item.role}`;
+
+                const meta = document.createElement("div");
+                meta.className = "meta";
+                meta.innerHTML = `<span>${item.actor}</span><span>step ${step + 1}</span>`;
+
+                const text = document.createElement("div");
+                text.className = "text";
+                text.textContent = item.text;
+
+                const code = document.createElement("div");
+                code.className = "code";
+
+                const head = document.createElement("div");
+                head.className = "code-head";
+
+                const title = document.createElement("span");
+                title.textContent = item.snippetName;
+
+                const copy = document.createElement("button");
+                copy.textContent = "Copy JSON";
+                copy.style.padding = "4px 8px";
+                copy.style.fontSize = "11px";
+                copy.style.borderRadius = "8px";
+                copy.addEventListener("click", async () => {
+                    try {
+                        await navigator.clipboard.writeText(
+                            JSON.stringify(item.snippet, null, 2),
+                        );
+                        copy.textContent = "Copied";
+                        setTimeout(
+                            () => (copy.textContent = "Copy JSON"),
+                            1000,
+                        );
+                    } catch {
+                        copy.textContent = "Copy failed";
+                        setTimeout(
+                            () => (copy.textContent = "Copy JSON"),
+                            1200,
+                        );
+                    }
+                });
+
+                head.appendChild(title);
+                head.appendChild(copy);
+
+                const pre = document.createElement("pre");
+                pre.textContent = JSON.stringify(item.snippet, null, 2);
+
+                code.appendChild(head);
+                code.appendChild(pre);
+
+                node.appendChild(meta);
+                node.appendChild(text);
+                node.appendChild(code);
+
+                return node;
+            }
+
+            function appendNext() {
+                const timeline = data[mode].timeline;
+                if (idx >= timeline.length) return false;
+                const item = timeline[idx];
+                els.chat.appendChild(bubble(item, idx));
+                els.chat.scrollTop = els.chat.scrollHeight;
+                idx++;
+
+                // Sync terminal log
+                syncLog();
+
+                return true;
+            }
+
+            function resetChat() {
+                idx = 0;
+                els.chat.innerHTML = "";
+                clearTerminal();
+            }
+
+            async function play() {
+                if (playing) return;
+                playing = true;
+                els.playBtn.textContent = "⏸ Playing...";
+                els.terminalStatus.textContent = "streaming...";
+                while (idx < data[mode].timeline.length && playing) {
+                    appendNext();
+                    await new Promise((r) => setTimeout(r, 720));
+                }
+                playing = false;
+                els.playBtn.textContent = "▶ Play demo";
+                els.terminalStatus.textContent = `${logIdx} calls logged`;
+            }
+
+            function setMode(next) {
+                mode = next;
+                playing = false;
+                els.playBtn.textContent = "▶ Play demo";
+                els.scenarioA.classList.toggle("btn-active", next === "A");
+                els.scenarioB.classList.toggle("btn-active", next === "B");
+                renderKpis();
+                renderSkills();
+                renderTrace();
+                renderTabs();
+                resetChat();
+                appendNext();
+                appendNext();
+            }
+
+            els.scenarioA.addEventListener("click", () => setMode("A"));
+            els.scenarioB.addEventListener("click", () => setMode("B"));
+            els.playBtn.addEventListener("click", () => {
+                if (playing) {
+                    playing = false;
+                    els.playBtn.textContent = "▶ Play demo";
+                } else {
+                    play();
+                }
+            });
+            els.nextBtn.addEventListener("click", appendNext);
+            els.resetBtn.addEventListener("click", () => {
+                playing = false;
+                els.playBtn.textContent = "▶ Play demo";
+                resetChat();
+                appendNext();
+            });
+
+            setMode("A");
+        </script>
+    </body>
+</html>

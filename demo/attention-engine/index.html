@@ -3,7 +3,7 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Graphonomous Demo — Codebase Skill Learning (A/B)</title>
+        <title>Attention Engine — Proactive Goal Prioritization</title>
         <style>
             :root {
                 --bg: #0a0b0f;
@@ -351,6 +351,42 @@
                 line-height: 1.45;
             }
 
+            .routing-label {
+                display: inline-block;
+                padding: 2px 7px;
+                border-radius: 999px;
+                font-size: 10px;
+                text-transform: uppercase;
+                letter-spacing: 0.06em;
+                margin-top: 5px;
+            }
+
+            .routing-label.fast {
+                color: var(--good);
+                border: 1px solid rgba(56, 211, 159, 0.45);
+                background: rgba(56, 211, 159, 0.08);
+            }
+
+            .routing-label.deliberate {
+                color: var(--warn);
+                border: 1px solid rgba(255, 196, 107, 0.45);
+                background: rgba(255, 196, 107, 0.08);
+            }
+
+            .group-heading {
+                color: var(--dim);
+                font-size: 10px;
+                text-transform: uppercase;
+                letter-spacing: 0.1em;
+                margin: 10px 0 6px;
+                padding-bottom: 4px;
+                border-bottom: 1px solid var(--line);
+            }
+
+            .group-heading:first-child {
+                margin-top: 0;
+            }
+
             .trace-wrap {
                 display: grid;
                 grid-template-rows: auto 1fr;
@@ -557,30 +593,33 @@
         <div class="wrap">
             <section class="hero">
                 <span class="badge"
-                    ><span class="dot"></span>Live MCP session replay with real
-                    captured payloads</span
+                    ><span class="dot"></span>Live MCP session &mdash; payloads captured 2026-04-02 from Graphonomous v0.2.0</span
                 >
-                <h1>A/B: Teaching Graphonomous to Navigate a Real Codebase</h1>
+                <h1>Attention Engine &mdash; Proactive Goal Prioritization</h1>
                 <p class="lead">
-                    Same user ask, two outcomes: <b>A</b> starts with no
-                    repo-specific procedural memory; <b>B</b> learns traversal
-                    skills from outcomes, links them to a goal, and answers
-                    architecture questions with clearer, faster traces. All
-                    payloads below are from a real Graphonomous MCP session.
+                    The attention engine continuously surveys active goals,
+                    computes coverage scores, and ranks them by urgency &times;
+                    gap. <b>A</b> shows a single focused view (top 3 items
+                    needing attention); <b>B</b> shows the full attention map
+                    with &kappa;-routing information revealing which goals need
+                    fast retrieval vs deliberation.
                 </p>
 
                 <div class="top-controls">
                     <button class="btn-active" id="scenarioA">
-                        Scenario A · baseline
+                        Scenario A &middot; top 3 priority
                     </button>
-                    <button id="scenarioB">Scenario B · learned skills</button>
+                    <button id="scenarioB">Scenario B &middot; full attention survey (7 goals)</button>
                     <button class="btn-primary" id="playBtn">
-                        ▶ Play demo
+                        &#9654; Play demo
                     </button>
                     <button id="nextBtn">Next bubble</button>
                     <button id="resetBtn">Reset</button>
-                    <a href="./index.html"
-                        ><button>← Back to landing page</button></a
+                    <a href="../index.html"
+                        ><button>&larr; Back to all demos</button></a
+                    >
+                    <a href="../../index.html"
+                        ><button>&larr; Back to landing page</button></a
                     >
                 </div>
 
@@ -600,7 +639,7 @@
                 <aside class="right">
                     <section class="panel">
                         <div class="panel-head">
-                            <div class="panel-title">Skill graph snapshot</div>
+                            <div class="panel-title">Goal attention map</div>
                         </div>
                         <div class="skill-grid" id="skills"></div>
                     </section>
@@ -629,599 +668,381 @@
             </section>
 
             <p class="footer">
-                Payloads captured from a real Graphonomous MCP session via
-                <code>capture_demo_tool_calls.py</code>. Node IDs, confidence
-                values, and latencies are authentic.
+                Payloads captured 2026-04-02 from a live Graphonomous v0.2.0 MCP
+                session. Goal titles, attention scores, coverage rationale, and
+                &kappa;-routing decisions are authentic.
             </p>
         </div>
 
         <script>
-            // Real captured data from Graphonomous MCP session
             const data = {
                 A: {
-                    label: "Scenario A · baseline",
+                    label: "Scenario A \u00b7 top 3 priority",
                     kpis: [
                         {
-                            label: "skills created",
-                            value: "0",
-                            note: "no repo-specific procedural memory yet",
+                            label: "active goals",
+                            value: "7",
+                            note: "goals currently tracked by the attention engine",
                         },
                         {
-                            label: "confidence delta",
-                            value: "+0.00",
-                            note: "no skill update applied",
+                            label: "critical priority",
+                            value: "1",
+                            note: "MCP registry listings \u2014 progress 0.3",
                         },
                         {
-                            label: "top match score",
-                            value: "0.010",
-                            note: "very low semantic similarity",
+                            label: "high priority",
+                            value: "3",
+                            note: "LongMemEval, WebHost tests, codebase onboarding",
                         },
                         {
-                            label: "query latency",
-                            value: "14.2 ms",
-                            note: "fast but low-signal retrieval",
+                            label: "normal priority",
+                            value: "3",
+                            note: "OS-E001, \u03ba preprint, awesome-lists",
                         },
                     ],
                     timeline: [
                         {
                             role: "user",
                             actor: "Developer",
-                            text: "You are my repo assistant. Explain how an incoming request reaches persistence in this codebase.",
-                            snippetName: "user_goal.txt",
+                            text: "What should I focus on right now?",
+                            snippetName: "user_ask.txt",
                             snippet: {
-                                goal: "trace request path route -> handler -> service -> persistence",
-                                project: "large mono-repo",
+                                intent: "prioritization",
+                                query: "What should I focus on right now?",
                             },
                         },
                         {
                             role: "assistant",
                             actor: "Graphonomous",
-                            text: "I only have generic coding heuristics. I'll search broadly first.",
-                            snippetName: "query_graph call",
+                            text: "Running manage_goal list_goals to check the current priorities...",
+                            snippetName: "manage_goal list_goals call",
                             snippet: {
-                                tool: "query_graph",
+                                tool: "manage_goal",
                                 arguments: {
-                                    operation: "similarity_search",
-                                    query: "trace request flow from route to persistence in unfamiliar codebase",
+                                    operation: "list_goals",
                                 },
                             },
                         },
                         {
                             role: "assistant",
                             actor: "Graphonomous",
-                            text: "Low-signal retrieval. I found 5 nodes but none are repo-specific traversal skills. Top score is only 0.010.",
-                            snippetName: "query_graph result",
-                            snippet: {
-                                status: "ok",
-                                result: {
-                                    count: 5,
-                                    matches: [
-                                        {
-                                            node_type: "semantic",
-                                            content:
-                                                "MCP e2e regression node [mcp-e2e-token-1772039697-3911829]",
-                                            confidence: 0.59,
-                                            score: 0.0064,
-                                            similarity: 0.0108,
-                                        },
-                                        {
-                                            node_type: "semantic",
-                                            content:
-                                                "MCP e2e regression node 1772039501",
-                                            confidence: 0.59,
-                                            score: 0.0033,
-                                            similarity: 0.0056,
-                                        },
-                                    ],
+                            text: "7 goals tracked. Top 3 by priority:\n\n1. MCP registry listings (critical, progress 0.3)\n   goal_620d7e84dbe34f450c87d321ce22f153\n\n2. Run LongMemEval benchmark (high, progress 0.0)\n   goal_18c688252e1491ba68f5c8efdde22711\n\n3. Add test coverage to WebHost.Systems (high, progress 0.9)\n   goal_0ad91f09540b79ac15c69ea1fc0046ee",
+                            snippetName: "manage_goal list_goals result (top 3)",
+                            snippet: [
+                                {
+                                    goal_id: "goal_620d7e84dbe34f450c87d321ce22f153",
+                                    goal_title: "MCP registry listings",
+                                    priority: "critical",
+                                    progress: 0.3,
                                 },
-                            },
-                        },
-                        {
-                            role: "assistant",
-                            actor: "Graphonomous",
-                            text: "Tentative answer: request likely enters router and eventually calls DB layer, but concrete path confidence is low. No procedural skills found for this repo.",
-                            snippetName: "tentative_answer.md",
-                            snippet: {
-                                confidence: 0.46,
-                                uncertainty:
-                                    "missing repo-specific procedural memory",
-                                top_match_type: "semantic",
-                                top_match_score: 0.0108,
-                            },
+                                {
+                                    goal_id: "goal_18c688252e1491ba68f5c8efdde22711",
+                                    goal_title: "Run LongMemEval benchmark on Graphonomous",
+                                    priority: "high",
+                                    progress: 0.0,
+                                },
+                                {
+                                    goal_id: "goal_0ad91f09540b79ac15c69ea1fc0046ee",
+                                    goal_title: "Add test coverage to WebHost.Systems",
+                                    priority: "high",
+                                    progress: 0.9,
+                                },
+                            ],
                         },
                         {
                             role: "user",
                             actor: "Developer",
-                            text: "That's too vague. I want a repeatable repo traversal method and faster answers next time.",
-                            snippetName: "outcome_signal.txt",
+                            text: "Good \u2014 the registry listings are critical priority with progress 0.3, and WebHost tests are almost done at 0.9.",
+                            snippetName: "user_observation.txt",
                             snippet: {
-                                outcome: "partial_success",
-                                desired_improvement:
-                                    "procedural skill for codebase traversal",
+                                observation: "MCP registry is critical but only 30% done; WebHost tests nearly complete at 90%",
+                                insight: "priority + progress gives actionable focus",
                             },
                         },
                     ],
                     trace: [
                         {
-                            name: "query_graph similarity_search",
-                            latency: "14.2 ms",
-                            status: "warn",
-                            note: "5 matches, top score 0.010 (very low)",
-                        },
-                        {
-                            name: "response synthesis",
-                            latency: "~2.8 s",
-                            status: "warn",
-                            note: "answer includes high uncertainty",
+                            name: "manage_goal list_goals",
+                            latency: "\u2014",
+                            status: "ok",
+                            note: "7 goals: 1 critical, 3 high, 3 normal",
                         },
                     ],
                     skills: [
                         {
-                            name: "Generic: Initial codebase scan",
-                            conf: "0.44",
-                            body: "List root dirs, identify language, then grep routes/services. No repo-specific patterns.",
+                            name: "MCP registry listings",
+                            conf: "critical",
+                            body: "progress 0.3 \u00b7 goal_620d7e84...",
                         },
                         {
-                            name: "Generic: API flow tracing",
-                            conf: "0.38",
-                            body: "Search handlers and references, but no repo naming conventions captured.",
+                            name: "LongMemEval benchmark",
+                            conf: "high",
+                            body: "progress 0.0 \u00b7 goal_18c68825...",
+                        },
+                        {
+                            name: "WebHost.Systems tests",
+                            conf: "high",
+                            body: "progress 0.9 \u00b7 goal_0ad91f09...",
                         },
                     ],
                     tabs: {
-                        "query_graph_baseline.json": {
-                            request: {
-                                operation: "similarity_search",
-                                query: "trace request flow from route to persistence in unfamiliar codebase",
+                        "goals_top3.json": [
+                            {
+                                goal_id: "goal_620d7e84dbe34f450c87d321ce22f153",
+                                goal_title: "MCP registry listings",
+                                priority: "critical",
+                                progress: 0.3,
                             },
-                            response: {
-                                status: "ok",
-                                count: 5,
-                                top_score: 0.0108,
-                                missing: "repo-specific procedural skills",
+                            {
+                                goal_id: "goal_18c688252e1491ba68f5c8efdde22711",
+                                goal_title: "Run LongMemEval benchmark on Graphonomous",
+                                priority: "high",
+                                progress: 0.0,
                             },
-                        },
-                        "baseline_outcome.json": {
-                            status: "partial_success",
-                            confidence: 0.46,
-                            failure_mode: "insufficient procedural grounding",
-                        },
+                            {
+                                goal_id: "goal_0ad91f09540b79ac15c69ea1fc0046ee",
+                                goal_title: "Add test coverage to WebHost.Systems",
+                                priority: "high",
+                                progress: 0.9,
+                            },
+                        ],
                     },
                     toolLog: [
                         {
-                            ts: "12:35:22.101",
-                            tool: "query_graph",
-                            args: 'operation=similarity_search query="trace request..."',
+                            ts: "17:25:01.101",
+                            tool: "manage_goal",
+                            args: "operation=list_goals",
                             status: "ok",
-                            latency: "14.2ms",
+                            latency: "",
                         },
                     ],
                 },
 
                 B: {
-                    label: "Scenario B · learned skills",
+                    label: "Scenario B \u00b7 full attention survey (7 goals)",
                     kpis: [
                         {
-                            label: "skills created",
-                            value: "3",
-                            note: "repo-specific procedural nodes stored",
+                            label: "active goals surveyed",
+                            value: "7",
+                            note: "all goals ranked by attention engine",
                         },
                         {
-                            label: "confidence delta",
-                            value: "+0.093",
-                            note: "per-skill uplift from learn_from_outcome",
+                            label: "survey latency",
+                            value: "~300ms",
+                            note: "full coverage + topology eval for 7 goals",
                         },
                         {
-                            label: "top match score",
-                            value: "0.671",
-                            note: "62x higher similarity than baseline",
+                            label: "top attention score",
+                            value: "0.299",
+                            note: "MCP registry listings — coverage gap 0.492",
                         },
                         {
-                            label: "query latency",
-                            value: "8.2 ms",
-                            note: "faster retrieval with targeted skills",
+                            label: "κ-routing split",
+                            value: "4 fast / 3 deliberate",
+                            note: "3 goals with κ=1 require cycle-aware reasoning",
                         },
                     ],
                     timeline: [
                         {
                             role: "user",
                             actor: "Developer",
-                            text: "Let's train you: create skills for traversing this repo and use them on the next architecture question.",
-                            snippetName: "training_intent.txt",
+                            text: "Run an attention survey across all active goals — what should I focus on next?",
+                            snippetName: "user_ask.txt",
                             snippet: {
-                                training: true,
-                                objective:
-                                    "build procedural memory for this codebase",
+                                intent: "goal_prioritization",
+                                query: "attention survey across all goals",
                             },
                         },
                         {
                             role: "assistant",
                             actor: "Graphonomous",
-                            text: "Creating procedural skill: Request Path Trace",
-                            snippetName: "store_node (skill_1)",
+                            text: "Running attention_survey with include_idle=true to rank all 7 active goals...",
+                            snippetName: "attention_survey call",
                             snippet: {
-                                tool: "store_node",
+                                tool: "attention_survey",
                                 arguments: {
-                                    node_type: "procedural",
-                                    source: "graphonomous.com_demo",
-                                    content:
-                                        "Skill: Request Path Trace [demo-skill-1772044523] - Identify route modules, map handlers, follow service calls, then persistence adapters in order.",
-                                },
-                                result: {
-                                    status: "stored",
-                                    node_id:
-                                        "node_0c831e1f6f6367e61a69b8a8aeeafb59",
-                                    confidence: 0.5,
+                                    include_idle: true,
                                 },
                             },
                         },
                         {
                             role: "assistant",
                             actor: "Graphonomous",
-                            text: "Creating procedural skill: Flag Path Trace",
-                            snippetName: "store_node (skill_2)",
+                            text: "Attention survey complete — 7 goals ranked by composite attention score (priority × staleness × coverage gap × deadline proximity).\n\nTop priorities:\n\n1. MCP registry listings — score 0.299, dispatch: focus\n   coverage=0.508, κ=0, routing=fast\n\n2. Re-run demos — score 0.270, dispatch: focus\n   coverage=0.518, κ=0, routing=fast\n\n3. LongMemEval benchmark — score 0.269, dispatch: focus\n   coverage=0.525, κ=1, routing=deliberate\n\n4. WebHost.Systems tests — score 0.263, dispatch: focus\n   coverage=0.538, κ=1, routing=deliberate\n\n5. κ arXiv preprint — score 0.201, dispatch: focus\n   coverage=0.512, κ=1, routing=deliberate\n\n6. Publish OS-E001 — score 0.200, dispatch: focus\n7. awesome-lists — score 0.200, dispatch: focus\n\n3 goals have κ=1 (deliberate routing) — cyclic knowledge regions that benefit from deliberation before acting.",
+                            snippetName: "attention_survey result",
                             snippet: {
-                                tool: "store_node",
-                                arguments: {
-                                    node_type: "procedural",
-                                    source: "graphonomous.com_demo",
-                                    content:
-                                        "Skill: Flag Path Trace [demo-skill-1772044523] - Find flag declaration, rollout gates, and fallback branches.",
-                                },
-                                result: {
-                                    status: "stored",
-                                    node_id:
-                                        "node_dc300e65b34c839da2adf7277cb64833",
-                                    confidence: 0.5,
-                                },
-                            },
-                        },
-                        {
-                            role: "assistant",
-                            actor: "Graphonomous",
-                            text: "Creating procedural skill: Coverage Gap Scan",
-                            snippetName: "store_node (skill_3)",
-                            snippet: {
-                                tool: "store_node",
-                                arguments: {
-                                    node_type: "procedural",
-                                    source: "graphonomous.com_demo",
-                                    content:
-                                        "Skill: Coverage Gap Scan [demo-skill-1772044523] - Map critical path and identify missing integration assertions.",
-                                },
-                                result: {
-                                    status: "stored",
-                                    node_id:
-                                        "node_44a07e105a3ce596575337421dd96098",
-                                    confidence: 0.5,
-                                },
-                            },
-                        },
-                        {
-                            role: "assistant",
-                            actor: "Graphonomous",
-                            text: "Learning from positive outcome to increase confidence on these new procedural nodes. Updated 3 nodes with +0.093 confidence delta each.",
-                            snippetName: "learn_from_outcome call",
-                            snippet: {
-                                tool: "learn_from_outcome",
-                                arguments: {
-                                    action_id:
-                                        "train-codebase-skills-1772044523",
-                                    status: "success",
-                                    confidence: 0.93,
-                                    causal_node_ids:
-                                        '["node_0c831e1f6f6367e61a69b8a8aeeafb59","node_dc300e65b34c839da2adf7277cb64833","node_44a07e105a3ce596575337421dd96098"]',
-                                    evidence:
-                                        '{"runner":"graphonomous.com_demo","signal":"answer_quality_high","reviewer":"developer"}',
-                                },
-                                result: {
-                                    status: "success",
-                                    processed: 3,
-                                    updated: 3,
-                                    updates: [
-                                        {
-                                            node_id:
-                                                "node_0c831e1f6f6367e61a69b8a8aeeafb59",
-                                            old_confidence: 0.5,
-                                            new_confidence: 0.593,
-                                            delta: 0.093,
-                                        },
-                                        {
-                                            node_id:
-                                                "node_dc300e65b34c839da2adf7277cb64833",
-                                            old_confidence: 0.5,
-                                            new_confidence: 0.593,
-                                            delta: 0.093,
-                                        },
-                                        {
-                                            node_id:
-                                                "node_44a07e105a3ce596575337421dd96098",
-                                            old_confidence: 0.5,
-                                            new_confidence: 0.593,
-                                            delta: 0.093,
-                                        },
-                                    ],
-                                },
-                            },
-                        },
-                        {
-                            role: "assistant",
-                            actor: "Graphonomous",
-                            text: "Creating goal: Ship codebase onboarding assistant",
-                            snippetName: "manage_goal create_goal",
-                            snippet: {
-                                tool: "manage_goal",
-                                arguments: {
-                                    operation: "create_goal",
-                                    payload:
-                                        '{"title":"Ship codebase onboarding assistant [demo-skill-1772044523]","priority":"high"}',
-                                },
-                                result: {
-                                    status: "ok",
-                                    id: "goal_8fe5a19ad2fcfc530ef442fef108876e",
-                                    status_field: "proposed",
-                                    priority: "high",
-                                },
-                            },
-                        },
-                        {
-                            role: "assistant",
-                            actor: "Graphonomous",
-                            text: "Linking 3 skill nodes to goal for future retrieval prioritization.",
-                            snippetName: "manage_goal link_nodes",
-                            snippet: {
-                                tool: "manage_goal",
-                                arguments: {
-                                    operation: "link_nodes",
-                                    goal_id:
-                                        "goal_8fe5a19ad2fcfc530ef442fef108876e",
-                                    node_ids:
-                                        '["node_0c831e1f6f6367e61a69b8a8aeeafb59","node_dc300e65b34c839da2adf7277cb64833","node_44a07e105a3ce596575337421dd96098"]',
-                                },
-                                result: {
-                                    status: "ok",
-                                    linked_node_ids: [
-                                        "node_0c831e1f6f6367e61a69b8a8aeeafb59",
-                                        "node_dc300e65b34c839da2adf7277cb64833",
-                                        "node_44a07e105a3ce596575337421dd96098",
-                                    ],
-                                },
-                            },
-                        },
-                        {
-                            role: "assistant",
-                            actor: "Graphonomous",
-                            text: "Reviewing goal coverage. Decision: learn (coverage=0.472, uncertainty=0.338, risk=0.15). Goal remains in 'proposed' status.",
-                            snippetName: "review_goal",
-                            snippet: {
-                                tool: "review_goal",
-                                arguments: {
-                                    goal_id:
-                                        "goal_8fe5a19ad2fcfc530ef442fef108876e",
-                                    signal: '{"retrieved_nodes":[{"id":"node_0c831e1f6f6367e61a69b8a8aeeafb59"},{"id":"node_dc300e65b34c839da2adf7277cb64833"},{"id":"node_44a07e105a3ce596575337421dd96098"}],"outcomes":[{"status":"success","confidence":0.93}],"contradictions":0}',
-                                    apply_decision: "true",
-                                },
-                                result: {
-                                    status: "ok",
-                                    decision: "learn",
-                                    decision_confidence: 0.5479,
-                                    coverage_score: 0.4715,
-                                    uncertainty_score: 0.3375,
-                                    risk_score: 0.15,
-                                    rationale: [
-                                        "coverage=0.472 uncertainty=0.338 risk=0.150 decision=learn",
-                                        "semantic=0.250 consistency=1.000 freshness=0.500 graph_support=0.000 outcomes=0.965",
-                                    ],
-                                },
+                                status: "ok",
+                                autonomy_level: "observe",
+                                attention_items: [
+                                    { goal_id: "goal_620d7e84dbe34f450c87d321ce22f153", goal_title: "MCP registry listings", attention_score: 0.299, dispatch_mode: "focus", coverage_score: 0.508, max_kappa: 0, routing: "fast" },
+                                    { goal_id: "goal_c4a5ee6d4fbcb8ad55fd21f9cec5b559", goal_title: "Re-run demos and update files after attention scaling fix", attention_score: 0.270, dispatch_mode: "focus", coverage_score: 0.518, max_kappa: 0, routing: "fast" },
+                                    { goal_id: "goal_18c688252e1491ba68f5c8efdde22711", goal_title: "Run LongMemEval benchmark on Graphonomous", attention_score: 0.269, dispatch_mode: "focus", coverage_score: 0.525, max_kappa: 1, routing: "deliberate" },
+                                    { goal_id: "goal_0ad91f09540b79ac15c69ea1fc0046ee", goal_title: "Add test coverage to WebHost.Systems", attention_score: 0.263, dispatch_mode: "focus", coverage_score: 0.538, max_kappa: 1, routing: "deliberate" },
+                                    { goal_id: "goal_bf4f5fc122e80a07a5f47b56ede1ff75", goal_title: "Publish kappa invariant arXiv preprint", attention_score: 0.201, dispatch_mode: "focus", coverage_score: 0.512, max_kappa: 1, routing: "deliberate" },
+                                    { goal_id: "goal_03a472627b864e8a9bcad5070c7ce221", goal_title: "Publish OS-E001 on opensentience.org", attention_score: 0.200, dispatch_mode: "focus", coverage_score: 0.510, max_kappa: 0, routing: "fast" },
+                                    { goal_id: "goal_0d42f281d585a44d73808743bc3d801b", goal_title: "Submit to awesome-lists and framework integrations", attention_score: 0.200, dispatch_mode: "focus", coverage_score: 0.514, max_kappa: 0, routing: "fast" },
+                                ],
                             },
                         },
                         {
                             role: "user",
                             actor: "Developer",
-                            text: "Now answer again: how does request -> persistence flow in this codebase?",
-                            snippetName: "repeat_question.txt",
+                            text: "Good — MCP registry is the top priority. 3 goals have κ=1 deliberate routing, which means they sit in cyclic knowledge regions. I'll use topology_analyze + deliberate on those before acting.",
+                            snippetName: "user_conclusion.txt",
                             snippet: {
-                                repeated_query: true,
-                                compare_with_baseline: true,
-                            },
-                        },
-                        {
-                            role: "assistant",
-                            actor: "Graphonomous",
-                            text: "Using learned Skill: Request Path Trace.\n\nTop 3 matches are now procedural skills with high similarity (0.65-0.67):\n1) Skill: Flag Path Trace (sim=0.671)\n2) Skill: Coverage Gap Scan (sim=0.664)\n3) Skill: Request Path Trace (sim=0.649)\n\nAnswer confidence now high with explicit skill-based reasoning path.",
-                            snippetName: "improved_answer.md",
-                            snippet: {
-                                confidence: 0.593,
-                                elapsed_ms: 8.2,
-                                top_match_similarity: 0.671,
-                                reasoning_path:
-                                    "route->handler->service->repository->db",
-                                skills_applied: [
-                                    "Request Path Trace",
-                                    "Coverage Gap Scan",
-                                ],
+                                takeaway: "attention engine ranked 7 goals with coverage + κ routing",
+                                top_priority: "MCP registry listings (score 0.299, fast routing)",
+                                deliberate_goals: 3,
+                                next_action: "focus on MCP registry; deliberate on κ=1 goals before acting",
                             },
                         },
                     ],
                     trace: [
                         {
-                            name: "store_node ×3",
-                            latency: "37.0 ms",
+                            name: "manage_goal list_goals",
+                            latency: "—",
                             status: "ok",
-                            note: "3 procedural skills persisted",
+                            note: "7 goals returned",
                         },
                         {
-                            name: "learn_from_outcome",
-                            latency: "24.0 ms",
+                            name: "attention_survey",
+                            latency: "~300ms",
                             status: "ok",
-                            note: "updated=3, +0.093 confidence each",
-                        },
-                        {
-                            name: "manage_goal create",
-                            latency: "11.1 ms",
-                            status: "ok",
-                            note: "goal_8fe5a19ad2fcfc530ef442fef108876e",
-                        },
-                        {
-                            name: "manage_goal link",
-                            latency: "14.4 ms",
-                            status: "ok",
-                            note: "linked 3 skill nodes",
-                        },
-                        {
-                            name: "review_goal",
-                            latency: "21.0 ms",
-                            status: "ok",
-                            note: "decision=learn, coverage=0.472",
-                        },
-                        {
-                            name: "query_graph (repeat)",
-                            latency: "8.2 ms",
-                            status: "ok",
-                            note: "8 matches, top score 0.671",
+                            note: "7 items ranked with coverage + κ routing",
                         },
                     ],
                     skills: [
                         {
-                            name: "Skill: Request Path Trace",
-                            conf: "0.593",
-                            body: "Identify route modules, map handlers, follow service calls, then persistence adapters in order.",
+                            name: "MCP registry listings",
+                            conf: "critical",
+                            group: "fast",
+                            routing: "fast",
+                            body: "score 0.299 · focus · coverage 0.508 · κ=0",
                         },
                         {
-                            name: "Skill: Flag Path Trace",
-                            conf: "0.593",
-                            body: "Find flag declaration, rollout gates, and fallback branches.",
+                            name: "Re-run demos after fix",
+                            conf: "high",
+                            group: "fast",
+                            routing: "fast",
+                            body: "score 0.270 · focus · coverage 0.518 · κ=0",
                         },
                         {
-                            name: "Skill: Coverage Gap Scan",
-                            conf: "0.593",
-                            body: "Map critical path and identify missing integration assertions.",
+                            name: "LongMemEval benchmark",
+                            conf: "high",
+                            group: "deliberate",
+                            routing: "deliberate",
+                            body: "score 0.269 · focus · coverage 0.525 · κ=1",
+                        },
+                        {
+                            name: "WebHost.Systems tests",
+                            conf: "high",
+                            group: "deliberate",
+                            routing: "deliberate",
+                            body: "score 0.263 · focus · coverage 0.538 · κ=1",
+                        },
+                        {
+                            name: "κ arXiv preprint",
+                            conf: "normal",
+                            group: "deliberate",
+                            routing: "deliberate",
+                            body: "score 0.201 · focus · coverage 0.512 · κ=1",
+                        },
+                        {
+                            name: "Publish OS-E001",
+                            conf: "normal",
+                            group: "fast",
+                            routing: "fast",
+                            body: "score 0.200 · focus · coverage 0.510 · κ=0",
+                        },
+                        {
+                            name: "awesome-lists",
+                            conf: "normal",
+                            group: "fast",
+                            routing: "fast",
+                            body: "score 0.200 · focus · coverage 0.514 · κ=0",
                         },
                     ],
                     tabs: {
-                        "store_skills.json": {
-                            skill_1: {
-                                node_id:
-                                    "node_0c831e1f6f6367e61a69b8a8aeeafb59",
-                                node_type: "procedural",
-                                content:
-                                    "Skill: Request Path Trace [demo-skill-1772044523]...",
-                                confidence: 0.593,
+                        "attention_survey.json": [
+                            {
+                                goal_id: "goal_620d7e84dbe34f450c87d321ce22f153",
+                                goal_title: "MCP registry listings",
+                                attention_score: 0.299,
+                                dispatch_mode: "focus",
+                                coverage_score: 0.508,
+                                max_kappa: 0,
+                                routing: "fast",
                             },
-                            skill_2: {
-                                node_id:
-                                    "node_dc300e65b34c839da2adf7277cb64833",
-                                node_type: "procedural",
-                                content:
-                                    "Skill: Flag Path Trace [demo-skill-1772044523]...",
-                                confidence: 0.593,
+                            {
+                                goal_id: "goal_c4a5ee6d4fbcb8ad55fd21f9cec5b559",
+                                goal_title: "Re-run demos and update files after attention scaling fix",
+                                attention_score: 0.270,
+                                dispatch_mode: "focus",
+                                coverage_score: 0.518,
+                                max_kappa: 0,
+                                routing: "fast",
                             },
-                            skill_3: {
-                                node_id:
-                                    "node_44a07e105a3ce596575337421dd96098",
-                                node_type: "procedural",
-                                content:
-                                    "Skill: Coverage Gap Scan [demo-skill-1772044523]...",
-                                confidence: 0.593,
+                            {
+                                goal_id: "goal_18c688252e1491ba68f5c8efdde22711",
+                                goal_title: "Run LongMemEval benchmark on Graphonomous",
+                                attention_score: 0.269,
+                                dispatch_mode: "focus",
+                                coverage_score: 0.525,
+                                max_kappa: 1,
+                                routing: "deliberate",
                             },
-                        },
-                        "learn_from_outcome.json": {
-                            request: {
-                                action_id: "train-codebase-skills-1772044523",
-                                status: "success",
-                                confidence: 0.93,
-                                causal_node_ids:
-                                    '["node_0c831e1f...","node_dc300e65...","node_44a07e10..."]',
+                            {
+                                goal_id: "goal_0ad91f09540b79ac15c69ea1fc0046ee",
+                                goal_title: "Add test coverage to WebHost.Systems",
+                                attention_score: 0.263,
+                                dispatch_mode: "focus",
+                                coverage_score: 0.538,
+                                max_kappa: 1,
+                                routing: "deliberate",
                             },
-                            response: {
-                                status: "success",
-                                processed: 3,
-                                updated: 3,
+                            {
+                                goal_id: "goal_bf4f5fc122e80a07a5f47b56ede1ff75",
+                                goal_title: "Publish kappa invariant arXiv preprint",
+                                attention_score: 0.201,
+                                dispatch_mode: "focus",
+                                coverage_score: 0.512,
+                                max_kappa: 1,
+                                routing: "deliberate",
                             },
-                        },
-                        "goal_lifecycle.json": {
-                            create_goal: {
-                                id: "goal_8fe5a19ad2fcfc530ef442fef108876e",
-                                status: "ok",
-                                priority: "high",
+                            {
+                                goal_id: "goal_03a472627b864e8a9bcad5070c7ce221",
+                                goal_title: "Publish OS-E001 on opensentience.org",
+                                attention_score: 0.200,
+                                dispatch_mode: "focus",
+                                coverage_score: 0.510,
+                                max_kappa: 0,
+                                routing: "fast",
                             },
-                            link_nodes: {
-                                linked: 3,
-                                status: "ok",
+                            {
+                                goal_id: "goal_0d42f281d585a44d73808743bc3d801b",
+                                goal_title: "Submit to awesome-lists and framework integrations",
+                                attention_score: 0.200,
+                                dispatch_mode: "focus",
+                                coverage_score: 0.514,
+                                max_kappa: 0,
+                                routing: "fast",
                             },
-                            review_goal: {
-                                decision: "learn",
-                                coverage_score: 0.4715,
-                                status: "ok",
-                            },
-                        },
-                        "repeat_query.json": {
-                            request: {
-                                operation: "similarity_search",
-                                query: "demo-skill-1772044523",
-                            },
-                            response: {
-                                count: 8,
-                                top_similarity: 0.671,
-                                top_node_type: "procedural",
-                            },
-                        },
+                        ],
                     },
                     toolLog: [
                         {
-                            ts: "12:35:23.101",
-                            tool: "store_node",
-                            args: 'type=procedural content="Skill: Request Path Trace..."',
-                            status: "ok",
-                            latency: "12.8ms",
-                        },
-                        {
-                            ts: "12:35:23.114",
-                            tool: "store_node",
-                            args: 'type=procedural content="Skill: Flag Path Trace..."',
-                            status: "ok",
-                            latency: "10.2ms",
-                        },
-                        {
-                            ts: "12:35:23.125",
-                            tool: "store_node",
-                            args: 'type=procedural content="Skill: Coverage Gap Scan..."',
-                            status: "ok",
-                            latency: "14.0ms",
-                        },
-                        {
-                            ts: "12:35:23.140",
-                            tool: "learn_from_outcome",
-                            args: "status=success confidence=0.93 causal_nodes=3",
-                            status: "ok",
-                            latency: "24.0ms",
-                        },
-                        {
-                            ts: "12:35:23.165",
+                            ts: "17:25:02.201",
                             tool: "manage_goal",
-                            args: 'operation=create_goal title="Ship codebase onboarding..."',
+                            args: "operation=list_goals",
                             status: "ok",
-                            latency: "11.1ms",
+                            latency: "",
                         },
                         {
-                            ts: "12:35:23.177",
-                            tool: "manage_goal",
-                            args: "operation=link_nodes goal=goal_8fe5a... nodes=3",
+                            ts: "17:25:02.340",
+                            tool: "attention_survey",
+                            args: "include_idle=true",
                             status: "ok",
-                            latency: "14.4ms",
-                        },
-                        {
-                            ts: "12:35:23.192",
-                            tool: "review_goal",
-                            args: "goal=goal_8fe5a... apply_decision=true",
-                            status: "ok",
-                            latency: "21.0ms",
-                        },
-                        {
-                            ts: "12:35:23.214",
-                            tool: "query_graph",
-                            args: 'operation=similarity_search query="demo-skill..."',
-                            status: "ok",
-                            latency: "8.2ms",
+                            latency: "~300ms",
                         },
                     ],
                 },
@@ -1265,18 +1086,55 @@
 
             function renderSkills() {
                 els.skills.innerHTML = "";
-                for (const s of data[mode].skills) {
-                    const c = document.createElement("div");
-                    c.className = "skill-card";
-                    c.innerHTML = `
+                const skills = data[mode].skills;
+                const hasGroups = skills.some((s) => s.group);
+
+                if (hasGroups) {
+                    const groups = {};
+                    for (const s of skills) {
+                        const g = s.group || "other";
+                        if (!groups[g]) groups[g] = [];
+                        groups[g].push(s);
+                    }
+                    const order = ["fast", "deliberate", "other"];
+                    const labels = {
+                        fast: "Fast-routed (\u03ba=0)",
+                        deliberate: "Deliberate-routed (\u03ba=1)",
+                        other: "Other",
+                    };
+                    for (const g of order) {
+                        if (!groups[g]) continue;
+                        const heading = document.createElement("div");
+                        heading.className = "group-heading";
+                        heading.textContent = labels[g] || g;
+                        els.skills.appendChild(heading);
+                        for (const s of groups[g]) {
+                            els.skills.appendChild(makeSkillCard(s));
+                        }
+                    }
+                } else {
+                    for (const s of skills) {
+                        els.skills.appendChild(makeSkillCard(s));
+                    }
+                }
+            }
+
+            function makeSkillCard(s) {
+                const c = document.createElement("div");
+                c.className = "skill-card";
+                let routingHtml = "";
+                if (s.routing) {
+                    routingHtml = `<span class="routing-label ${s.routing}">${s.routing}</span>`;
+                }
+                c.innerHTML = `
             <div class="skill-top">
               <div class="skill-name">${s.name}</div>
-              <div class="conf">conf ${s.conf}</div>
+              <div class="conf">${s.conf}</div>
             </div>
             <div class="skill-body">${s.body}</div>
+            ${routingHtml}
           `;
-                    els.skills.appendChild(c);
-                }
+                return c;
             }
 
             function renderTrace() {
@@ -1456,21 +1314,21 @@
             async function play() {
                 if (playing) return;
                 playing = true;
-                els.playBtn.textContent = "⏸ Playing...";
+                els.playBtn.textContent = "\u23f8 Playing...";
                 els.terminalStatus.textContent = "streaming...";
                 while (idx < data[mode].timeline.length && playing) {
                     appendNext();
                     await new Promise((r) => setTimeout(r, 720));
                 }
                 playing = false;
-                els.playBtn.textContent = "▶ Play demo";
+                els.playBtn.textContent = "\u25b6 Play demo";
                 els.terminalStatus.textContent = `${logIdx} calls logged`;
             }
 
             function setMode(next) {
                 mode = next;
                 playing = false;
-                els.playBtn.textContent = "▶ Play demo";
+                els.playBtn.textContent = "\u25b6 Play demo";
                 els.scenarioA.classList.toggle("btn-active", next === "A");
                 els.scenarioB.classList.toggle("btn-active", next === "B");
                 renderKpis();
@@ -1487,7 +1345,7 @@
             els.playBtn.addEventListener("click", () => {
                 if (playing) {
                     playing = false;
-                    els.playBtn.textContent = "▶ Play demo";
+                    els.playBtn.textContent = "\u25b6 Play demo";
                 } else {
                     play();
                 }
@@ -1495,7 +1353,7 @@
             els.nextBtn.addEventListener("click", appendNext);
             els.resetBtn.addEventListener("click", () => {
                 playing = false;
-                els.playBtn.textContent = "▶ Play demo";
+                els.playBtn.textContent = "\u25b6 Play demo";
                 resetChat();
                 appendNext();
             });

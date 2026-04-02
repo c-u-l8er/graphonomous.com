@@ -1,0 +1,1334 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>A/B: κ-Routing — DAG Fast Path vs Cyclic Deliberation</title>
+        <style>
+            :root {
+                --bg: #0a0b0f;
+                --surface: #11141c;
+                --surface-2: #171b26;
+                --surface-3: #0d1018;
+                --line: #252b3b;
+                --text: #e9ecf4;
+                --dim: #8a92a7;
+                --good: #38d39f;
+                --accent: #7b8cff;
+                --accent-2: #4af5c6;
+                --warn: #ffc46b;
+                --bubble-user: #1c2435;
+                --bubble-assistant: #141b2c;
+                --shadow: 0 14px 34px rgba(0, 0, 0, 0.35);
+                --terminal-bg: #080a10;
+                --terminal-line: #1a1f2e;
+            }
+
+            * {
+                box-sizing: border-box;
+            }
+
+            html,
+            body {
+                margin: 0;
+                padding: 0;
+                min-height: 100%;
+                background:
+                    radial-gradient(
+                        1200px 800px at 85% -20%,
+                        rgba(123, 140, 255, 0.11),
+                        transparent 60%
+                    ),
+                    radial-gradient(
+                        1000px 700px at -10% 120%,
+                        rgba(74, 245, 198, 0.08),
+                        transparent 55%
+                    ),
+                    var(--bg);
+                color: var(--text);
+                font-family:
+                    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+                    "Liberation Mono", "Courier New", monospace;
+            }
+
+            a {
+                color: inherit;
+            }
+
+            .wrap {
+                max-width: 1220px;
+                margin: 0 auto;
+                padding: 22px;
+            }
+
+            .hero {
+                border: 1px solid var(--line);
+                border-radius: 18px;
+                background: linear-gradient(
+                    160deg,
+                    rgba(123, 140, 255, 0.08),
+                    rgba(17, 20, 28, 0.95) 28%
+                );
+                padding: 18px;
+                box-shadow: var(--shadow);
+            }
+
+            .badge {
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+                border-radius: 999px;
+                border: 1px solid rgba(74, 245, 198, 0.35);
+                color: var(--accent-2);
+                background: rgba(74, 245, 198, 0.08);
+                font-size: 12px;
+                padding: 6px 10px;
+            }
+
+            .dot {
+                width: 8px;
+                height: 8px;
+                border-radius: 50%;
+                background: var(--accent-2);
+                box-shadow: 0 0 12px rgba(74, 245, 198, 0.8);
+                animation: pulse 1.7s infinite;
+            }
+
+            @keyframes pulse {
+                0%,
+                100% {
+                    transform: scale(1);
+                    opacity: 0.85;
+                }
+                50% {
+                    transform: scale(1.3);
+                    opacity: 1;
+                }
+            }
+
+            h1 {
+                margin: 14px 0 6px;
+                font-size: clamp(26px, 4vw, 42px);
+                line-height: 1.06;
+                letter-spacing: -0.02em;
+            }
+
+            .lead {
+                color: var(--dim);
+                max-width: 90ch;
+                line-height: 1.55;
+                margin: 0;
+            }
+
+            .top-controls {
+                margin-top: 14px;
+                display: flex;
+                flex-wrap: wrap;
+                gap: 8px;
+            }
+
+            button {
+                border: 1px solid var(--line);
+                background: var(--surface-2);
+                color: var(--text);
+                border-radius: 10px;
+                padding: 8px 10px;
+                font-size: 12px;
+                cursor: pointer;
+            }
+
+            button:hover {
+                border-color: #3a4256;
+                transform: translateY(-1px);
+            }
+
+            .btn-primary {
+                border-color: rgba(74, 245, 198, 0.35);
+                color: var(--accent-2);
+                background: rgba(74, 245, 198, 0.08);
+            }
+
+            .btn-active {
+                border-color: rgba(123, 140, 255, 0.45);
+                color: var(--accent);
+                background: rgba(123, 140, 255, 0.12);
+            }
+
+            .kpis {
+                margin-top: 12px;
+                display: grid;
+                gap: 10px;
+                grid-template-columns: repeat(4, minmax(0, 1fr));
+            }
+
+            .kpi {
+                border: 1px solid var(--line);
+                border-radius: 12px;
+                background: rgba(18, 21, 30, 0.88);
+                padding: 10px 11px;
+            }
+
+            .kpi-label {
+                color: var(--dim);
+                font-size: 11px;
+                text-transform: uppercase;
+                letter-spacing: 0.08em;
+                margin-bottom: 6px;
+            }
+
+            .kpi-value {
+                color: var(--accent-2);
+                font-size: 20px;
+                font-weight: 700;
+            }
+
+            .kpi-note {
+                color: var(--dim);
+                font-size: 11px;
+                margin-top: 2px;
+                line-height: 1.35;
+            }
+
+            .layout {
+                margin-top: 14px;
+                display: grid;
+                gap: 16px;
+                grid-template-columns: 1.08fr 0.92fr;
+            }
+
+            .panel {
+                border: 1px solid var(--line);
+                border-radius: 16px;
+                background: var(--surface);
+                overflow: hidden;
+                box-shadow: var(--shadow);
+            }
+
+            .panel-head {
+                border-bottom: 1px solid var(--line);
+                padding: 11px 13px;
+                display: flex;
+                justify-content: space-between;
+                gap: 10px;
+                align-items: center;
+                background: rgba(255, 255, 255, 0.01);
+            }
+
+            .panel-title {
+                color: #c9d2e8;
+                font-size: 13px;
+                letter-spacing: 0.08em;
+                text-transform: uppercase;
+            }
+
+            .chat {
+                padding: 13px;
+                overflow: auto;
+                background:
+                    linear-gradient(
+                        transparent 0%,
+                        rgba(255, 255, 255, 0.01) 100%
+                    ),
+                    var(--surface);
+            }
+
+            .bubble {
+                border: 1px solid var(--line);
+                border-radius: 14px;
+                padding: 10px 11px;
+                margin-bottom: 10px;
+                max-width: 94%;
+                box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+                animation: rise 0.24s ease;
+            }
+
+            .bubble.user {
+                margin-left: auto;
+                background: var(--bubble-user);
+            }
+
+            .bubble.assistant {
+                margin-right: auto;
+                background: var(--bubble-assistant);
+            }
+
+            @keyframes rise {
+                from {
+                    opacity: 0;
+                    transform: translateY(8px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
+            }
+
+            .meta {
+                display: flex;
+                justify-content: space-between;
+                gap: 10px;
+                font-size: 10px;
+                color: var(--dim);
+                margin-bottom: 7px;
+                text-transform: uppercase;
+                letter-spacing: 0.08em;
+            }
+
+            .text {
+                font-size: 13px;
+                line-height: 1.52;
+                white-space: pre-wrap;
+            }
+
+            .code {
+                margin-top: 8px;
+                border: 1px solid #222a3f;
+                border-radius: 10px;
+                overflow: hidden;
+                background: var(--surface-3);
+            }
+
+            .code-head {
+                border-bottom: 1px solid #222a3f;
+                padding: 7px 9px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                color: var(--dim);
+                font-size: 11px;
+            }
+
+            .code pre {
+                margin: 0;
+                padding: 10px 11px;
+                font-size: 12px;
+                line-height: 1.45;
+                color: #d6ddf0;
+                overflow: auto;
+                max-height: 220px;
+            }
+
+            .right {
+                display: grid;
+                gap: 16px;
+                grid-template-rows: 0.93fr 1.07fr;
+            }
+
+            .skill-grid {
+                padding: 12px;
+                overflow: auto;
+            }
+
+            .skill-card {
+                border: 1px solid var(--line);
+                border-radius: 12px;
+                background: rgba(255, 255, 255, 0.01);
+                padding: 9px 10px;
+                margin-bottom: 8px;
+            }
+
+            .skill-top {
+                display: flex;
+                justify-content: space-between;
+                gap: 8px;
+                align-items: baseline;
+                margin-bottom: 5px;
+            }
+
+            .skill-name {
+                font-size: 12px;
+                color: #cfd8ee;
+            }
+
+            .conf {
+                font-size: 11px;
+                color: var(--accent-2);
+            }
+
+            .skill-body {
+                color: var(--dim);
+                font-size: 11px;
+                line-height: 1.45;
+            }
+
+            .trace-wrap {
+                display: grid;
+                grid-template-rows: auto 1fr;
+                min-height: 0;
+            }
+
+            .trace-list {
+                padding: 11px;
+                max-height: 190px;
+                overflow: auto;
+                border-bottom: 1px solid var(--line);
+            }
+
+            .trace-item {
+                border: 1px solid var(--line);
+                border-radius: 11px;
+                padding: 8px;
+                margin-bottom: 7px;
+                background: rgba(255, 255, 255, 0.01);
+            }
+
+            .trace-head {
+                display: flex;
+                justify-content: space-between;
+                align-items: baseline;
+                gap: 7px;
+            }
+
+            .trace-name {
+                font-size: 12px;
+                color: #d2daee;
+            }
+
+            .trace-latency {
+                font-size: 11px;
+                color: var(--dim);
+            }
+
+            .pill {
+                margin-top: 4px;
+                display: inline-block;
+                padding: 2px 8px;
+                border-radius: 999px;
+                font-size: 10px;
+                text-transform: uppercase;
+                letter-spacing: 0.06em;
+            }
+
+            .pill.ok {
+                color: var(--good);
+                border: 1px solid rgba(56, 211, 159, 0.45);
+                background: rgba(56, 211, 159, 0.08);
+            }
+
+            .pill.warn {
+                color: var(--warn);
+                border: 1px solid rgba(255, 196, 107, 0.45);
+                background: rgba(255, 196, 107, 0.08);
+            }
+
+            .tabs {
+                display: flex;
+                overflow: auto;
+                border-bottom: 1px solid var(--line);
+            }
+
+            .tab {
+                border: none;
+                border-right: 1px solid var(--line);
+                border-radius: 0;
+                background: #0f131d;
+                color: var(--dim);
+                font-size: 11px;
+                padding: 9px 11px;
+                white-space: nowrap;
+            }
+
+            .tab.active {
+                color: var(--accent);
+                background: #131a2a;
+            }
+
+            .pane {
+                display: none;
+                height: 255px;
+                overflow: auto;
+            }
+
+            .pane.active {
+                display: block;
+            }
+
+            .pane pre {
+                margin: 0;
+                padding: 10px 11px;
+                font-size: 12px;
+                line-height: 1.44;
+                color: #d4dcec;
+            }
+
+            /* Terminal log strip */
+            .terminal-strip {
+                margin-top: 14px;
+                border: 1px solid var(--terminal-line);
+                border-radius: 12px;
+                background: var(--terminal-bg);
+                overflow: hidden;
+            }
+
+            .terminal-head {
+                padding: 8px 12px;
+                border-bottom: 1px solid var(--terminal-line);
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                background: rgba(255, 255, 255, 0.02);
+            }
+
+            .terminal-title {
+                font-size: 11px;
+                color: var(--dim);
+                text-transform: uppercase;
+                letter-spacing: 0.08em;
+            }
+
+            .terminal-status {
+                font-size: 11px;
+                color: var(--accent-2);
+            }
+
+            .terminal-body {
+                padding: 10px 12px;
+                height: 140px;
+                overflow: auto;
+                font-size: 11px;
+                line-height: 1.6;
+            }
+
+            .log-line {
+                margin-bottom: 4px;
+                opacity: 0;
+                animation: logFade 0.3s ease forwards;
+            }
+
+            @keyframes logFade {
+                from {
+                    opacity: 0;
+                    transform: translateX(-6px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateX(0);
+                }
+            }
+
+            .log-ts {
+                color: #4a5568;
+                margin-right: 8px;
+            }
+
+            .log-tool {
+                color: var(--accent);
+            }
+
+            .log-ok {
+                color: var(--good);
+            }
+
+            .log-warn {
+                color: var(--warn);
+            }
+
+            .log-dim {
+                color: var(--dim);
+            }
+
+            .footer {
+                margin-top: 12px;
+                text-align: center;
+                color: var(--dim);
+                font-size: 12px;
+            }
+
+            @media (max-width: 1024px) {
+                .kpis {
+                    grid-template-columns: repeat(2, minmax(0, 1fr));
+                }
+
+                .layout {
+                    grid-template-columns: 1fr;
+                }
+
+                .right {
+                    grid-template-rows: auto auto;
+                }
+
+                .chat {
+                    height: 450px;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="wrap">
+            <section class="hero">
+                <span class="badge"
+                    ><span class="dot"></span>Live MCP session — payloads captured 2026-04-02 from Graphonomous v0.2.0</span
+                >
+                <h1>A/B: κ-Routing — DAG Fast Path vs Cyclic Deliberation</h1>
+                <p class="lead">
+                    Same <code>topology_analyze</code> tool, two knowledge topologies:
+                    <b>A</b> queries a DAG region (3 procedural skills with no cycles)
+                    and gets κ=0 fast routing; <b>B</b> queries a 4-node business cycle
+                    and gets κ=1 deliberate routing with fault-line detection and a
+                    deliberation budget. All payloads below are from a real Graphonomous
+                    MCP session.
+                </p>
+
+                <div class="top-controls">
+                    <button class="btn-active" id="scenarioA">
+                        Scenario A · DAG (κ=0)
+                    </button>
+                    <button id="scenarioB">Scenario B · Cycle (κ=1)</button>
+                    <button class="btn-primary" id="playBtn">
+                        ▶ Play demo
+                    </button>
+                    <button id="nextBtn">Next bubble</button>
+                    <button id="resetBtn">Reset</button>
+                    <a href="../index.html"
+                        ><button>← Back to all demos</button></a
+                    >
+                    <a href="../../index.html"
+                        ><button>← Back to landing page</button></a
+                    >
+                </div>
+
+                <div class="kpis" id="kpis"></div>
+            </section>
+
+            <section class="layout">
+                <article class="panel">
+                    <div class="panel-head">
+                        <div class="panel-title">
+                            Chat + tool-call storytelling
+                        </div>
+                    </div>
+                    <div class="chat" id="chat"></div>
+                </article>
+
+                <aside class="right">
+                    <section class="panel">
+                        <div class="panel-head">
+                            <div class="panel-title">Skill graph snapshot</div>
+                        </div>
+                        <div class="skill-grid" id="skills"></div>
+                    </section>
+
+                    <section class="panel trace-wrap">
+                        <div class="panel-head">
+                            <div class="panel-title">
+                                Execution trace + payload explorer
+                            </div>
+                        </div>
+
+                        <div class="trace-list" id="trace"></div>
+
+                        <div class="tabs" id="tabs"></div>
+                        <div id="panes"></div>
+                    </section>
+                </aside>
+            </section>
+
+            <section class="terminal-strip">
+                <div class="terminal-head">
+                    <div class="terminal-title">Live tool-call log</div>
+                    <div class="terminal-status" id="terminalStatus">idle</div>
+                </div>
+                <div class="terminal-body" id="terminalBody"></div>
+            </section>
+
+            <p class="footer">
+                Payloads captured 2026-04-02 from a live Graphonomous v0.2.0 MCP
+                session. Node IDs, κ values, fault lines, and deliberation budgets
+                are authentic.
+            </p>
+        </div>
+
+        <script>
+            const data = {
+                A: {
+                    label: "Scenario A · DAG (κ=0)",
+                    kpis: [
+                        {
+                            label: "κ (kappa)",
+                            value: "0",
+                            note: "no cycles detected in this region",
+                        },
+                        {
+                            label: "routing",
+                            value: "fast",
+                            note: "single-pass retrieval sufficient",
+                        },
+                        {
+                            label: "SCC count",
+                            value: "0",
+                            note: "no strongly connected components",
+                        },
+                        {
+                            label: "DAG nodes",
+                            value: "3",
+                            note: "pure acyclic topology",
+                        },
+                    ],
+                    timeline: [
+                        {
+                            role: "user",
+                            actor: "Developer",
+                            text: "Analyze the topology of my three codebase navigation skills. Are there any circular dependencies?",
+                            snippetName: "user_query.txt",
+                            snippet: {
+                                query: "Analyze topology of 3 codebase navigation skills for circular dependencies",
+                                node_count: 3,
+                                expected: "DAG — no cycles",
+                            },
+                        },
+                        {
+                            role: "assistant",
+                            actor: "Graphonomous",
+                            text: "Running topology_analyze on 3 explicit nodes...",
+                            snippetName: "topology_analyze call",
+                            snippet: {
+                                tool: "topology_analyze",
+                                arguments: {
+                                    node_ids: [
+                                        "node_3c9e83e7a94b8acc7234d15f8a087b00",
+                                        "node_d13eaf96e1f72502c3347bede27681d2",
+                                        "node_4a65be5f0a4ab106eb96102cdc9b02f7",
+                                    ],
+                                },
+                            },
+                        },
+                        {
+                            role: "assistant",
+                            actor: "Graphonomous",
+                            text: "Result: κ=0, routing=fast. All 3 nodes form a pure DAG — no circular dependencies detected. Fast single-pass retrieval is sufficient.",
+                            snippetName: "topology_analyze result",
+                            snippet: {
+                                status: "ok",
+                                sccs: [],
+                                max_kappa: 0,
+                                routing: "fast",
+                                dag_nodes: [
+                                    "node_3c9e83e7a94b8acc7234d15f8a087b00",
+                                    "node_4a65be5f0a4ab106eb96102cdc9b02f7",
+                                    "node_d13eaf96e1f72502c3347bede27681d2",
+                                ],
+                                scc_count: 0,
+                                recommendation: "This knowledge region is acyclic (κ=0). Use fast retrieval.",
+                                node_count: 3,
+                                selection: "explicit_node_ids",
+                            },
+                        },
+                    ],
+                    trace: [
+                        {
+                            name: "topology_analyze",
+                            latency: "",
+                            status: "ok",
+                            note: "3 nodes, 0 SCCs, κ=0, routing=fast",
+                        },
+                    ],
+                    skills: [
+                        {
+                            name: "Request Path Trace",
+                            conf: "0.485",
+                            body: "Trace route/router modules \u2192 handler \u2192 service/context \u2192 repository/adapter \u2192 persistence (Ecto changeset, SQL, ORM).",
+                        },
+                        {
+                            name: "Feature Flag Path Trace",
+                            conf: "0.485",
+                            body: "Find flag declaration \u2192 rollout gate checks \u2192 enabled/disabled branches \u2192 fallback behavior.",
+                        },
+                        {
+                            name: "Test Coverage Gap Scan",
+                            conf: "0.485",
+                            body: "Map critical request path, check each module for test files, flag untested modules with risk severity.",
+                        },
+                    ],
+                    tabs: {
+                        "topology_dag.json": {
+                            status: "ok",
+                            sccs: [],
+                            max_kappa: 0,
+                            routing: "fast",
+                            dag_nodes: [
+                                "node_3c9e83e7a94b8acc7234d15f8a087b00",
+                                "node_4a65be5f0a4ab106eb96102cdc9b02f7",
+                                "node_d13eaf96e1f72502c3347bede27681d2",
+                            ],
+                            scc_count: 0,
+                            recommendation: "This knowledge region is acyclic (κ=0). Use fast retrieval.",
+                            node_count: 3,
+                            selection: "explicit_node_ids",
+                        },
+                    },
+                    toolLog: [
+                        {
+                            ts: "17:23:01.101",
+                            tool: "topology_analyze",
+                            args: "node_ids=[3 procedural skills]",
+                            status: "ok",
+                        },
+                    ],
+                },
+                B: {
+                    label: "Scenario B · Cycle (κ=1)",
+                    kpis: [
+                        {
+                            label: "κ (kappa)",
+                            value: "1",
+                            note: "cyclic dependency detected",
+                        },
+                        {
+                            label: "routing",
+                            value: "deliberate",
+                            note: "requires multi-pass deliberation",
+                        },
+                        {
+                            label: "SCC count",
+                            value: "1",
+                            note: "one strongly connected component",
+                        },
+                        {
+                            label: "nodes in SCC",
+                            value: "4",
+                            note: "4 of 19 total nodes in the cycle",
+                        },
+                    ],
+                    timeline: [
+                        {
+                            role: "user",
+                            actor: "Developer",
+                            text: "Analyze the topology around kappa routing and deliberation for cyclic dependencies.",
+                            snippetName: "user_query.txt",
+                            snippet: {
+                                query: "kappa routing deliberation cyclic dependencies",
+                                total_nodes: 19,
+                                expected: "SCC with \u03ba\u22651",
+                            },
+                        },
+                        {
+                            role: "assistant",
+                            actor: "Graphonomous",
+                            text: "Running topology_analyze on the full graph (19 nodes)...",
+                            snippetName: "topology_analyze call",
+                            snippet: {
+                                tool: "topology_analyze",
+                                arguments: {
+                                    query: "kappa routing deliberation cyclic dependencies",
+                                },
+                            },
+                        },
+                        {
+                            role: "assistant",
+                            actor: "Graphonomous",
+                            text: "\u03ba=1 detected! 19 nodes analyzed: 1 SCC with 4 nodes, 15 DAG nodes. Routing: deliberate. Fault line: node_03ad47a1\u2192node_64f8947a. Deliberation budget: max_iterations=2, confidence_threshold=0.75, agent_count=1.",
+                            snippetName: "topology_analyze result",
+                            snippet: {
+                                status: "ok",
+                                sccs: [
+                                    {
+                                        id: "scc-0",
+                                        nodes: [
+                                            "node_03ad47a10848c311f26e897aabecdafe",
+                                            "node_1fd376068232cc267a9745d4cd399b06",
+                                            "node_64f8947aa6e5b93d688c01d2be86334b",
+                                            "node_97d2969e71d19341ecb46709fbe0e650",
+                                        ],
+                                        fault_line_edges: [
+                                            {
+                                                source: "node_03ad47a10848c311f26e897aabecdafe",
+                                                target: "node_64f8947aa6e5b93d688c01d2be86334b",
+                                            },
+                                        ],
+                                        kappa: 1,
+                                        routing: "deliberate",
+                                        approximate: false,
+                                        deliberation_budget: {
+                                            max_iterations: 2,
+                                            confidence_threshold: 0.75,
+                                            timeout_multiplier: 1.5,
+                                            agent_count: 1,
+                                        },
+                                    },
+                                ],
+                                max_kappa: 1,
+                                routing: "deliberate",
+                                dag_node_count: 15,
+                                scc_count: 1,
+                                recommendation: "This knowledge region contains 1 strongly connected component(s) with max \u03ba=1. Route to deliberation.",
+                                node_count: 19,
+                                selection: "query",
+                            },
+                        },
+                        {
+                            role: "user",
+                            actor: "Developer",
+                            text: "Deliberate on this cycle \u2014 how do the cyclic dependencies affect routing decisions?",
+                            snippetName: "deliberation_query.txt",
+                            snippet: {
+                                query: "Deliberate on the business cycle to find the most fragile link",
+                                write_back: true,
+                            },
+                        },
+                        {
+                            role: "assistant",
+                            actor: "Graphonomous",
+                            text: "Running deliberation with write_back=true on the SCC...",
+                            snippetName: "deliberate call",
+                            snippet: {
+                                tool: "deliberate",
+                                arguments: {
+                                    query: "How do cyclic knowledge dependencies between product quality and revenue growth affect routing decisions?",
+                                    node_ids: [
+                                        "node_03ad47a10848c311f26e897aabecdafe",
+                                        "node_64f8947aa6e5b93d688c01d2be86334b",
+                                        "node_1fd376068232cc267a9745d4cd399b06",
+                                        "node_97d2969e71d19341ecb46709fbe0e650",
+                                    ],
+                                    write_back: true,
+                                },
+                            },
+                        },
+                        {
+                            role: "assistant",
+                            actor: "Graphonomous",
+                            text: "Deliberation converged in 0 iterations. The topology detected κ=1 but was below the deliberation floor for the local_small tier (κ floor=2), so LLM deliberation was skipped. This is the system adapting its compute budget to model tier — on cloud_frontier, this cycle would trigger full multi-iteration deliberation.",
+                            snippetName: "deliberate result",
+                            snippet: {
+                                status: "ok",
+                                topology: {
+                                    sccs: [
+                                        {
+                                            id: "scc-0",
+                                            kappa: 1,
+                                            routing: "deliberate",
+                                            deliberation_budget: {
+                                                max_iterations: 2,
+                                                confidence_threshold: 0.75,
+                                                timeout_multiplier: 1.5,
+                                                agent_count: 1,
+                                            },
+                                        },
+                                    ],
+                                    max_kappa: 1,
+                                    routing: "deliberate",
+                                    scc_count: 1,
+                                },
+                                deliberation: {
+                                    conclusions: [],
+                                    converged: true,
+                                    iterations_used: 0,
+                                    topology_change: {
+                                        note: "All SCCs are below κ deliberation floor (κ floor=2) for tier local_small; skipped LLM deliberation.",
+                                        kappa_before: 1,
+                                        kappa_after: 1,
+                                        new_nodes_created: 0,
+                                    },
+                                },
+                                selection: {
+                                    mode: "explicit_node_ids",
+                                    write_back: true,
+                                    node_count: 4,
+                                },
+                            },
+                        },
+                    ],
+                    trace: [
+                        {
+                            name: "topology_analyze",
+                            latency: "",
+                            status: "ok",
+                            note: "19 nodes, 1 SCC (4 nodes), 15 DAG, \u03ba=1, routing=deliberate",
+                        },
+                        {
+                            name: "deliberate",
+                            latency: "",
+                            status: "ok",
+                            note: "converged in 0 iterations (κ below tier floor)",
+                        },
+                    ],
+                    skills: [
+                        {
+                            name: "Product Quality",
+                            conf: "0.596",
+                            body: "Product quality drives customer satisfaction and directly influences market share acquisition and retention.",
+                        },
+                        {
+                            name: "Market Share",
+                            conf: "0.596",
+                            body: "Market share position determines revenue scale through volume effects and pricing power.",
+                        },
+                        {
+                            name: "R&D Investment",
+                            conf: "0.596",
+                            body: "R&D investment funded by revenue feeds back into product quality improvements and innovation.",
+                        },
+                        {
+                            name: "Revenue Growth",
+                            conf: "0.596",
+                            body: "Revenue growth from market share enables increased R&D investment allocation.",
+                        },
+                    ],
+                    tabs: {
+                        "topology_scc.json": {
+                            status: "ok",
+                            sccs: [
+                                {
+                                    id: "scc-0",
+                                    nodes: [
+                                        "node_03ad47a10848c311f26e897aabecdafe",
+                                        "node_1fd376068232cc267a9745d4cd399b06",
+                                        "node_64f8947aa6e5b93d688c01d2be86334b",
+                                        "node_97d2969e71d19341ecb46709fbe0e650",
+                                    ],
+                                    fault_line_edges: [
+                                        {
+                                            source: "node_03ad47a10848c311f26e897aabecdafe",
+                                            target: "node_64f8947aa6e5b93d688c01d2be86334b",
+                                        },
+                                    ],
+                                    kappa: 1,
+                                    routing: "deliberate",
+                                    approximate: false,
+                                    deliberation_budget: {
+                                        max_iterations: 2,
+                                        confidence_threshold: 0.75,
+                                        timeout_multiplier: 1.5,
+                                        agent_count: 1,
+                                    },
+                                },
+                            ],
+                            max_kappa: 1,
+                            routing: "deliberate",
+                            dag_node_count: 15,
+                            scc_count: 1,
+                            recommendation: "This knowledge region contains 1 strongly connected component(s) with max \u03ba=1. Route to deliberation.",
+                            node_count: 19,
+                            selection: "query",
+                        },
+                        "deliberation.json": {
+                            status: "ok",
+                            topology: {
+                                sccs: [
+                                    {
+                                        id: "scc-0",
+                                        kappa: 1,
+                                        routing: "deliberate",
+                                        deliberation_budget: {
+                                            max_iterations: 2,
+                                            confidence_threshold: 0.75,
+                                            timeout_multiplier: 1.5,
+                                            agent_count: 1,
+                                        },
+                                    },
+                                ],
+                                max_kappa: 1,
+                                routing: "deliberate",
+                                scc_count: 1,
+                            },
+                            deliberation: {
+                                conclusions: [],
+                                converged: true,
+                                iterations_used: 0,
+                                topology_change: {
+                                    note: "All SCCs are below κ deliberation floor (κ floor=2) for tier local_small; skipped LLM deliberation.",
+                                    kappa_before: 1,
+                                    kappa_after: 1,
+                                    new_nodes_created: 0,
+                                },
+                            },
+                            selection: {
+                                mode: "query",
+                                write_back: true,
+                                node_count: 19,
+                            },
+                        },
+                    },
+                    toolLog: [
+                        {
+                            ts: "17:23:05.201",
+                            tool: "topology_analyze",
+                            args: 'query="kappa routing deliberation cyclic dependencies"',
+                            status: "ok",
+                        },
+                        {
+                            ts: "17:23:06.340",
+                            tool: "deliberate",
+                            args: 'query="How do cyclic knowledge dependencies..." write_back=true',
+                            status: "ok",
+                        },
+                    ],
+                },
+            };
+
+            const els = {
+                scenarioA: document.getElementById("scenarioA"),
+                scenarioB: document.getElementById("scenarioB"),
+                playBtn: document.getElementById("playBtn"),
+                nextBtn: document.getElementById("nextBtn"),
+                resetBtn: document.getElementById("resetBtn"),
+                kpis: document.getElementById("kpis"),
+                chat: document.getElementById("chat"),
+                skills: document.getElementById("skills"),
+                trace: document.getElementById("trace"),
+                tabs: document.getElementById("tabs"),
+                panes: document.getElementById("panes"),
+                terminalBody: document.getElementById("terminalBody"),
+                terminalStatus: document.getElementById("terminalStatus"),
+            };
+
+            let mode = "A";
+            let idx = 0;
+            let playing = false;
+            let logIdx = 0;
+
+            function renderKpis() {
+                const kpis = data[mode].kpis;
+                els.kpis.innerHTML = "";
+                for (const k of kpis) {
+                    const d = document.createElement("div");
+                    d.className = "kpi";
+                    d.innerHTML = `
+            <div class="kpi-label">${k.label}</div>
+            <div class="kpi-value">${k.value}</div>
+            <div class="kpi-note">${k.note}</div>
+          `;
+                    els.kpis.appendChild(d);
+                }
+            }
+
+            function renderSkills() {
+                els.skills.innerHTML = "";
+                for (const s of data[mode].skills) {
+                    const c = document.createElement("div");
+                    c.className = "skill-card";
+                    c.innerHTML = `
+            <div class="skill-top">
+              <div class="skill-name">${s.name}</div>
+              <div class="conf">conf ${s.conf}</div>
+            </div>
+            <div class="skill-body">${s.body}</div>
+          `;
+                    els.skills.appendChild(c);
+                }
+            }
+
+            function renderTrace() {
+                els.trace.innerHTML = "";
+                for (const t of data[mode].trace) {
+                    const item = document.createElement("div");
+                    item.className = "trace-item";
+                    item.innerHTML = `
+            <div class="trace-head">
+              <div class="trace-name">${t.name}</div>
+              <div class="trace-latency">${t.latency}</div>
+            </div>
+            <span class="pill ${t.status === "ok" ? "ok" : "warn"}">${t.status}</span>
+            <div style="margin-top:5px;color:var(--dim);font-size:11px;line-height:1.4;">${t.note}</div>
+          `;
+                    els.trace.appendChild(item);
+                }
+            }
+
+            function renderTabs() {
+                const tabs = Object.keys(data[mode].tabs);
+                els.tabs.innerHTML = "";
+                els.panes.innerHTML = "";
+
+                tabs.forEach((name, i) => {
+                    const b = document.createElement("button");
+                    b.className = `tab ${i === 0 ? "active" : ""}`;
+                    b.textContent = name;
+                    b.dataset.name = name;
+
+                    const pane = document.createElement("div");
+                    pane.className = `pane ${i === 0 ? "active" : ""}`;
+                    pane.dataset.name = name;
+
+                    const pre = document.createElement("pre");
+                    pre.textContent = JSON.stringify(
+                        data[mode].tabs[name],
+                        null,
+                        2,
+                    );
+                    pane.appendChild(pre);
+
+                    b.addEventListener("click", () => {
+                        [...els.tabs.children].forEach((x) =>
+                            x.classList.toggle(
+                                "active",
+                                x.dataset.name === name,
+                            ),
+                        );
+                        [...els.panes.children].forEach((x) =>
+                            x.classList.toggle(
+                                "active",
+                                x.dataset.name === name,
+                            ),
+                        );
+                    });
+
+                    els.tabs.appendChild(b);
+                    els.panes.appendChild(pane);
+                });
+            }
+
+            function clearTerminal() {
+                els.terminalBody.innerHTML = "";
+                logIdx = 0;
+                els.terminalStatus.textContent = "idle";
+            }
+
+            function appendLog(entry) {
+                const line = document.createElement("div");
+                line.className = "log-line";
+                const statusClass =
+                    entry.status === "ok" ? "log-ok" : "log-warn";
+                line.innerHTML = `
+          <span class="log-ts">${entry.ts}</span>
+          <span class="log-tool">${entry.tool}</span>
+          <span class="log-dim">(${entry.args})</span>
+          <span class="${statusClass}">[${entry.status}]</span>
+        `;
+                els.terminalBody.appendChild(line);
+                els.terminalBody.scrollTop = els.terminalBody.scrollHeight;
+            }
+
+            function syncLog() {
+                const log = data[mode].toolLog;
+                while (logIdx < log.length) {
+                    appendLog(log[logIdx]);
+                    logIdx++;
+                }
+                if (logIdx > 0) {
+                    els.terminalStatus.textContent = `${logIdx} calls logged`;
+                }
+            }
+
+            function bubble(item, step) {
+                const node = document.createElement("div");
+                node.className = `bubble ${item.role}`;
+
+                const meta = document.createElement("div");
+                meta.className = "meta";
+                meta.innerHTML = `<span>${item.actor}</span><span>step ${step + 1}</span>`;
+
+                const text = document.createElement("div");
+                text.className = "text";
+                text.textContent = item.text;
+
+                const code = document.createElement("div");
+                code.className = "code";
+
+                const head = document.createElement("div");
+                head.className = "code-head";
+
+                const title = document.createElement("span");
+                title.textContent = item.snippetName;
+
+                const copy = document.createElement("button");
+                copy.textContent = "Copy JSON";
+                copy.style.padding = "4px 8px";
+                copy.style.fontSize = "11px";
+                copy.style.borderRadius = "8px";
+                copy.addEventListener("click", async () => {
+                    try {
+                        await navigator.clipboard.writeText(
+                            JSON.stringify(item.snippet, null, 2),
+                        );
+                        copy.textContent = "Copied";
+                        setTimeout(
+                            () => (copy.textContent = "Copy JSON"),
+                            1000,
+                        );
+                    } catch {
+                        copy.textContent = "Copy failed";
+                        setTimeout(
+                            () => (copy.textContent = "Copy JSON"),
+                            1200,
+                        );
+                    }
+                });
+
+                head.appendChild(title);
+                head.appendChild(copy);
+
+                const pre = document.createElement("pre");
+                pre.textContent = JSON.stringify(item.snippet, null, 2);
+
+                code.appendChild(head);
+                code.appendChild(pre);
+
+                node.appendChild(meta);
+                node.appendChild(text);
+                node.appendChild(code);
+
+                return node;
+            }
+
+            function appendNext() {
+                const timeline = data[mode].timeline;
+                if (idx >= timeline.length) return false;
+                const item = timeline[idx];
+                els.chat.appendChild(bubble(item, idx));
+                els.chat.scrollTop = els.chat.scrollHeight;
+                idx++;
+
+                // Sync terminal log
+                syncLog();
+
+                return true;
+            }
+
+            function resetChat() {
+                idx = 0;
+                els.chat.innerHTML = "";
+                clearTerminal();
+            }
+
+            async function play() {
+                if (playing) return;
+                playing = true;
+                els.playBtn.textContent = "⏸ Playing...";
+                els.terminalStatus.textContent = "streaming...";
+                while (idx < data[mode].timeline.length && playing) {
+                    appendNext();
+                    await new Promise((r) => setTimeout(r, 720));
+                }
+                playing = false;
+                els.playBtn.textContent = "▶ Play demo";
+                els.terminalStatus.textContent = `${logIdx} calls logged`;
+            }
+
+            function setMode(next) {
+                mode = next;
+                playing = false;
+                els.playBtn.textContent = "▶ Play demo";
+                els.scenarioA.classList.toggle("btn-active", next === "A");
+                els.scenarioB.classList.toggle("btn-active", next === "B");
+                renderKpis();
+                renderSkills();
+                renderTrace();
+                renderTabs();
+                resetChat();
+                appendNext();
+                appendNext();
+            }
+
+            els.scenarioA.addEventListener("click", () => setMode("A"));
+            els.scenarioB.addEventListener("click", () => setMode("B"));
+            els.playBtn.addEventListener("click", () => {
+                if (playing) {
+                    playing = false;
+                    els.playBtn.textContent = "▶ Play demo";
+                } else {
+                    play();
+                }
+            });
+            els.nextBtn.addEventListener("click", appendNext);
+            els.resetBtn.addEventListener("click", () => {
+                playing = false;
+                els.playBtn.textContent = "▶ Play demo";
+                resetChat();
+                appendNext();
+            });
+
+            setMode("A");
+        </script>
+    </body>
+</html>

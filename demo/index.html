@@ -1,0 +1,423 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Graphonomous Demos — Live MCP Session Replays</title>
+        <meta
+            name="description"
+            content="Interactive A/B demos of Graphonomous v0.2.0 MCP tools — all payloads captured from real sessions on 2026-04-02."
+        />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+            rel="stylesheet"
+        />
+        <style>
+            :root {
+                --bg: #0a0b0f;
+                --surface: #11141c;
+                --surface-2: #171b26;
+                --line: #252b3b;
+                --text: #e9ecf4;
+                --dim: #8a92a7;
+                --good: #38d39f;
+                --accent: #7b8cff;
+                --accent-2: #4af5c6;
+                --warn: #ffc46b;
+                --rose: #ff6b8a;
+                --shadow: 0 14px 34px rgba(0, 0, 0, 0.35);
+            }
+
+            * {
+                box-sizing: border-box;
+            }
+
+            html,
+            body {
+                margin: 0;
+                padding: 0;
+                min-height: 100vh;
+                background:
+                    radial-gradient(
+                        1200px 800px at 85% -20%,
+                        rgba(123, 140, 255, 0.11),
+                        transparent 60%
+                    ),
+                    radial-gradient(
+                        1000px 700px at -10% 120%,
+                        rgba(74, 245, 198, 0.08),
+                        transparent 55%
+                    ),
+                    var(--bg);
+                color: var(--text);
+                font-family:
+                    "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo,
+                    Monaco, Consolas, monospace;
+            }
+
+            a {
+                color: inherit;
+                text-decoration: none;
+            }
+
+            .wrap {
+                max-width: 960px;
+                margin: 0 auto;
+                padding: 40px 22px;
+            }
+
+            .back {
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                color: var(--dim);
+                font-size: 13px;
+                margin-bottom: 28px;
+                transition: color 0.2s;
+            }
+            .back:hover {
+                color: var(--accent-2);
+            }
+
+            .badge {
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+                border-radius: 999px;
+                border: 1px solid rgba(74, 245, 198, 0.35);
+                color: var(--accent-2);
+                background: rgba(74, 245, 198, 0.08);
+                font-size: 12px;
+                padding: 6px 12px;
+                margin-bottom: 16px;
+            }
+
+            .dot {
+                width: 8px;
+                height: 8px;
+                border-radius: 50%;
+                background: var(--accent-2);
+                box-shadow: 0 0 12px rgba(74, 245, 198, 0.8);
+                animation: pulse 1.7s infinite;
+            }
+
+            @keyframes pulse {
+                0%,
+                100% {
+                    transform: scale(1);
+                    opacity: 0.85;
+                }
+                50% {
+                    transform: scale(1.3);
+                    opacity: 1;
+                }
+            }
+
+            h1 {
+                font-size: clamp(26px, 4vw, 38px);
+                line-height: 1.1;
+                letter-spacing: -0.02em;
+                margin: 0 0 12px;
+            }
+
+            .lead {
+                color: var(--dim);
+                font-size: 14px;
+                line-height: 1.6;
+                max-width: 70ch;
+                margin: 0 0 36px;
+            }
+
+            .grid {
+                display: grid;
+                gap: 16px;
+                grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            }
+
+            .card {
+                border: 1px solid var(--line);
+                border-radius: 16px;
+                background: var(--surface);
+                padding: 20px;
+                box-shadow: var(--shadow);
+                transition:
+                    border-color 0.25s,
+                    transform 0.2s;
+                display: flex;
+                flex-direction: column;
+                gap: 10px;
+            }
+            .card:hover {
+                border-color: rgba(74, 245, 198, 0.4);
+                transform: translateY(-3px);
+            }
+
+            .card-number {
+                font-size: 11px;
+                color: var(--dim);
+                text-transform: uppercase;
+                letter-spacing: 0.1em;
+            }
+
+            .card-title {
+                font-size: 16px;
+                font-weight: 600;
+                line-height: 1.25;
+                color: var(--text);
+            }
+
+            .card-desc {
+                font-size: 12px;
+                color: var(--dim);
+                line-height: 1.55;
+                flex: 1;
+            }
+
+            .card-tools {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 6px;
+                margin-top: 4px;
+            }
+
+            .tool-pill {
+                font-size: 10px;
+                padding: 3px 8px;
+                border-radius: 999px;
+                letter-spacing: 0.04em;
+            }
+
+            .tool-pill.green {
+                color: var(--good);
+                border: 1px solid rgba(56, 211, 159, 0.4);
+                background: rgba(56, 211, 159, 0.08);
+            }
+
+            .tool-pill.blue {
+                color: var(--accent);
+                border: 1px solid rgba(123, 140, 255, 0.4);
+                background: rgba(123, 140, 255, 0.08);
+            }
+
+            .tool-pill.amber {
+                color: var(--warn);
+                border: 1px solid rgba(255, 196, 107, 0.4);
+                background: rgba(255, 196, 107, 0.08);
+            }
+
+            .tool-pill.rose {
+                color: var(--rose);
+                border: 1px solid rgba(255, 107, 138, 0.4);
+                background: rgba(255, 107, 138, 0.08);
+            }
+
+            .card-kpi {
+                display: flex;
+                gap: 16px;
+                margin-top: 6px;
+                padding-top: 10px;
+                border-top: 1px solid var(--line);
+            }
+
+            .card-kpi-item {
+                font-size: 11px;
+            }
+            .card-kpi-item .val {
+                color: var(--accent-2);
+                font-weight: 600;
+            }
+            .card-kpi-item .lbl {
+                color: var(--dim);
+            }
+
+            .card-arrow {
+                color: var(--accent-2);
+                font-size: 13px;
+                margin-top: 4px;
+                transition: transform 0.2s;
+            }
+            .card:hover .card-arrow {
+                transform: translateX(4px);
+            }
+
+            .footer {
+                margin-top: 40px;
+                text-align: center;
+                color: var(--dim);
+                font-size: 12px;
+                line-height: 1.6;
+            }
+            .footer a {
+                color: var(--accent-2);
+            }
+            .footer a:hover {
+                color: var(--text);
+            }
+        </style>
+    </head>
+    <body>
+        <div class="wrap">
+            <a href="../index.html" class="back">&larr; Back to graphonomous.com</a>
+
+            <span class="badge">
+                <span class="dot"></span>
+                All payloads captured 2026-04-02 from Graphonomous v0.2.0
+            </span>
+
+            <h1>Live MCP Demo Suite</h1>
+            <p class="lead">
+                Five interactive A/B demos showing Graphonomous v0.2.0 in action.
+                Every node ID, confidence score, similarity value, and κ routing
+                decision below was captured from a real MCP session. Click any card
+                to explore the full chat replay with payload inspector.
+            </p>
+
+            <div class="grid">
+                <!-- 1. Codebase Skills -->
+                <a href="./codebase-skills/" class="card">
+                    <div class="card-number">Demo 01</div>
+                    <div class="card-title">Codebase Skill Learning</div>
+                    <div class="card-desc">
+                        Baseline retrieval (top similarity 0.062) vs learned
+                        procedural skills (top similarity 0.521). Store skills,
+                        learn from outcomes, link to goals, then re-query.
+                    </div>
+                    <div class="card-tools">
+                        <span class="tool-pill green">retrieve_context</span>
+                        <span class="tool-pill green">store_node</span>
+                        <span class="tool-pill blue">learn_from_outcome</span>
+                        <span class="tool-pill blue">manage_goal</span>
+                    </div>
+                    <div class="card-kpi">
+                        <div class="card-kpi-item">
+                            <span class="val">8.4&times;</span>
+                            <span class="lbl"> similarity lift</span>
+                        </div>
+                        <div class="card-kpi-item">
+                            <span class="val">+0.093</span>
+                            <span class="lbl"> confidence &Delta;</span>
+                        </div>
+                    </div>
+                    <div class="card-arrow">&rarr; Explore demo</div>
+                </a>
+
+                <!-- 2. κ-Routing -->
+                <a href="./kappa-routing/" class="card">
+                    <div class="card-number">Demo 02</div>
+                    <div class="card-title">&kappa;-Routing &amp; Deliberation</div>
+                    <div class="card-desc">
+                        DAG region (κ=0, fast routing) vs 4-node business cycle
+                        (κ=1, deliberate routing). Topology analysis detects
+                        circular dependencies and assigns deliberation budgets.
+                    </div>
+                    <div class="card-tools">
+                        <span class="tool-pill amber">topology_analyze</span>
+                        <span class="tool-pill rose">deliberate</span>
+                    </div>
+                    <div class="card-kpi">
+                        <div class="card-kpi-item">
+                            <span class="val">&kappa;=0</span>
+                            <span class="lbl"> vs </span>
+                            <span class="val">&kappa;=1</span>
+                        </div>
+                        <div class="card-kpi-item">
+                            <span class="val">1 SCC</span>
+                            <span class="lbl"> detected</span>
+                        </div>
+                    </div>
+                    <div class="card-arrow">&rarr; Explore demo</div>
+                </a>
+
+                <!-- 3. Novelty Detection -->
+                <a href="./novelty-detection/" class="card">
+                    <div class="card-number">Demo 03</div>
+                    <div class="card-title">Novelty Detection</div>
+                    <div class="card-desc">
+                        Known concept (novelty 0.14, Graphonomous itself) vs
+                        completely novel concept (novelty 0.92, quantum error
+                        correction). The system knows what it knows &mdash; and
+                        what it doesn&rsquo;t.
+                    </div>
+                    <div class="card-tools">
+                        <span class="tool-pill green">learn_detect_novelty</span>
+                    </div>
+                    <div class="card-kpi">
+                        <div class="card-kpi-item">
+                            <span class="val">0.14</span>
+                            <span class="lbl"> vs </span>
+                            <span class="val">0.92</span>
+                        </div>
+                        <div class="card-kpi-item">
+                            <span class="val">0.855</span>
+                            <span class="lbl"> max similarity</span>
+                        </div>
+                    </div>
+                    <div class="card-arrow">&rarr; Explore demo</div>
+                </a>
+
+                <!-- 4. Attention Engine -->
+                <a href="./attention-engine/" class="card">
+                    <div class="card-number">Demo 04</div>
+                    <div class="card-title">Attention Engine</div>
+                    <div class="card-desc">
+                        Proactive goal prioritization combining urgency, coverage
+                        gap, and &kappa;-routing. 7 real goals ranked by attention
+                        score with topology-aware reasoning depth per goal.
+                    </div>
+                    <div class="card-tools">
+                        <span class="tool-pill amber">attention_survey</span>
+                        <span class="tool-pill blue">manage_goal</span>
+                    </div>
+                    <div class="card-kpi">
+                        <div class="card-kpi-item">
+                            <span class="val">7</span>
+                            <span class="lbl"> active goals</span>
+                        </div>
+                        <div class="card-kpi-item">
+                            <span class="val">3/7</span>
+                            <span class="lbl"> &kappa;&gt;0</span>
+                        </div>
+                    </div>
+                    <div class="card-arrow">&rarr; Explore demo</div>
+                </a>
+
+                <!-- 5. Consolidation -->
+                <a href="./consolidation/" class="card">
+                    <div class="card-number">Demo 05</div>
+                    <div class="card-title">Consolidation Pipeline</div>
+                    <div class="card-desc">
+                        Before &amp; after the 7-stage consolidation pipeline:
+                        decay, pruning, co-activation strengthening, similarity
+                        merging, timescale promotion, and abstraction generation.
+                    </div>
+                    <div class="card-tools">
+                        <span class="tool-pill rose">run_consolidation</span>
+                        <span class="tool-pill green">graph_stats</span>
+                    </div>
+                    <div class="card-kpi">
+                        <div class="card-kpi-item">
+                            <span class="val">7</span>
+                            <span class="lbl"> pipeline stages</span>
+                        </div>
+                        <div class="card-kpi-item">
+                            <span class="val">0.02</span>
+                            <span class="lbl"> decay rate</span>
+                        </div>
+                    </div>
+                    <div class="card-arrow">&rarr; Explore demo</div>
+                </a>
+            </div>
+
+            <p class="footer">
+                All payloads captured from a live Graphonomous v0.2.0 MCP session
+                on 2026-04-02. Node IDs, confidence values, &kappa; invariants,
+                and latencies are authentic.<br />
+                <a href="../index.html">graphonomous.com</a> &middot;
+                <a href="https://github.com/c-u-l8er/graphonomous">GitHub</a> &middot;
+                <a href="https://docs.graphonomous.com">Docs</a>
+            </p>
+        </div>
+    </body>
+</html>

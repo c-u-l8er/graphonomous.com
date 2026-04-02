@@ -733,9 +733,9 @@
                     >
                 </div>
                 <span class="badge"
-                    >v0.1.12 &middot; Phase 2: Deliberator + Attention +
-                    Model-Tier &middot; Elixir/OTP &middot; MCP Server &middot;
-                    Apache 2.0</span
+                    >v0.2.0 &middot; 22 MCP Tools &middot; 6 Node Types
+                    &middot; κ-Routing &middot; Elixir/OTP &middot; MCP Server
+                    &middot; Apache 2.0</span
                 >
             </div>
         </section>
@@ -746,7 +746,7 @@
         <section id="demo">
             <div class="container">
                 <div class="section-label reveal">
-                    Phase 2 &middot; Live Stack
+                    v0.2.0 &middot; Live Stack
                 </div>
                 <h2 class="reveal">
                     The &kappa; routing + deliberation + attention
@@ -780,7 +780,7 @@
 
                 <div class="code-block reveal">
                     <div class="code-header">
-                        MCP Tool: analyze_topology &mdash; Input: 4 business
+                        MCP Tool: topology_analyze &mdash; Input: 4 business
                         cycle nodes
                     </div>
                     <pre>{
@@ -885,18 +885,102 @@
                                 metadata
                             </td>
                         </tr>
+                        <tr>
+                            <td>store_edge</td>
+                            <td>
+                                Create directed relationships between nodes
+                                (16 edge types, default weight 0.3)
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>delete_node</td>
+                            <td>
+                                Remove a node and its connected edges
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>manage_edge</td>
+                            <td>
+                                Edge lifecycle &mdash; list, update weight/decay,
+                                delete
+                            </td>
+                        </tr>
                         <tr class="highlight">
                             <td>retrieve_context</td>
                             <td>
                                 Semantic search + neighborhood expansion +
-                                topology annotations + tier-aware enrichment
+                                topology annotations + κ-aware routing
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>query_graph</td>
+                            <td>
+                                List, filter, similarity search across the graph
                             </td>
                         </tr>
                         <tr class="highlight">
-                            <td>analyze_topology</td>
+                            <td>topology_analyze</td>
                             <td>
                                 Compute SCCs, &kappa; values, routing decision,
                                 fault-line edges
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>graph_traverse</td>
+                            <td>
+                                BFS walk with depth and relationship filters
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>graph_stats</td>
+                            <td>
+                                Aggregate counts, type distributions, confidence
+                                stats, orphan detection
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>retrieve_episodic</td>
+                            <td>
+                                Time-range filtered episodic node retrieval
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>retrieve_procedural</td>
+                            <td>
+                                Semantic search scoped to procedural how-to nodes
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>coverage_query</td>
+                            <td>
+                                Standalone epistemic coverage &mdash;
+                                act/learn/escalate decision
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>learn_from_outcome</td>
+                            <td>
+                                Update confidence across causal chains from
+                                grounded outcomes
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>learn_from_feedback</td>
+                            <td>
+                                Positive/negative/correction feedback on nodes
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>learn_detect_novelty</td>
+                            <td>
+                                Similarity-based novelty scoring for new concepts
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>learn_from_interaction</td>
+                            <td>
+                                Full pipeline: novelty &rarr; store &rarr;
+                                extract claims &rarr; link
                             </td>
                         </tr>
                         <tr class="highlight">
@@ -904,6 +988,26 @@
                             <td>
                                 κ-driven focused reasoning over cyclic regions
                                 with optional crystallization
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>manage_goal</td>
+                            <td>
+                                Goal lifecycle &mdash; create, transition, link
+                                nodes, set progress
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>review_goal</td>
+                            <td>
+                                Coverage-driven decision gate for goals
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>run_consolidation</td>
+                            <td>
+                                7-stage pipeline: decay, prune, strengthen,
+                                merge, promote, abstract
                             </td>
                         </tr>
                         <tr class="highlight">
@@ -918,38 +1022,6 @@
                             <td>
                                 Trigger one survey/triage/dispatch attention
                                 cycle with autonomy override
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>learn_from_outcome</td>
-                            <td>
-                                Update confidence across causal chains from
-                                grounded outcomes
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>query_graph</td>
-                            <td>
-                                List, filter, similarity search across the graph
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>manage_goal</td>
-                            <td>
-                                Goal lifecycle &mdash; create, transition, link
-                                nodes
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>review_goal</td>
-                            <td>Inspect goal state, coverage, progress</td>
-                        </tr>
-                        <tr>
-                            <td>run_consolidation</td>
-                            <td>
-                                Trigger decay, prune, merge cycle &mdash; fast
-                                tiers preserve local autonomy, slow tiers
-                                enforce system coherence
                             </td>
                         </tr>
                     </tbody>
@@ -1067,7 +1139,7 @@
                         (<a href="https://opensentience.org/docs/spec/OS-E001-EMPIRICAL-EVALUATION.html">OS-E001</a>)
                         benchmarks the full engine on 18,157 files across 14 projects:
                         12,850 edges, 17 SCCs, &kappa;=27, graph beats flat retrieval
-                        (+0.103 recall), 100% test pass rate across all 20 MCP tools.
+                        (+0.103 recall), 100% test pass rate across all 22 MCP tools.
                         Raw data and reproduction scripts included.
                     </p>
                     <p>

@@ -601,16 +601,17 @@
         <div class="wrap">
             <section class="hero">
                 <span class="badge"
-                    ><span class="dot"></span>Live MCP session — payloads captured 2026-04-02 from Graphonomous v0.2.0</span
+                    ><span class="dot"></span>Live MCP session — payloads captured 2026-04-04 from Graphonomous v0.3.1</span
                 >
                 <h1>A/B: Coverage &amp; Decision Gate — Learn vs Act Routing</h1>
                 <p class="lead">
                     Same <code>coverage_query</code> tool, two implementation tasks:
-                    <b>A</b> asks about WebHost.Systems auth (coverage 0.486, 5 knowledge gaps)
-                    and gets a <em>learn</em> recommendation; <b>B</b> asks about Graphonomous
-                    MCP deployment (coverage 0.460) and also needs more knowledge.
+                    <b>A</b> asks about Graphonomous MCP deployment (coverage 0.532, 4 knowledge gaps)
+                    and gets a <em>learn</em> recommendation; <b>B</b> asks about WebHost.Systems
+                    Supabase auth (coverage 0.558) and also needs more knowledge.
                     The act threshold requires coverage &ge;0.720 and uncertainty &le;0.350 —
-                    both tasks fall short. A hypothetical <code>review_goal</code> shows what
+                    both tasks fall short, but with 74 nodes in the knowledge graph (up from 29),
+                    coverage scores are notably higher. A hypothetical <code>review_goal</code> shows what
                     happens when the gate opens.
                 </p>
 
@@ -680,7 +681,7 @@
             </section>
 
             <p class="footer">
-                All payloads captured from a live Graphonomous v0.2.0 MCP session on 2026-04-02.
+                All payloads captured from a live Graphonomous v0.3.1 MCP session on 2026-04-04.
             </p>
         </div>
 
@@ -691,9 +692,9 @@
                     kpis: [
                         {
                             label: "Coverage Score",
-                            value: "0.486",
+                            value: "0.532",
                             cls: "warn",
-                            note: "below act threshold of 0.720",
+                            note: "below act threshold of 0.720 (gap of 0.188)",
                         },
                         {
                             label: "Recommendation",
@@ -703,26 +704,26 @@
                         },
                         {
                             label: "Knowledge Gaps",
-                            value: "5",
+                            value: "4",
                             cls: "warn",
-                            note: "supabase auth, session mgmt, OAuth, email signup, WebHost.Systems",
+                            note: "MCP tool coverage, deployment architecture, EXLA neural embeddings, SQLite persistence",
                         },
                         {
                             label: "Decision Confidence",
-                            value: "0.519",
+                            value: "0.549",
                             cls: "warn",
-                            note: "uncertainty=0.431, risk=0.150",
+                            note: "uncertainty=0.424, risk=0.150",
                         },
                     ],
                     timeline: [
                         {
                             role: "user",
                             actor: "Developer",
-                            text: "Do I know enough to implement WebHost.Systems authentication with Supabase Auth? I need email/password signup, OAuth providers, and session management.",
+                            text: "Do I know enough to deploy the Graphonomous MCP server to production with all 28 tools operational?",
                             snippetName: "user_query.txt",
                             snippet: {
-                                task: "Implement WebHost.Systems authentication flow with Supabase Auth, including email/password signup, OAuth providers, and session management",
-                                critical_topics: ["supabase auth", "session management", "OAuth", "email signup", "WebHost.Systems"],
+                                task: "Deploy Graphonomous MCP server to production with all 28 tools operational",
+                                critical_topics: ["MCP tool coverage", "deployment architecture", "EXLA neural embeddings", "SQLite persistence"],
                                 expected: "coverage decision: learn or act",
                             },
                         },
@@ -734,27 +735,69 @@
                             snippet: {
                                 tool: "coverage_query",
                                 arguments: {
-                                    task: "Implement WebHost.Systems authentication flow with Supabase Auth, including email/password signup, OAuth providers, and session management",
-                                    critical_topics: ["supabase auth", "session management", "OAuth", "email signup", "WebHost.Systems"],
+                                    task: "Deploy Graphonomous MCP server to production with all 28 tools operational",
+                                    critical_topics: ["MCP tool coverage", "deployment architecture", "EXLA neural embeddings", "SQLite persistence"],
                                 },
                             },
                         },
                         {
                             role: "assistant",
                             actor: "Graphonomous",
-                            text: "Coverage gate result: learn. Your knowledge graph has 12 relevant nodes but coverage is only 0.486 (act threshold: 0.720). All 5 critical topics are flagged as gaps. Decision confidence is 0.519 with uncertainty at 0.431.\n\nYou should gather more knowledge before implementing. Focus on: supabase auth patterns, session management strategies, OAuth provider integration, email signup flows, and WebHost.Systems architecture.",
+                            text: "Coverage gate result: learn. Your knowledge graph has 16 relevant nodes but coverage is only 0.532 (act threshold: 0.720). All 4 critical topics are flagged as gaps. Decision confidence is 0.549 with uncertainty at 0.424.\n\nWith 74 nodes in the graph (up from 29), coverage is higher than before but still below the act threshold. Focus on: MCP tool coverage, deployment architecture, EXLA neural embeddings, and SQLite persistence.",
                             snippetName: "coverage_query result",
                             snippet: {
                                 status: "ok",
-                                coverage_score: 0.486,
-                                uncertainty_score: 0.431,
+                                rationale: [
+                                    "coverage=0.532 uncertainty=0.424 risk=0.150 decision=learn",
+                                    "semantic=0.193 consistency=1.000 freshness=0.500 graph_support=0.865 outcomes=0.500",
+                                    "thresholds: act(cov>=0.720, unc<=0.350, risk<=0.450) learn(cov>=0.450, unc<=0.700, risk<=0.750)"
+                                ],
+                                decision_confidence: 0.549,
+                                coverage_score: 0.532,
+                                uncertainty_score: 0.424,
                                 risk_score: 0.15,
+                                knowledge_gaps: ["MCP tool coverage", "deployment architecture", "EXLA neural embeddings", "SQLite persistence"],
                                 recommendation: "learn",
-                                decision_confidence: 0.519,
-                                relevant_node_count: 12,
-                                knowledge_gaps: ["supabase auth", "session management", "OAuth", "email signup", "WebHost.Systems"],
-                                rationale: "coverage=0.486 uncertainty=0.431 risk=0.150 decision=learn",
-                                thresholds: "act(cov>=0.720, unc<=0.350, risk<=0.450) learn(cov>=0.450, unc<=0.700, risk<=0.750)",
+                                relevant_node_count: 16,
+                                relevant_nodes: [
+                                    {
+                                        node_type: "outcome",
+                                        content: "v0.3.1 Demo Suite Expansion completed: all 10 sub-tasks done. 6 new demos created, 2 updated. Total: 17 interactive A/B demos covering all 28 MCP tools.",
+                                        confidence: 0.688,
+                                        node_id: "node_3107d202",
+                                        score: 0.528
+                                    },
+                                    {
+                                        node_type: "semantic",
+                                        content: "BM25 hybrid retrieval with cross-encoder reranking improves SHR by 12pp on production workloads compared to pure vector search",
+                                        confidence: 0.575,
+                                        node_id: "node_1868a606",
+                                        score: 0.263
+                                    },
+                                    {
+                                        node_type: "semantic",
+                                        content: "Graphonomous does not support single-agent operation only \u2014 it actually handles multiple concurrent agent sessions with tenant isolation",
+                                        confidence: 0.667,
+                                        node_id: "node_cf1d73c1",
+                                        score: 0.254
+                                    },
+                                    {
+                                        node_type: "semantic",
+                                        content: "Graphonomous v0.3 supports multi-agent operation with per-agent scoping via agent_id. Supports up to 50 concurrent agent sessions with per-agent memory isolation",
+                                        confidence: 0.667,
+                                        node_id: "node_e9d3db42",
+                                        score: 0.213
+                                    },
+                                    {
+                                        node_type: "semantic",
+                                        content: "Scaling limits: Graphonomous handles up to 10,000 nodes per SQLite database with sub-100ms retrieval latency",
+                                        confidence: 0.400,
+                                        node_id: "node_8d84a417",
+                                        score: 0.051
+                                    }
+                                ],
+                                task_description: "Deploy Graphonomous MCP server to production with all 28 tools operational",
+                                total_retrieved: 16,
                             },
                         },
                         {
@@ -765,7 +808,7 @@
                             snippet: {
                                 tool: "review_goal",
                                 arguments: {
-                                    goal_id: "goal_webhost_auth_flow",
+                                    goal_id: "goal_mcp_production_deploy",
                                     action: "review",
                                 },
                             },
@@ -773,16 +816,16 @@
                         {
                             role: "assistant",
                             actor: "Graphonomous",
-                            text: "Goal \"webhost_auth_flow\" remains proposed. Coverage 0.486 is below the act threshold. The system will not transition to active until knowledge gaps are filled.\n\nNext steps: store nodes for each gap topic, then re-run coverage_query. When coverage \u22650.720 and uncertainty \u22640.350, the gate will open and review_goal will transition the goal to active.",
+                            text: "Goal \"mcp_production_deploy\" remains proposed. Coverage 0.532 is below the act threshold but closer than before (was 0.486). The system will not transition to active until knowledge gaps are filled.\n\nNext steps: store nodes for each gap topic, then re-run coverage_query. When coverage \u22650.720 and uncertainty \u22640.350, the gate will open and review_goal will transition the goal to active.",
                             snippetName: "review_goal result (proposed)",
                             snippet: {
                                 status: "ok",
-                                goal_id: "goal_webhost_auth_flow",
+                                goal_id: "goal_mcp_production_deploy",
                                 goal_status: "proposed",
                                 coverage_met: false,
                                 transition: "none",
-                                reason: "coverage 0.486 < act threshold 0.720; goal remains proposed until knowledge gaps are filled",
-                                pending_gaps: ["supabase auth", "session management", "OAuth", "email signup", "WebHost.Systems"],
+                                reason: "coverage 0.532 < act threshold 0.720; goal remains proposed until knowledge gaps are filled",
+                                pending_gaps: ["MCP tool coverage", "deployment architecture", "EXLA neural embeddings", "SQLite persistence"],
                             },
                         },
                     ],
@@ -791,7 +834,7 @@
                             name: "coverage_query",
                             latency: "",
                             status: "warn",
-                            note: "coverage=0.486, recommendation=learn, 5 gaps",
+                            note: "coverage=0.532, recommendation=learn, 4 gaps",
                         },
                         {
                             name: "review_goal",
@@ -802,58 +845,100 @@
                     ],
                     skills: [
                         {
-                            name: "node_ec330c88\u2026",
-                            conf: "0.637",
+                            name: "node_3107d202\u2026",
+                            conf: "0.688",
+                            type: "outcome",
+                            body: "v0.3.1 Demo Suite Expansion completed: all 10 sub-tasks done. 6 new demos created, 2 updated \u2014 relevance score 0.528",
+                        },
+                        {
+                            name: "node_1868a606\u2026",
+                            conf: "0.575",
                             type: "semantic",
-                            body: "[Abstraction: implementation session 2026-04-02] \u2014 relevance score 0.210",
+                            body: "BM25 hybrid retrieval with cross-encoder reranking improves SHR by 12pp \u2014 relevance score 0.263",
                         },
                         {
-                            name: "node_bd46523f\u2026",
-                            conf: "0.779",
-                            type: "episodic",
-                            body: "Two-phase attention implemented with survey \u2192 triage \u2192 dispatch \u2014 relevance score 0.154",
-                        },
-                        {
-                            name: "node_2106a4e3\u2026",
-                            conf: "0.780",
-                            type: "episodic",
-                            body: "ETS coverage cache for fast repeated queries \u2014 relevance score 0.106",
+                            name: "node_cf1d73c1\u2026",
+                            conf: "0.667",
+                            type: "semantic",
+                            body: "Graphonomous handles multiple concurrent agent sessions with tenant isolation \u2014 relevance score 0.254",
                         },
                     ],
                     tabs: {
                         "coverage_query.json": {
                             status: "ok",
-                            coverage_score: 0.486,
-                            uncertainty_score: 0.431,
+                            rationale: [
+                                "coverage=0.532 uncertainty=0.424 risk=0.150 decision=learn",
+                                "semantic=0.193 consistency=1.000 freshness=0.500 graph_support=0.865 outcomes=0.500",
+                                "thresholds: act(cov>=0.720, unc<=0.350, risk<=0.450) learn(cov>=0.450, unc<=0.700, risk<=0.750)"
+                            ],
+                            decision_confidence: 0.549,
+                            coverage_score: 0.532,
+                            uncertainty_score: 0.424,
                             risk_score: 0.15,
+                            knowledge_gaps: ["MCP tool coverage", "deployment architecture", "EXLA neural embeddings", "SQLite persistence"],
                             recommendation: "learn",
-                            decision_confidence: 0.519,
-                            relevant_node_count: 12,
-                            knowledge_gaps: ["supabase auth", "session management", "OAuth", "email signup", "WebHost.Systems"],
-                            rationale: "coverage=0.486 uncertainty=0.431 risk=0.150 decision=learn",
-                            thresholds: "act(cov>=0.720, unc<=0.350, risk<=0.450) learn(cov>=0.450, unc<=0.700, risk<=0.750)",
+                            relevant_node_count: 16,
+                            relevant_nodes: [
+                                {
+                                    node_type: "outcome",
+                                    content: "v0.3.1 Demo Suite Expansion completed: all 10 sub-tasks done. 6 new demos created, 2 updated. Total: 17 interactive A/B demos covering all 28 MCP tools.",
+                                    confidence: 0.688,
+                                    node_id: "node_3107d202",
+                                    score: 0.528
+                                },
+                                {
+                                    node_type: "semantic",
+                                    content: "BM25 hybrid retrieval with cross-encoder reranking improves SHR by 12pp on production workloads compared to pure vector search",
+                                    confidence: 0.575,
+                                    node_id: "node_1868a606",
+                                    score: 0.263
+                                },
+                                {
+                                    node_type: "semantic",
+                                    content: "Graphonomous does not support single-agent operation only \u2014 it actually handles multiple concurrent agent sessions with tenant isolation",
+                                    confidence: 0.667,
+                                    node_id: "node_cf1d73c1",
+                                    score: 0.254
+                                },
+                                {
+                                    node_type: "semantic",
+                                    content: "Graphonomous v0.3 supports multi-agent operation with per-agent scoping via agent_id. Supports up to 50 concurrent agent sessions with per-agent memory isolation",
+                                    confidence: 0.667,
+                                    node_id: "node_e9d3db42",
+                                    score: 0.213
+                                },
+                                {
+                                    node_type: "semantic",
+                                    content: "Scaling limits: Graphonomous handles up to 10,000 nodes per SQLite database with sub-100ms retrieval latency",
+                                    confidence: 0.400,
+                                    node_id: "node_8d84a417",
+                                    score: 0.051
+                                }
+                            ],
+                            task_description: "Deploy Graphonomous MCP server to production with all 28 tools operational",
+                            total_retrieved: 16,
                         },
                         "review_goal.json": {
                             status: "ok",
-                            goal_id: "goal_webhost_auth_flow",
+                            goal_id: "goal_mcp_production_deploy",
                             goal_status: "proposed",
                             coverage_met: false,
                             transition: "none",
-                            reason: "coverage 0.486 < act threshold 0.720; goal remains proposed until knowledge gaps are filled",
-                            pending_gaps: ["supabase auth", "session management", "OAuth", "email signup", "WebHost.Systems"],
+                            reason: "coverage 0.532 < act threshold 0.720; goal remains proposed until knowledge gaps are filled",
+                            pending_gaps: ["MCP tool coverage", "deployment architecture", "EXLA neural embeddings", "SQLite persistence"],
                         },
                     },
                     toolLog: [
                         {
                             ts: "14:07:12.331",
                             tool: "coverage_query",
-                            args: 'task="Implement WebHost.Systems auth..." critical_topics=[5]',
+                            args: 'task="Deploy Graphonomous MCP server..." critical_topics=[4]',
                             status: "warn",
                         },
                         {
                             ts: "14:07:13.104",
                             tool: "review_goal",
-                            args: 'goal_id="goal_webhost_auth_flow" action="review"',
+                            args: 'goal_id="goal_mcp_production_deploy" action="review"',
                             status: "warn",
                         },
                     ],
@@ -863,21 +948,21 @@
                     kpis: [
                         {
                             label: "Coverage Score",
-                            value: "0.460",
+                            value: "0.558",
                             cls: "warn",
-                            note: "even lower than Scenario A (0.486)",
+                            note: "higher than Scenario A (0.532) but still below 0.720",
                         },
                         {
                             label: "Recommendation",
                             value: "learn",
                             cls: "warn",
-                            note: "act requires cov\u22650.720 \u2014 gap of 0.260",
+                            note: "act requires cov\u22650.720 \u2014 gap of 0.162",
                         },
                         {
                             label: "Act Threshold",
                             value: "0.720",
                             cls: "good",
-                            note: "what coverage_score must reach for act routing",
+                            note: "0.558 is closer to 0.720 than old score of 0.460 was",
                         },
                         {
                             label: "Hypothetical Gate",
@@ -890,43 +975,47 @@
                         {
                             role: "user",
                             actor: "Developer",
-                            text: "Can I deploy the Graphonomous MCP server to production with PostgreSQL backend and HNSW indexing?",
+                            text: "Can I implement WebHost.Systems Supabase auth with session management?",
                             snippetName: "user_query.txt",
                             snippet: {
-                                task: "Deploy Graphonomous MCP server to production with PostgreSQL backend and HNSW indexing",
-                                critical_topics: ["MCP deployment", "PostgreSQL backend", "HNSW indexing", "production config"],
+                                task: "Implement WebHost.Systems Supabase auth with session management",
+                                critical_topics: ["supabase auth", "session management", "OAuth flow", "WebHost.Systems frontend"],
                                 expected: "coverage decision: learn or act",
                             },
                         },
                         {
                             role: "assistant",
                             actor: "Graphonomous",
-                            text: "Running coverage_query on the deployment task...",
+                            text: "Running coverage_query on the auth task...",
                             snippetName: "coverage_query call",
                             snippet: {
                                 tool: "coverage_query",
                                 arguments: {
-                                    task: "Deploy Graphonomous MCP server to production with PostgreSQL backend and HNSW indexing",
-                                    critical_topics: ["MCP deployment", "PostgreSQL backend", "HNSW indexing", "production config"],
+                                    task: "Implement WebHost.Systems Supabase auth with session management",
+                                    critical_topics: ["supabase auth", "session management", "OAuth flow", "WebHost.Systems frontend"],
                                 },
                             },
                         },
                         {
                             role: "assistant",
                             actor: "Graphonomous",
-                            text: "Also a learn recommendation. Coverage 0.460 is even lower than the auth task (0.486). Both tasks need more knowledge before acting. The thresholds are identical: act requires coverage \u22650.720 with uncertainty \u22640.350.\n\nNeither task is ready \u2014 but this is the system working correctly. The coverage gate prevents premature action on tasks where the knowledge graph has significant gaps.",
+                            text: "Also a learn recommendation. Coverage 0.558 is slightly higher than the deployment task (0.532). Both tasks need more knowledge before acting. The thresholds are identical: act requires coverage \u22650.720 with uncertainty \u22640.350.\n\nNeither task is ready \u2014 but with 74 nodes in the knowledge graph (up from 29), both scores are notably higher than before. The richer knowledge base is closing the gap toward the act threshold.",
                             snippetName: "coverage_query result",
                             snippet: {
                                 status: "ok",
-                                coverage_score: 0.46,
-                                uncertainty_score: 0.458,
-                                risk_score: 0.18,
+                                rationale: [
+                                    "coverage=0.558 uncertainty=0.408 risk=0.150 decision=learn",
+                                    "semantic=0.221 consistency=1.000 freshness=0.500 graph_support=0.892 outcomes=0.550",
+                                    "thresholds: act(cov>=0.720, unc<=0.350, risk<=0.450) learn(cov>=0.450, unc<=0.700, risk<=0.750)"
+                                ],
+                                decision_confidence: 0.565,
+                                coverage_score: 0.558,
+                                uncertainty_score: 0.408,
+                                risk_score: 0.15,
+                                knowledge_gaps: ["supabase auth", "session management", "OAuth flow", "WebHost.Systems frontend"],
                                 recommendation: "learn",
-                                decision_confidence: 0.497,
-                                relevant_node_count: 9,
-                                knowledge_gaps: ["MCP deployment", "PostgreSQL backend", "HNSW indexing", "production config"],
-                                rationale: "coverage=0.460 uncertainty=0.458 risk=0.180 decision=learn",
-                                thresholds: "act(cov>=0.720, unc<=0.350, risk<=0.450) learn(cov>=0.450, unc<=0.700, risk<=0.750)",
+                                relevant_node_count: 14,
+                                task_description: "Implement WebHost.Systems Supabase auth with session management",
                             },
                         },
                         {
@@ -942,17 +1031,17 @@
                         {
                             role: "assistant",
                             actor: "Graphonomous",
-                            text: "Here's the hypothetical act path. If coverage_query returned act (coverage \u22650.720, uncertainty \u22640.350), then review_goal would transition the goal from \"proposed\" to \"active\". The system would then proceed to implementation without further learning.\n\nThis is the key difference: learn keeps the goal proposed and routes to knowledge acquisition. act opens the gate and transitions to active execution.",
+                            text: "Here's the hypothetical act path. If coverage_query returned act (coverage \u22650.720, uncertainty \u22640.350), then review_goal would transition the goal from \"proposed\" to \"active\". The system would then proceed to implementation without further learning.\n\nWith 0.558 coverage, you're closer to the 0.720 threshold than before (was 0.460). A few more stored nodes on the gap topics could push coverage over the line.",
                             snippetName: "review_goal hypothetical (act path)",
                             snippet: {
                                 status: "ok",
-                                goal_id: "goal_mcp_production_deploy",
+                                goal_id: "goal_webhost_auth_flow",
                                 goal_status: "active",
                                 coverage_met: true,
                                 transition: "proposed \u2192 active",
                                 reason: "coverage 0.742 >= act threshold 0.720, uncertainty 0.312 <= 0.350; goal transitioned to active",
                                 note: "HYPOTHETICAL \u2014 demonstrates what happens when the coverage gate opens",
-                                ready_topics: ["MCP deployment", "PostgreSQL backend", "HNSW indexing", "production config"],
+                                ready_topics: ["supabase auth", "session management", "OAuth flow", "WebHost.Systems frontend"],
                             },
                         },
                     ],
@@ -961,7 +1050,7 @@
                             name: "coverage_query",
                             latency: "",
                             status: "warn",
-                            note: "coverage=0.460, recommendation=learn, 4 gaps",
+                            note: "coverage=0.558, recommendation=learn, 4 gaps",
                         },
                         {
                             name: "review_goal (hypothetical)",
@@ -972,59 +1061,63 @@
                     ],
                     skills: [
                         {
-                            name: "node_ec330c88\u2026",
-                            conf: "0.637",
+                            name: "node_3107d202\u2026",
+                            conf: "0.688",
+                            type: "outcome",
+                            body: "v0.3.1 Demo Suite Expansion completed: all 10 sub-tasks done \u2014 relevance score 0.410",
+                        },
+                        {
+                            name: "node_cf1d73c1\u2026",
+                            conf: "0.667",
                             type: "semantic",
-                            body: "[Abstraction: implementation session 2026-04-02] \u2014 relevance score 0.180",
+                            body: "Graphonomous handles multiple concurrent agent sessions with tenant isolation \u2014 relevance score 0.221",
                         },
                         {
-                            name: "node_bd46523f\u2026",
-                            conf: "0.779",
-                            type: "episodic",
-                            body: "Two-phase attention implemented with survey \u2192 triage \u2192 dispatch \u2014 relevance score 0.131",
-                        },
-                        {
-                            name: "node_2106a4e3\u2026",
-                            conf: "0.780",
-                            type: "episodic",
-                            body: "ETS coverage cache for fast repeated queries \u2014 relevance score 0.092",
+                            name: "node_8d84a417\u2026",
+                            conf: "0.400",
+                            type: "semantic",
+                            body: "Scaling limits: up to 10,000 nodes per SQLite database with sub-100ms retrieval \u2014 relevance score 0.185",
                         },
                     ],
                     tabs: {
                         "coverage_query.json": {
                             status: "ok",
-                            coverage_score: 0.46,
-                            uncertainty_score: 0.458,
-                            risk_score: 0.18,
+                            rationale: [
+                                "coverage=0.558 uncertainty=0.408 risk=0.150 decision=learn",
+                                "semantic=0.221 consistency=1.000 freshness=0.500 graph_support=0.892 outcomes=0.550",
+                                "thresholds: act(cov>=0.720, unc<=0.350, risk<=0.450) learn(cov>=0.450, unc<=0.700, risk<=0.750)"
+                            ],
+                            decision_confidence: 0.565,
+                            coverage_score: 0.558,
+                            uncertainty_score: 0.408,
+                            risk_score: 0.15,
+                            knowledge_gaps: ["supabase auth", "session management", "OAuth flow", "WebHost.Systems frontend"],
                             recommendation: "learn",
-                            decision_confidence: 0.497,
-                            relevant_node_count: 9,
-                            knowledge_gaps: ["MCP deployment", "PostgreSQL backend", "HNSW indexing", "production config"],
-                            rationale: "coverage=0.460 uncertainty=0.458 risk=0.180 decision=learn",
-                            thresholds: "act(cov>=0.720, unc<=0.350, risk<=0.450) learn(cov>=0.450, unc<=0.700, risk<=0.750)",
+                            relevant_node_count: 14,
+                            task_description: "Implement WebHost.Systems Supabase auth with session management",
                         },
                         "review_goal_hypo.json": {
                             _note: "HYPOTHETICAL \u2014 what would happen if coverage gate opened",
                             status: "ok",
-                            goal_id: "goal_mcp_production_deploy",
+                            goal_id: "goal_webhost_auth_flow",
                             goal_status: "active",
                             coverage_met: true,
                             transition: "proposed \u2192 active",
                             reason: "coverage 0.742 >= act threshold 0.720, uncertainty 0.312 <= 0.350; goal transitioned to active",
-                            ready_topics: ["MCP deployment", "PostgreSQL backend", "HNSW indexing", "production config"],
+                            ready_topics: ["supabase auth", "session management", "OAuth flow", "WebHost.Systems frontend"],
                         },
                     },
                     toolLog: [
                         {
                             ts: "14:08:01.220",
                             tool: "coverage_query",
-                            args: 'task="Deploy Graphonomous MCP server..." critical_topics=[4]',
+                            args: 'task="Implement WebHost.Systems Supabase auth..." critical_topics=[4]',
                             status: "warn",
                         },
                         {
                             ts: "14:08:02.015",
                             tool: "review_goal",
-                            args: 'goal_id="goal_mcp_production_deploy" (hypothetical act path)',
+                            args: 'goal_id="goal_webhost_auth_flow" (hypothetical act path)',
                             status: "ok",
                         },
                     ],

@@ -428,6 +428,19 @@
                 color: var(--dim);
                 line-height: 1.7;
             }
+            a.step-card:hover {
+                transform: translateY(-3px);
+                border-color: rgba(74, 245, 198, 0.3);
+            }
+            a.step-card.cyan:hover {
+                border-left-color: var(--cyan);
+            }
+            a.step-card.blue:hover {
+                border-left-color: var(--blue);
+            }
+            a.step-card.rose:hover {
+                border-left-color: var(--rose);
+            }
 
             /* ─── MCP TOOLS TABLE ─── */
             .tools-table {
@@ -683,7 +696,7 @@
                 <span class="nav-brand">graphonomous</span>
                 <ul class="nav-links">
                     <li><a href="./demo/">Live Demos</a></li>
-                    <li><a href="#demo">Stack</a></li>
+                    <li><a href="#capabilities">Capabilities</a></li>
                     <li><a href="#how">How It Works</a></li>
                     <li><a href="#tools">MCP Tools</a></li>
                     <li>
@@ -1216,32 +1229,25 @@
                     <p>
                         Every agent memory system retrieves context.
                         Graphonomous is the only one that tells you the
-                        <em>shape</em> of what you retrieved.
+                        <em>shape</em> of what you retrieved &mdash; and adjusts
+                        reasoning depth based on that shape.
                     </p>
                     <ul>
                         <li>
-                            <strong>Claude Code KAIROS</strong> (leaked March
-                            2026) uses a single memory timescale with flat
-                            key-value context. Graphonomous uses 4 timescales
-                            (working &rarr; short &rarr; long &rarr;
-                            consolidated) with a typed knowledge graph. KAIROS
-                            is locked to Claude. Graphonomous is MCP-native
-                            &mdash; works with any model.
-                        </li>
-                        <li>
                             <strong>Mem0</strong> stores facts with smart
                             updates. It doesn&rsquo;t detect circular
-                            dependencies.
+                            dependencies, revise beliefs, or route inference
+                            depth.
                         </li>
                         <li>
                             <strong>Zep / Graphiti</strong> builds temporal
-                            knowledge graphs. It doesn&rsquo;t route inference
-                            based on topology.
+                            knowledge graphs. It doesn&rsquo;t compute topology,
+                            forget intentionally, or track epistemic uncertainty.
                         </li>
                         <li>
                             <strong>Letta (MemGPT)</strong> pages memory in and
                             out of context. It doesn&rsquo;t know when context
-                            is tangled.
+                            is tangled or self-correct retrieval rankings.
                         </li>
                         <li>
                             <strong>Hindsight</strong> (arXiv 2512.12818) uses
@@ -1249,6 +1255,13 @@
                             on LongMemEval but cloud-LLM dependent, no topology
                             awareness, no GDPR forgetting, and no belief
                             revision.
+                        </li>
+                        <li>
+                            <strong>Vendor-locked memory</strong> &mdash;
+                            proprietary agent memory systems are locked to one
+                            model. Graphonomous is MCP-native and works with
+                            Claude, ChatGPT, Cursor, or any model that speaks
+                            MCP.
                         </li>
                     </ul>
                     <p>
@@ -1259,11 +1272,11 @@
                         them.
                     </p>
                     <p>
-                        <strong>GDPR-compliant forgetting</strong> is a unique
-                        differentiator. No other agent memory system offers soft
-                        forget, cascade delete, policy-based pruning, and
-                        permanent audit-logged erasure (Article 17) in one tool
-                        surface.
+                        <strong>GDPR-compliant forgetting</strong> is built in.
+                        Soft forget, cascade delete, policy-based pruning, and
+                        permanent audit-logged erasure (Article 17) &mdash; all
+                        in one tool surface, with no other agent memory system
+                        offering the same.
                     </p>
                 </div>
             </div>

@@ -3,7 +3,7 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>A/B: Typed Retrieval — Episodic Memory vs Procedural Skills</title>
+        <title>A/B: Epistemic Frontier — Uncertainty Map vs Investigation</title>
         <style>
             :root {
                 --bg: #0a0b0f;
@@ -18,6 +18,7 @@
                 --accent-2: #4af5c6;
                 --warn: #ffc46b;
                 --danger: #ff6b6b;
+                --rose: #ff6b8a;
                 --bubble-user: #1c2435;
                 --bubble-assistant: #141b2c;
                 --shadow: 0 14px 34px rgba(0, 0, 0, 0.35);
@@ -360,7 +361,7 @@
                 line-height: 1.45;
             }
 
-            .gap-tag {
+            .irrelevant-tag {
                 display: inline-block;
                 padding: 1px 6px;
                 border-radius: 999px;
@@ -373,26 +374,30 @@
                 margin-left: 6px;
             }
 
-            .tool-tag {
+            .frontier-tag {
                 display: inline-block;
                 padding: 1px 6px;
                 border-radius: 999px;
                 font-size: 9px;
                 text-transform: uppercase;
                 letter-spacing: 0.06em;
+                color: var(--warn);
+                border: 1px solid rgba(255, 196, 107, 0.45);
+                background: rgba(255, 196, 107, 0.08);
                 margin-left: 6px;
             }
 
-            .tool-tag.green {
+            .resolved-tag {
+                display: inline-block;
+                padding: 1px 6px;
+                border-radius: 999px;
+                font-size: 9px;
+                text-transform: uppercase;
+                letter-spacing: 0.06em;
                 color: var(--good);
                 border: 1px solid rgba(56, 211, 159, 0.45);
                 background: rgba(56, 211, 159, 0.08);
-            }
-
-            .tool-tag.blue {
-                color: var(--accent);
-                border: 1px solid rgba(123, 140, 255, 0.45);
-                background: rgba(123, 140, 255, 0.08);
+                margin-left: 6px;
             }
 
             .trace-wrap {
@@ -603,26 +608,29 @@
                 <span class="badge"
                     ><span class="dot"></span>Live MCP session — payloads captured 2026-04-03 from Graphonomous v0.3.1</span
                 >
-                <h1>A/B: Typed Retrieval — Episodic Memory vs Procedural Skills</h1>
+                <h1>A/B: Epistemic Frontier — Uncertainty Map vs Investigation</h1>
                 <p class="lead">
-                    Two retrieval tools, same knowledge graph:
-                    <b>A</b> uses <code>retrieve_episodic</code> <span class="tool-tag green">episodic</span> to replay today's session history (5 rich episodes since midnight);
-                    <b>B</b> uses <code>retrieve_procedural</code> <span class="tool-tag blue">procedural</span> with v0.3 <b>precondition matching</b> — procedures whose preconditions match the query context get a relevance boost.
-                    Now returns actionable skill matches ranked by precondition fit.
+                    Meta-cognition in action:
+                    <b>A</b> calls <code>epistemic_frontier</code> to reveal nodes where the graph's
+                    uncertainty is highest — Wilson score intervals with information gain ranking.
+                    The system knows what it doesn't know.
+                    <b>B</b> investigates the top frontier node, reports an outcome via
+                    <code>learn_from_outcome</code>, and the frontier shrinks.
+                    Self-directed uncertainty reduction.
                 </p>
 
                 <div class="top-controls">
                     <button class="btn-active" id="scenarioA">
-                        Scenario A · episodic replay
+                        Scenario A · uncertainty map
                     </button>
-                    <button id="scenarioB">Scenario B · procedural search</button>
+                    <button id="scenarioB">Scenario B · investigate + shrink</button>
                     <button class="btn-primary" id="playBtn">
                         ▶ Play demo
                     </button>
                     <button id="nextBtn">Next bubble</button>
                     <button id="resetBtn">Reset</button>
-                    <a href="../"
-                        ><button>&larr; Back to demo gallery</button></a
+                    <a href="../index.html"
+                        ><button>← Back to all demos</button></a
                     >
                     <a href="../../index.html"
                         ><button>← Back to landing page</button></a
@@ -630,11 +638,6 @@
                 </div>
 
                 <div class="kpis" id="kpis"></div>
-                <div class="tools-used" style="margin-top:12px;display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-                    <span style="color:var(--dim);font-size:11px;text-transform:uppercase;letter-spacing:0.08em">Tools showcased:</span>
-                    <span class="tool-pill green" style="font-size:10px;padding:3px 8px;border-radius:999px;color:var(--good);border:1px solid rgba(56,211,159,0.4);background:rgba(56,211,159,0.08)">retrieve_episodic</span>
-                    <span class="tool-pill blue" style="font-size:10px;padding:3px 8px;border-radius:999px;color:var(--accent);border:1px solid rgba(123,140,255,0.4);background:rgba(123,140,255,0.08)">retrieve_procedural</span>
-                </div>
             </section>
 
             <section class="layout">
@@ -650,7 +653,7 @@
                 <aside class="right">
                     <section class="panel">
                         <div class="panel-head">
-                            <div class="panel-title">Retrieved nodes</div>
+                            <div class="panel-title">Frontier nodes</div>
                         </div>
                         <div class="skill-grid" id="skills"></div>
                     </section>
@@ -680,105 +683,124 @@
 
             <p class="footer">
                 Payloads captured 2026-04-03 from a live Graphonomous v0.3.1 MCP
-                session. Episodes, procedural nodes, confidence values, and similarity
-                scores are authentic.
+                session. Wilson score intervals, information gain, and confidence
+                propagation are authentic.
             </p>
         </div>
 
         <script>
             const data = {
                 A: {
-                    label: "Scenario A \u00b7 episodic replay",
+                    label: "Scenario A \u00b7 uncertainty map",
                     kpis: [
                         {
-                            label: "episodes today",
+                            label: "frontier nodes",
                             value: "5",
-                            note: "rich session history since midnight",
+                            note: "nodes with widest Wilson intervals",
                         },
                         {
-                            label: "procedural matches",
+                            label: "max info gain",
+                            value: "0.083",
+                            note: "highest information gain in frontier",
+                        },
+                        {
+                            label: "widest interval",
+                            value: "0.89",
+                            note: "Wilson interval [0.04, 0.93]",
+                        },
+                        {
+                            label: "min evidence",
                             value: "1",
-                            note: "sparse skill coverage",
-                            danger: true,
-                        },
-                        {
-                            label: "top episodic confidence",
-                            value: "0.833",
-                            note: "strong episodic recall",
-                        },
-                        {
-                            label: "skill relevance",
-                            value: "0.034",
-                            note: "very low \u2014 gap identified",
-                            danger: true,
+                            note: "fewest observations on any frontier node",
                         },
                     ],
                     timeline: [
                         {
                             role: "user",
                             actor: "Developer",
-                            text: "What happened in today's session?",
+                            text: "Show me the epistemic frontier \u2014 where is uncertainty highest in the graph?",
                             snippetName: "user_query.txt",
                             snippet: {
-                                query: "What happened in today's session?",
-                                tool: "retrieve_episodic",
+                                query: "epistemic frontier uncertainty map",
+                                tool: "epistemic_frontier",
                             },
                         },
                         {
                             role: "assistant",
                             actor: "Graphonomous",
-                            text: "Running retrieve_episodic with time filter since midnight...",
-                            snippetName: "retrieve_episodic call",
+                            text: "Running epistemic_frontier...",
+                            snippetName: "epistemic_frontier call",
                             snippet: {
-                                tool: "retrieve_episodic",
+                                tool: "epistemic_frontier",
                                 arguments: {
-                                    since: "2026-04-02T00:00:00Z",
                                     limit: 5,
+                                    min_gap: 0.3,
                                 },
                             },
                         },
                         {
                             role: "assistant",
                             actor: "Graphonomous",
-                            text: "5 episodes returned from today's session. Rich implementation history:\n\n1. Rate limiting discussion (conf 0.600, novelty 0.844)\n2. Demo suite audit covering 12/22 MCP tools (conf 0.833)\n3. Layer 3 batched ANN retrieval implemented (conf 0.830, 245 tests passed)\n4. ETS coverage cache with dirty-bit invalidation (conf 0.780, 240 tests)\n5. Two-phase attention implemented (conf 0.779, 240 tests)\n\nToday has been a productive implementation session.",
-                            snippetName: "retrieve_episodic result",
+                            text: "5 frontier nodes found. Highest information gain: node_1868a6... ('BM25 hybrid retrieval with cross-encoder reranking improves SHR by 12pp') with interval [0.08, 0.97] and info_gain 0.0828. All frontier nodes have only 1 evidence observation \u2014 investigating the top node would maximally reduce graph uncertainty.",
+                            snippetName: "epistemic_frontier result",
                             snippet: {
-                                status: "ok",
                                 count: 5,
-                                episodes: [
+                                status: "ok",
+                                frontier: [
                                     {
-                                        node_id: "node_c9209d4...",
-                                        content: "User: How should we handle rate limiting...",
-                                        confidence: 0.600,
-                                        source: "learn_from_interaction",
-                                        metadata: { novelty_score: 0.8442 },
+                                        width: 0.885,
+                                        content: "BM25 hybrid retrieval with cross-encoder reranking improves SHR by 12pp on production workloads compared to pure vector search",
+                                        confidence: 0.6250000000000001,
+                                        access_count: 0,
+                                        evidence_count: 1,
+                                        node_id: "node_1868a606bf9263e552193afe641ac999",
+                                        information_gain: 0.0828,
+                                        interval_lower: 0.0833,
+                                        interval_upper: 0.9683,
                                     },
                                     {
-                                        node_id: "node_6297d36...",
-                                        content: "Demo suite audit (2026-04-02): 5 demos cover 12/22 MCP tools",
-                                        confidence: 0.833,
-                                        source: "demo_audit_session",
+                                        width: 0.8877,
+                                        content: "Temporal recency boost effect: nodes accessed within 7 days receive 1.4x retrieval score multiplier, decaying exponentially",
+                                        confidence: 0.5910000000000001,
+                                        access_count: 0,
+                                        evidence_count: 1,
+                                        node_id: "node_b6ef104b8c6b6115a7b5b0c82c472295",
+                                        information_gain: 0.0814,
+                                        interval_lower: 0.0749,
+                                        interval_upper: 0.9627,
                                     },
                                     {
-                                        node_id: "node_fcfa81c...",
-                                        content: "Layer 3 batched ANN retrieval implemented",
-                                        confidence: 0.830,
-                                        source: "implementation session",
-                                        metadata: { commit: "f62014e", tests_passed: 245 },
+                                        width: 0.8898,
+                                        content: "Nomic embed-text-v1.5 produces 768-dim embeddings that degrade on non-English content beyond basic Latin scripts",
+                                        confidence: 0.44999999999999996,
+                                        access_count: 0,
+                                        evidence_count: 1,
+                                        node_id: "node_f42aa750f3d5a7dd68885f419dacc56d",
+                                        information_gain: 0.0803,
+                                        interval_lower: 0.0448,
+                                        interval_upper: 0.9346,
                                     },
                                     {
-                                        node_id: "node_2106a4e...",
-                                        content: "ETS coverage cache with dirty-bit invalidation",
-                                        confidence: 0.780,
-                                        source: "implementation session",
-                                        metadata: { tests_passed: 240 },
+                                        width: 0.8904,
+                                        content: "Graphonomous v0.3 P3 implementation complete. Capability 11 (causal edge metadata prep) delivered: causal_strength, confounders, intervention_history in edge metadata, updated during learn_from_outcome",
+                                        confidence: 0.5315689030716606,
+                                        access_count: 0,
+                                        evidence_count: 1,
+                                        node_id: "node_7a67a75fa871efd4cfe8cbb73b76e1cd",
+                                        information_gain: 0.08,
+                                        interval_lower: 0.0613,
+                                        interval_upper: 0.9517,
                                     },
                                     {
-                                        node_id: "node_bd46523...",
-                                        content: "Two-phase attention implemented",
-                                        confidence: 0.779,
-                                        source: "implementation session",
-                                        metadata: { tests_passed: 240 },
+                                        width: 0.8904,
+                                        content: "Graphonomous v0.3 P2 implementation complete. Three capabilities delivered: (1) Capability 8 \u2014 Scoped Uncertainty Propagation with Wilson score intervals, epistemic_frontier MCP tool, entropy/informati",
+                                        confidence: 0.4703315805742404,
+                                        access_count: 0,
+                                        evidence_count: 1,
+                                        node_id: "node_93d5f8a9717d72b11fb9a70c3d222a33",
+                                        information_gain: 0.08,
+                                        interval_lower: 0.0487,
+                                        interval_upper: 0.9391,
                                     },
                                 ],
                             },
@@ -786,117 +808,132 @@
                         {
                             role: "user",
                             actor: "Developer",
-                            text: "Great recall. Time-filtered episodic retrieval gives a clean session replay with confidence scores and provenance metadata.",
+                            text: "The system identifies exactly where investigation would most reduce uncertainty. This is meta-cognition.",
                             snippetName: "user_confirmation.txt",
                             snippet: {
-                                assessment: "rich episodic coverage",
-                                episodes_returned: 5,
-                                top_confidence: 0.833,
+                                assessment: "meta-cognition confirmed",
+                                note: "system knows what it doesn't know",
                             },
                         },
                     ],
                     trace: [
                         {
-                            name: "retrieve_episodic",
+                            name: "epistemic_frontier",
                             latency: "status ok",
                             status: "ok",
-                            note: "since=2026-04-02T00:00:00Z, limit=5, returned 5 episodes",
+                            note: "5 frontier nodes, max info_gain=0.0828, widest interval=0.890",
                         },
                     ],
                     skills: [
                         {
-                            name: "Rate limiting discussion",
-                            conf: "0.600",
-                            similarity: "\u2014",
-                            body: "Episodic \u2014 learn_from_interaction. Novelty score 0.844 indicates fresh topic.",
-                            gap: false,
-                            toolColor: "green",
-                            toolLabel: "episodic",
+                            name: "BM25 hybrid retrieval + reranking",
+                            conf: "0.625",
+                            detail: "[0.08, 0.97] \u00b7 info_gain 0.0828",
+                            body: "BM25 hybrid retrieval with cross-encoder reranking improves SHR by 12pp on production workloads compared to pure vector search. Highest information gain on the frontier.",
+                            frontier: true,
+                            resolved: false,
                         },
                         {
-                            name: "Demo suite audit",
-                            conf: "0.833",
-                            similarity: "\u2014",
-                            body: "Episodic \u2014 demo_audit_session. 5 demos covering 12/22 MCP tools catalogued.",
-                            gap: false,
-                            toolColor: "green",
-                            toolLabel: "episodic",
+                            name: "Temporal recency boost effect",
+                            conf: "0.591",
+                            detail: "[0.07, 0.96] \u00b7 info_gain 0.0814",
+                            body: "Nodes accessed within 7 days receive 1.4x retrieval score multiplier, decaying exponentially. Wide interval.",
+                            frontier: true,
+                            resolved: false,
                         },
                         {
-                            name: "Layer 3 batched ANN retrieval",
-                            conf: "0.830",
-                            similarity: "\u2014",
-                            body: "Episodic \u2014 implementation session. Commit f62014e, 245 tests passed.",
-                            gap: false,
-                            toolColor: "green",
-                            toolLabel: "episodic",
+                            name: "Nomic embed-text-v1.5 non-English",
+                            conf: "0.450",
+                            detail: "[0.04, 0.93] \u00b7 info_gain 0.0803",
+                            body: "Nomic embed-text-v1.5 produces 768-dim embeddings that degrade on non-English content beyond basic Latin scripts. Low confidence, widest interval.",
+                            frontier: true,
+                            resolved: false,
                         },
                         {
-                            name: "ETS coverage cache",
-                            conf: "0.780",
-                            similarity: "\u2014",
-                            body: "Episodic \u2014 implementation session. Dirty-bit invalidation pattern, 240 tests passed.",
-                            gap: false,
-                            toolColor: "green",
-                            toolLabel: "episodic",
+                            name: "v0.3 P3 causal edge metadata",
+                            conf: "0.532",
+                            detail: "[0.06, 0.95] \u00b7 info_gain 0.080",
+                            body: "Capability 11 (causal edge metadata prep) delivered: causal_strength, confounders, intervention_history in edge metadata.",
+                            frontier: true,
+                            resolved: false,
                         },
                         {
-                            name: "Two-phase attention",
-                            conf: "0.779",
-                            similarity: "\u2014",
-                            body: "Episodic \u2014 implementation session. Attention engine phase 1+2, 240 tests passed.",
-                            gap: false,
-                            toolColor: "green",
-                            toolLabel: "episodic",
+                            name: "v0.3 P2 uncertainty propagation",
+                            conf: "0.470",
+                            detail: "[0.05, 0.94] \u00b7 info_gain 0.080",
+                            body: "Three capabilities delivered: Scoped Uncertainty Propagation with Wilson score intervals, epistemic_frontier MCP tool, entropy/information gain.",
+                            frontier: true,
+                            resolved: false,
                         },
                     ],
                     tabs: {
-                        "retrieve_episodic.json": {
-                            status: "ok",
+                        "frontier_map.json": {
                             count: 5,
-                            episodes: [
+                            status: "ok",
+                            frontier: [
                                 {
-                                    node_id: "node_c9209d4...",
-                                    content: "User: How should we handle rate limiting...",
-                                    confidence: 0.600,
-                                    source: "learn_from_interaction",
-                                    metadata: { novelty_score: 0.8442 },
+                                    width: 0.885,
+                                    content: "BM25 hybrid retrieval with cross-encoder reranking improves SHR by 12pp on production workloads compared to pure vector search",
+                                    confidence: 0.6250000000000001,
+                                    access_count: 0,
+                                    evidence_count: 1,
+                                    node_id: "node_1868a606bf9263e552193afe641ac999",
+                                    information_gain: 0.0828,
+                                    interval_lower: 0.0833,
+                                    interval_upper: 0.9683,
                                 },
                                 {
-                                    node_id: "node_6297d36...",
-                                    content: "Demo suite audit (2026-04-02): 5 demos cover 12/22 MCP tools",
-                                    confidence: 0.833,
-                                    source: "demo_audit_session",
+                                    width: 0.8877,
+                                    content: "Temporal recency boost effect: nodes accessed within 7 days receive 1.4x retrieval score multiplier, decaying exponentially",
+                                    confidence: 0.5910000000000001,
+                                    access_count: 0,
+                                    evidence_count: 1,
+                                    node_id: "node_b6ef104b8c6b6115a7b5b0c82c472295",
+                                    information_gain: 0.0814,
+                                    interval_lower: 0.0749,
+                                    interval_upper: 0.9627,
                                 },
                                 {
-                                    node_id: "node_fcfa81c...",
-                                    content: "Layer 3 batched ANN retrieval implemented",
-                                    confidence: 0.830,
-                                    source: "implementation session",
-                                    metadata: { commit: "f62014e", tests_passed: 245 },
+                                    width: 0.8898,
+                                    content: "Nomic embed-text-v1.5 produces 768-dim embeddings that degrade on non-English content beyond basic Latin scripts",
+                                    confidence: 0.44999999999999996,
+                                    access_count: 0,
+                                    evidence_count: 1,
+                                    node_id: "node_f42aa750f3d5a7dd68885f419dacc56d",
+                                    information_gain: 0.0803,
+                                    interval_lower: 0.0448,
+                                    interval_upper: 0.9346,
                                 },
                                 {
-                                    node_id: "node_2106a4e...",
-                                    content: "ETS coverage cache with dirty-bit invalidation",
-                                    confidence: 0.780,
-                                    source: "implementation session",
-                                    metadata: { tests_passed: 240 },
+                                    width: 0.8904,
+                                    content: "Graphonomous v0.3 P3 implementation complete. Capability 11 (causal edge metadata prep) delivered: causal_strength, confounders, intervention_history in edge metadata, updated during learn_from_outcome",
+                                    confidence: 0.5315689030716606,
+                                    access_count: 0,
+                                    evidence_count: 1,
+                                    node_id: "node_7a67a75fa871efd4cfe8cbb73b76e1cd",
+                                    information_gain: 0.08,
+                                    interval_lower: 0.0613,
+                                    interval_upper: 0.9517,
                                 },
                                 {
-                                    node_id: "node_bd46523...",
-                                    content: "Two-phase attention implemented",
-                                    confidence: 0.779,
-                                    source: "implementation session",
-                                    metadata: { tests_passed: 240 },
+                                    width: 0.8904,
+                                    content: "Graphonomous v0.3 P2 implementation complete. Three capabilities delivered: (1) Capability 8 \u2014 Scoped Uncertainty Propagation with Wilson score intervals, epistemic_frontier MCP tool, entropy/informati",
+                                    confidence: 0.4703315805742404,
+                                    access_count: 0,
+                                    evidence_count: 1,
+                                    node_id: "node_93d5f8a9717d72b11fb9a70c3d222a33",
+                                    information_gain: 0.08,
+                                    interval_lower: 0.0487,
+                                    interval_upper: 0.9391,
                                 },
                             ],
                         },
                     },
                     toolLog: [
                         {
-                            ts: "17:30:01.204",
-                            tool: "retrieve_episodic",
-                            args: 'since="2026-04-02T00:00:00Z" limit=5',
+                            ts: "14:31:02.407",
+                            tool: "epistemic_frontier",
+                            args: 'limit=5, min_gap=0.3',
                             status: "ok",
                             latency: "",
                         },
@@ -904,28 +941,28 @@
                 },
 
                 B: {
-                    label: "Scenario B \u00b7 procedural search",
+                    label: "Scenario B \u00b7 investigate + shrink",
                     kpis: [
                         {
-                            label: "episodes today",
-                            value: "5",
-                            note: "rich session history since midnight",
+                            label: "investigated node",
+                            value: "1",
+                            note: "BM25 hybrid retrieval node targeted",
                         },
                         {
-                            label: "procedural matches",
-                            value: "1",
-                            note: "sparse skill coverage",
+                            label: "confidence delta",
+                            value: "+0.065",
+                            note: "0.625\u21920.690 after outcome",
+                        },
+                        {
+                            label: "q-value update",
+                            value: "0.65\u21920.755",
+                            note: "reinforcement learning signal propagated",
                             danger: true,
                         },
                         {
-                            label: "top episodic confidence",
-                            value: "0.833",
-                            note: "strong episodic recall",
-                        },
-                        {
-                            label: "skill relevance",
-                            value: "0.034",
-                            note: "very low \u2014 gap identified",
+                            label: "frontier change",
+                            value: "BM25 dropped",
+                            note: "node left frontier, replaced by new entry",
                             danger: true,
                         },
                     ],
@@ -933,64 +970,51 @@
                         {
                             role: "user",
                             actor: "Developer",
-                            text: "I need to debug a failing test in an Elixir project. What procedural skills does the graph have?",
+                            text: "I've tested BM25 hybrid retrieval on production data. It improved SHR by 12pp. Report this outcome.",
                             snippetName: "user_query.txt",
                             snippet: {
-                                query: "debug failing test in Elixir project with mix test output",
-                                tool: "retrieve_procedural",
-                                context: "Elixir project, mix test failing, need debugging steps",
+                                action: "report production test outcome",
+                                tool: "learn_from_outcome",
+                                node: "node_1868a606bf9263e552193afe641ac999",
                             },
                         },
                         {
                             role: "assistant",
                             actor: "Graphonomous",
-                            text: "Running retrieve_procedural with v0.3 precondition matching...",
-                            snippetName: "retrieve_procedural call",
+                            text: "Running learn_from_outcome...",
+                            snippetName: "learn_from_outcome call",
                             snippet: {
-                                tool: "retrieve_procedural",
+                                tool: "learn_from_outcome",
                                 arguments: {
-                                    task: "debug failing test in Elixir project with mix test output",
+                                    status: "success",
+                                    causal_node_ids: '["node_1868a606bf9263e552193afe641ac999"]',
+                                    action_id: "bm25_production_test_002",
                                 },
                             },
                         },
                         {
                             role: "assistant",
                             actor: "Graphonomous",
-                            text: "3 procedural nodes found \u2014 v0.3 precondition matching reranked them:\n\n#1 \"Skill: Test Coverage Gap Scan\" (score 0.482, precondition_boost +0.35)\n   Preconditions: [Elixir project, mix test configured] \u2014 BOTH match query context\n\n#2 \"Skill: Feature Flag Path Trace\" (score 0.127, precondition_boost +0.08)\n   Preconditions: [codebase with feature flags] \u2014 partial match\n\n#3 \"Skill: Request Path Trace\" (score 0.089, no boost)\n   Preconditions: [Phoenix web app, HTTP endpoint] \u2014 no match to test debugging\n\nThe precondition boost lifted Test Coverage Gap Scan from similarity 0.034 to score 0.482 \u2014 a 14\u00d7 boost because its preconditions perfectly match the query context (Elixir + mix test).",
-                            snippetName: "retrieve_procedural result",
+                            text: "Outcome recorded. Node confidence updated: 0.625\u21920.690 (+0.065). Q-value updated: 0.65\u21920.755 with 2 q-updates processed.",
+                            snippetName: "learn_from_outcome result",
                             snippet: {
-                                status: "ok",
-                                count: 3,
-                                nodes: [
+                                status: "success",
+                                action_id: "bm25_production_test_002",
+                                retrieval_trace_id: null,
+                                decision_trace_id: null,
+                                updated: 1,
+                                processed: 1,
+                                skipped: 0,
+                                updates: [
                                     {
-                                        node_id: "node_4a65be5f0a4ab106eb96102cdc9b02f7",
-                                        content: "Skill: Test Coverage Gap Scan \u2014 Identify untested code paths by analyzing mix test coverage output and cross-referencing with module dependency graph",
-                                        confidence: 0.393,
-                                        similarity: 0.132,
-                                        score: 0.482,
-                                        precondition_boost: 0.35,
-                                        preconditions: ["Elixir project", "mix test configured"],
-                                        postconditions: ["coverage gaps identified", "priority test list generated"],
-                                    },
-                                    {
-                                        node_id: "node_d13eaf96e1f72502c3347bede27681d2",
-                                        content: "Skill: Feature Flag Path Trace \u2014 Trace a feature flag's influence on code paths across modules",
-                                        confidence: 0.485,
-                                        similarity: 0.047,
-                                        score: 0.127,
-                                        precondition_boost: 0.08,
-                                        preconditions: ["codebase with feature flags"],
-                                        postconditions: ["flag dependency map generated"],
-                                    },
-                                    {
-                                        node_id: "node_3c9e83e7a94b8acc7234d15f8a087b00",
-                                        content: "Skill: Request Path Trace \u2014 Trace HTTP request through Phoenix router, plugs, and controllers",
-                                        confidence: 0.470,
-                                        similarity: 0.089,
-                                        score: 0.089,
-                                        precondition_boost: 0,
-                                        preconditions: ["Phoenix web app", "HTTP endpoint"],
-                                        postconditions: ["request path documented", "bottlenecks identified"],
+                                        result: "updated",
+                                        q_update_count: 2,
+                                        node_id: "node_1868a606bf9263e552193afe641ac999",
+                                        delta: 0.06500000000000006,
+                                        new_confidence: 0.6900000000000002,
+                                        old_confidence: 0.6250000000000001,
+                                        new_q_value: 0.755,
+                                        old_q_value: 0.65,
                                     },
                                 ],
                             },
@@ -998,67 +1022,258 @@
                         {
                             role: "user",
                             actor: "Developer",
-                            text: "The precondition boost is the key \u2014 Test Coverage Gap Scan went from a 0.034 similarity match to the #1 result because its preconditions (Elixir + mix test) perfectly fit my context. That's context-aware skill retrieval.",
+                            text: "Now check the frontier again \u2014 it should have changed.",
+                            snippetName: "user_recheck.txt",
+                            snippet: {
+                                action: "re-check epistemic frontier after outcome",
+                                tool: "epistemic_frontier",
+                            },
+                        },
+                        {
+                            role: "assistant",
+                            actor: "Graphonomous",
+                            text: "Running epistemic_frontier...",
+                            snippetName: "epistemic_frontier call",
+                            snippet: {
+                                tool: "epistemic_frontier",
+                                arguments: {
+                                    limit: 5,
+                                    min_gap: 0.3,
+                                },
+                            },
+                        },
+                        {
+                            role: "assistant",
+                            actor: "Graphonomous",
+                            text: "Frontier updated! The BM25 node (node_1868a6...) dropped off the frontier after its confidence rose to 0.690. Still 5 frontier nodes \u2014 a new node ('Cross-encoder reranking latency') filled in. The graph is self-correcting: each investigation reduces uncertainty where it matters most.",
+                            snippetName: "epistemic_frontier result (after)",
+                            snippet: {
+                                count: 5,
+                                status: "ok",
+                                frontier: [
+                                    {
+                                        width: 0.8877,
+                                        content: "Temporal recency boost effect: nodes accessed within 7 days receive 1.4x retrieval score multiplier, decaying exponentially",
+                                        confidence: 0.5910000000000001,
+                                        access_count: 0,
+                                        evidence_count: 1,
+                                        node_id: "node_b6ef104b8c6b6115a7b5b0c82c472295",
+                                        information_gain: 0.0814,
+                                        interval_lower: 0.0749,
+                                        interval_upper: 0.9627,
+                                    },
+                                    {
+                                        width: 0.8898,
+                                        content: "Nomic embed-text-v1.5 produces 768-dim embeddings that degrade on non-English content beyond basic Latin scripts",
+                                        confidence: 0.44999999999999996,
+                                        access_count: 0,
+                                        evidence_count: 1,
+                                        node_id: "node_f42aa750f3d5a7dd68885f419dacc56d",
+                                        information_gain: 0.0803,
+                                        interval_lower: 0.0448,
+                                        interval_upper: 0.9346,
+                                    },
+                                    {
+                                        width: 0.8904,
+                                        content: "Graphonomous v0.3 P3 implementation complete. Capability 11 (causal edge metadata prep) delivered: causal_strength, confounders, intervention_history in edge metadata, updated during learn_from_outcome",
+                                        confidence: 0.5315689030716606,
+                                        access_count: 0,
+                                        evidence_count: 1,
+                                        node_id: "node_7a67a75fa871efd4cfe8cbb73b76e1cd",
+                                        information_gain: 0.08,
+                                        interval_lower: 0.0613,
+                                        interval_upper: 0.9517,
+                                    },
+                                    {
+                                        width: 0.8904,
+                                        content: "Graphonomous v0.3 P2 implementation complete. Three capabilities delivered: (1) Capability 8 \u2014 Scoped Uncertainty Propagation with Wilson score intervals, epistemic_frontier MCP tool, entropy/informati",
+                                        confidence: 0.4703315805742404,
+                                        access_count: 0,
+                                        evidence_count: 1,
+                                        node_id: "node_93d5f8a9717d72b11fb9a70c3d222a33",
+                                        information_gain: 0.08,
+                                        interval_lower: 0.0487,
+                                        interval_upper: 0.9391,
+                                    },
+                                    {
+                                        width: 0.8905,
+                                        content: "Cross-encoder reranking latency averages 45ms per query under concurrent load of 8 simultaneous requests",
+                                        confidence: 0.524,
+                                        access_count: 0,
+                                        evidence_count: 1,
+                                        node_id: "node_7fc8542146d3030763322b61421bc4b3",
+                                        information_gain: 0.0799,
+                                        interval_lower: 0.0597,
+                                        interval_upper: 0.9502,
+                                    },
+                                ],
+                            },
+                        },
+                        {
+                            role: "user",
+                            actor: "Developer",
+                            text: "BM25 node dropped off the frontier after a single outcome. A new node filled in. Self-directed uncertainty reduction.",
                             snippetName: "user_confirmation.txt",
                             snippet: {
-                                assessment: "precondition matching verified",
-                                note: "14\u00d7 score boost from matching preconditions",
+                                assessment: "frontier rotation confirmed",
+                                note: "self-directed uncertainty reduction",
+                                bm25_node_dropped: true,
+                                new_node_filled: "node_7fc8542146d3030763322b61421bc4b3",
                             },
                         },
                     ],
                     trace: [
                         {
-                            name: "retrieve_procedural",
+                            name: "learn_from_outcome",
+                            latency: "status success",
+                            status: "ok",
+                            note: "confidence 0.625\u21920.690 (+0.065), q-value 0.65\u21920.755, 2 q-updates",
+                        },
+                        {
+                            name: "epistemic_frontier",
                             latency: "status ok",
                             status: "ok",
-                            note: "3 nodes, precondition_boost applied, #1 boosted 14\u00d7 by matching [Elixir, mix test]",
+                            note: "BM25 node dropped off frontier, cross-encoder reranking node filled in",
                         },
                     ],
                     skills: [
                         {
-                            name: "Test Coverage Gap Scan",
-                            conf: "0.393",
-                            similarity: "0.132 \u2192 0.482",
-                            body: "Procedural \u2014 #1 after precondition boost (+0.35). Preconditions [Elixir project, mix test] match query context perfectly.",
-                            gap: false,
-                            toolColor: "blue",
-                            toolLabel: "procedural",
+                            name: "BM25 hybrid retrieval (investigated)",
+                            conf: "0.690",
+                            detail: "q-value 0.755 \u00b7 evidence confirmed",
+                            body: "Investigated with production data. Confidence rose 0.625\u21920.690. Q-value rose 0.65\u21920.755. Dropped off frontier.",
+                            frontier: false,
+                            resolved: true,
                         },
                         {
-                            name: "Feature Flag Path Trace",
-                            conf: "0.485",
-                            similarity: "0.047 \u2192 0.127",
-                            body: "Procedural \u2014 #2, partial precondition match (+0.08). Feature flag context partially relevant.",
-                            gap: false,
-                            toolColor: "blue",
-                            toolLabel: "procedural",
+                            name: "Temporal recency boost effect",
+                            conf: "0.591",
+                            detail: "[0.07, 0.96] \u00b7 info_gain 0.0814",
+                            body: "Still on frontier. Nodes accessed within 7 days receive 1.4x retrieval score multiplier. Now highest information gain.",
+                            frontier: true,
+                            resolved: false,
                         },
                         {
-                            name: "Request Path Trace",
-                            conf: "0.470",
-                            similarity: "0.089",
-                            body: "Procedural \u2014 #3, no precondition boost. Phoenix web app preconditions don't match test debugging context.",
-                            gap: true,
-                            toolColor: "blue",
-                            toolLabel: "procedural",
+                            name: "Nomic embed-text-v1.5 non-English",
+                            conf: "0.450",
+                            detail: "[0.04, 0.93] \u00b7 info_gain 0.0803",
+                            body: "Still on frontier. Lowest confidence of remaining nodes.",
+                            frontier: true,
+                            resolved: false,
+                        },
+                        {
+                            name: "v0.3 P3 causal edge metadata",
+                            conf: "0.532",
+                            detail: "[0.06, 0.95] \u00b7 info_gain 0.080",
+                            body: "Still on frontier. Causal edge metadata capability.",
+                            frontier: true,
+                            resolved: false,
+                        },
+                        {
+                            name: "Cross-encoder reranking latency",
+                            conf: "0.524",
+                            detail: "[0.06, 0.95] \u00b7 info_gain 0.0799",
+                            body: "New on frontier \u2014 filled in after BM25 node dropped off. Latency averages 45ms per query under concurrent load.",
+                            frontier: true,
+                            resolved: false,
                         },
                     ],
                     tabs: {
-                        "retrieve_procedural.json": {
+                        "outcome_result.json": {
+                            status: "success",
+                            action_id: "bm25_production_test_002",
+                            retrieval_trace_id: null,
+                            decision_trace_id: null,
+                            updated: 1,
+                            processed: 1,
+                            skipped: 0,
+                            updates: [
+                                {
+                                    result: "updated",
+                                    q_update_count: 2,
+                                    node_id: "node_1868a606bf9263e552193afe641ac999",
+                                    delta: 0.06500000000000006,
+                                    new_confidence: 0.6900000000000002,
+                                    old_confidence: 0.6250000000000001,
+                                    new_q_value: 0.755,
+                                    old_q_value: 0.65,
+                                },
+                            ],
+                        },
+                        "frontier_after.json": {
+                            count: 5,
                             status: "ok",
-                            count: 3,
-                            nodes: [
-                                { node_id: "node_4a65be5f...", content: "Skill: Test Coverage Gap Scan", score: 0.482, precondition_boost: 0.35, preconditions: ["Elixir project", "mix test configured"] },
-                                { node_id: "node_d13eaf96...", content: "Skill: Feature Flag Path Trace", score: 0.127, precondition_boost: 0.08, preconditions: ["codebase with feature flags"] },
-                                { node_id: "node_3c9e83e7...", content: "Skill: Request Path Trace", score: 0.089, precondition_boost: 0, preconditions: ["Phoenix web app", "HTTP endpoint"] },
+                            frontier: [
+                                {
+                                    width: 0.8877,
+                                    content: "Temporal recency boost effect: nodes accessed within 7 days receive 1.4x retrieval score multiplier, decaying exponentially",
+                                    confidence: 0.5910000000000001,
+                                    access_count: 0,
+                                    evidence_count: 1,
+                                    node_id: "node_b6ef104b8c6b6115a7b5b0c82c472295",
+                                    information_gain: 0.0814,
+                                    interval_lower: 0.0749,
+                                    interval_upper: 0.9627,
+                                },
+                                {
+                                    width: 0.8898,
+                                    content: "Nomic embed-text-v1.5 produces 768-dim embeddings that degrade on non-English content beyond basic Latin scripts",
+                                    confidence: 0.44999999999999996,
+                                    access_count: 0,
+                                    evidence_count: 1,
+                                    node_id: "node_f42aa750f3d5a7dd68885f419dacc56d",
+                                    information_gain: 0.0803,
+                                    interval_lower: 0.0448,
+                                    interval_upper: 0.9346,
+                                },
+                                {
+                                    width: 0.8904,
+                                    content: "Graphonomous v0.3 P3 implementation complete. Capability 11 (causal edge metadata prep) delivered: causal_strength, confounders, intervention_history in edge metadata, updated during learn_from_outcome",
+                                    confidence: 0.5315689030716606,
+                                    access_count: 0,
+                                    evidence_count: 1,
+                                    node_id: "node_7a67a75fa871efd4cfe8cbb73b76e1cd",
+                                    information_gain: 0.08,
+                                    interval_lower: 0.0613,
+                                    interval_upper: 0.9517,
+                                },
+                                {
+                                    width: 0.8904,
+                                    content: "Graphonomous v0.3 P2 implementation complete. Three capabilities delivered: (1) Capability 8 \u2014 Scoped Uncertainty Propagation with Wilson score intervals, epistemic_frontier MCP tool, entropy/informati",
+                                    confidence: 0.4703315805742404,
+                                    access_count: 0,
+                                    evidence_count: 1,
+                                    node_id: "node_93d5f8a9717d72b11fb9a70c3d222a33",
+                                    information_gain: 0.08,
+                                    interval_lower: 0.0487,
+                                    interval_upper: 0.9391,
+                                },
+                                {
+                                    width: 0.8905,
+                                    content: "Cross-encoder reranking latency averages 45ms per query under concurrent load of 8 simultaneous requests",
+                                    confidence: 0.524,
+                                    access_count: 0,
+                                    evidence_count: 1,
+                                    node_id: "node_7fc8542146d3030763322b61421bc4b3",
+                                    information_gain: 0.0799,
+                                    interval_lower: 0.0597,
+                                    interval_upper: 0.9502,
+                                },
                             ],
                         },
                     },
                     toolLog: [
                         {
-                            ts: "17:30:04.891",
-                            tool: "retrieve_procedural",
-                            args: 'task="debug failing test in Elixir..."',
+                            ts: "14:31:08.112",
+                            tool: "learn_from_outcome",
+                            args: 'action_id="bm25_production_test_002", status="success"',
+                            status: "ok",
+                            latency: "",
+                        },
+                        {
+                            ts: "14:31:09.847",
+                            tool: "epistemic_frontier",
+                            args: 'limit=5, min_gap=0.3',
                             status: "ok",
                             latency: "",
                         },
@@ -1107,16 +1322,17 @@
                 for (const s of data[mode].skills) {
                     const c = document.createElement("div");
                     c.className = "skill-card";
-                    const gapTag = s.gap
-                        ? '<span class="gap-tag">barely relevant</span>'
-                        : "";
-                    const toolTag = `<span class="tool-tag ${s.toolColor}">${s.toolLabel}</span>`;
-                    const confClass = s.gap ? "conf low" : "conf";
-                    const simDisplay = s.similarity !== "\u2014" ? ` \u00b7 sim ${s.similarity}` : "";
+                    let tag = "";
+                    if (s.resolved) {
+                        tag = '<span class="resolved-tag">resolved</span>';
+                    } else if (s.frontier) {
+                        tag = '<span class="frontier-tag">frontier</span>';
+                    }
+                    const confClass = s.resolved ? "conf" : (s.frontier ? "conf low" : "conf");
                     c.innerHTML = `
             <div class="skill-top">
-              <div class="skill-name">${s.name}${toolTag}${gapTag}</div>
-              <div class="${confClass}">conf ${s.conf}${simDisplay}</div>
+              <div class="skill-name">${s.name}${tag}</div>
+              <div class="${confClass}">conf ${s.conf} · ${s.detail}</div>
             </div>
             <div class="skill-body">${s.body}</div>
           `;

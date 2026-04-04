@@ -1,0 +1,563 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>A/B: Causal Chains — Success vs Partial-Success Propagation</title>
+        <style>
+            :root {
+                --bg: #0a0b0f;
+                --surface: #11141c;
+                --surface-2: #171b26;
+                --surface-3: #0d1018;
+                --line: #252b3b;
+                --text: #e9ecf4;
+                --dim: #8a92a7;
+                --good: #38d39f;
+                --accent: #7b8cff;
+                --accent-2: #4af5c6;
+                --warn: #ffc46b;
+                --danger: #ff6b6b;
+                --rose: #ff6b8a;
+                --bubble-user: #1c2435;
+                --bubble-assistant: #141b2c;
+                --shadow: 0 14px 34px rgba(0, 0, 0, 0.35);
+                --terminal-bg: #080a10;
+                --terminal-line: #1a1f2e;
+            }
+
+            * { box-sizing: border-box; }
+
+            html, body {
+                margin: 0; padding: 0; min-height: 100%;
+                background:
+                    radial-gradient(1200px 800px at 85% -20%, rgba(123,140,255,0.11), transparent 60%),
+                    radial-gradient(1000px 700px at -10% 120%, rgba(74,245,198,0.08), transparent 55%),
+                    var(--bg);
+                color: var(--text);
+                font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+            }
+
+            a { color: inherit; }
+
+            .wrap { max-width: 1220px; margin: 0 auto; padding: 22px; }
+
+            .hero {
+                border: 1px solid var(--line); border-radius: 18px;
+                background: linear-gradient(160deg, rgba(123,140,255,0.08), rgba(17,20,28,0.95) 28%);
+                padding: 18px; box-shadow: var(--shadow);
+            }
+
+            .badge {
+                display: inline-flex; align-items: center; gap: 8px;
+                border-radius: 999px; border: 1px solid rgba(74,245,198,0.35);
+                color: var(--accent-2); background: rgba(74,245,198,0.08);
+                font-size: 12px; padding: 6px 10px;
+            }
+
+            .dot {
+                width: 8px; height: 8px; border-radius: 50%;
+                background: var(--accent-2); box-shadow: 0 0 12px rgba(74,245,198,0.8);
+                animation: pulse 1.7s infinite;
+            }
+
+            @keyframes pulse {
+                0%, 100% { transform: scale(1); opacity: 0.85; }
+                50% { transform: scale(1.3); opacity: 1; }
+            }
+
+            h1 { margin: 14px 0 6px; font-size: clamp(26px,4vw,42px); line-height: 1.06; letter-spacing: -0.02em; }
+            .lead { color: var(--dim); max-width: 90ch; line-height: 1.55; margin: 0; }
+            .top-controls { margin-top: 14px; display: flex; flex-wrap: wrap; gap: 8px; }
+
+            button {
+                border: 1px solid var(--line); background: var(--surface-2);
+                color: var(--text); border-radius: 10px; padding: 8px 10px;
+                font-size: 12px; cursor: pointer;
+            }
+            button:hover { border-color: #3a4256; transform: translateY(-1px); }
+            .btn-primary { border-color: rgba(74,245,198,0.35); color: var(--accent-2); background: rgba(74,245,198,0.08); }
+            .btn-active { border-color: rgba(123,140,255,0.45); color: var(--accent); background: rgba(123,140,255,0.12); }
+
+            .kpis { margin-top: 12px; display: grid; gap: 10px; grid-template-columns: repeat(4, minmax(0,1fr)); }
+            .kpi { border: 1px solid var(--line); border-radius: 12px; background: rgba(18,21,30,0.88); padding: 10px 11px; }
+            .kpi-label { color: var(--dim); font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; }
+            .kpi-value { color: var(--accent-2); font-size: 20px; font-weight: 700; }
+            .kpi-value.danger { color: var(--danger); }
+            .kpi-note { color: var(--dim); font-size: 11px; margin-top: 2px; line-height: 1.35; }
+
+            .layout { margin-top: 14px; display: grid; gap: 16px; grid-template-columns: 1.08fr 0.92fr; }
+            .panel { border: 1px solid var(--line); border-radius: 16px; background: var(--surface); overflow: hidden; box-shadow: var(--shadow); }
+            .panel-head { border-bottom: 1px solid var(--line); padding: 11px 13px; display: flex; justify-content: space-between; gap: 10px; align-items: center; background: rgba(255,255,255,0.01); }
+            .panel-title { color: #c9d2e8; font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; }
+
+            .chat { padding: 13px; overflow: auto; background: linear-gradient(transparent 0%, rgba(255,255,255,0.01) 100%), var(--surface); }
+            .bubble { border: 1px solid var(--line); border-radius: 14px; padding: 10px 11px; margin-bottom: 10px; max-width: 94%; box-shadow: 0 8px 20px rgba(0,0,0,0.2); animation: rise 0.24s ease; }
+            .bubble.user { margin-left: auto; background: var(--bubble-user); }
+            .bubble.assistant { margin-right: auto; background: var(--bubble-assistant); }
+            @keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+            .meta { display: flex; justify-content: space-between; gap: 10px; font-size: 10px; color: var(--dim); margin-bottom: 7px; text-transform: uppercase; letter-spacing: 0.08em; }
+            .text { font-size: 13px; line-height: 1.52; white-space: pre-wrap; }
+            .code { margin-top: 8px; border: 1px solid #222a3f; border-radius: 10px; overflow: hidden; background: var(--surface-3); }
+            .code-head { border-bottom: 1px solid #222a3f; padding: 7px 9px; display: flex; justify-content: space-between; align-items: center; color: var(--dim); font-size: 11px; }
+            .code pre { margin: 0; padding: 10px 11px; font-size: 12px; line-height: 1.45; color: #d6ddf0; overflow: auto; max-height: 220px; }
+
+            .right { display: grid; gap: 16px; grid-template-rows: 0.93fr 1.07fr; }
+            .skill-grid { padding: 12px; overflow: auto; }
+            .skill-card { border: 1px solid var(--line); border-radius: 12px; background: rgba(255,255,255,0.01); padding: 9px 10px; margin-bottom: 8px; }
+            .skill-top { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; margin-bottom: 5px; }
+            .skill-name { font-size: 12px; color: #cfd8ee; }
+            .conf { font-size: 11px; color: var(--accent-2); }
+            .conf.low { color: var(--danger); }
+            .skill-body { color: var(--dim); font-size: 11px; line-height: 1.45; }
+            .irrelevant-tag { display: inline-block; padding: 1px 6px; border-radius: 999px; font-size: 9px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--danger); border: 1px solid rgba(255,107,107,0.35); background: rgba(255,107,107,0.08); margin-left: 6px; }
+
+            .trace-wrap { display: grid; grid-template-rows: auto 1fr; min-height: 0; }
+            .trace-list { padding: 11px; max-height: 190px; overflow: auto; border-bottom: 1px solid var(--line); }
+            .trace-item { border: 1px solid var(--line); border-radius: 11px; padding: 8px; margin-bottom: 7px; background: rgba(255,255,255,0.01); }
+            .trace-head { display: flex; justify-content: space-between; align-items: baseline; gap: 7px; }
+            .trace-name { font-size: 12px; color: #d2daee; }
+            .trace-latency { font-size: 11px; color: var(--dim); }
+            .pill { margin-top: 4px; display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; }
+            .pill.ok { color: var(--good); border: 1px solid rgba(56,211,159,0.45); background: rgba(56,211,159,0.08); }
+            .pill.warn { color: var(--warn); border: 1px solid rgba(255,196,107,0.45); background: rgba(255,196,107,0.08); }
+
+            .tabs { display: flex; overflow: auto; border-bottom: 1px solid var(--line); }
+            .tab { border: none; border-right: 1px solid var(--line); border-radius: 0; background: #0f131d; color: var(--dim); font-size: 11px; padding: 9px 11px; white-space: nowrap; }
+            .tab.active { color: var(--accent); background: #131a2a; }
+            .pane { display: none; height: 255px; overflow: auto; }
+            .pane.active { display: block; }
+            .pane pre { margin: 0; padding: 10px 11px; font-size: 12px; line-height: 1.44; color: #d4dcec; }
+
+            .terminal-strip { margin-top: 14px; border: 1px solid var(--terminal-line); border-radius: 12px; background: var(--terminal-bg); overflow: hidden; }
+            .terminal-head { padding: 8px 12px; border-bottom: 1px solid var(--terminal-line); display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02); }
+            .terminal-title { font-size: 11px; color: var(--dim); text-transform: uppercase; letter-spacing: 0.08em; }
+            .terminal-status { font-size: 11px; color: var(--accent-2); }
+            .terminal-body { padding: 10px 12px; height: 140px; overflow: auto; font-size: 11px; line-height: 1.6; }
+            .log-line { margin-bottom: 4px; opacity: 0; animation: logFade 0.3s ease forwards; }
+            @keyframes logFade { from { opacity: 0; transform: translateX(-6px); } to { opacity: 1; transform: translateX(0); } }
+            .log-ts { color: #4a5568; margin-right: 8px; }
+            .log-tool { color: var(--accent); }
+            .log-ok { color: var(--good); }
+            .log-warn { color: var(--warn); }
+            .log-dim { color: var(--dim); }
+
+            .footer { margin-top: 12px; text-align: center; color: var(--dim); font-size: 12px; }
+
+            @media (max-width: 1024px) {
+                .kpis { grid-template-columns: repeat(2, minmax(0,1fr)); }
+                .layout { grid-template-columns: 1fr; }
+                .right { grid-template-rows: auto auto; }
+                .chat { height: 450px; }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="wrap">
+            <section class="hero">
+                <span class="badge"><span class="dot"></span>Live MCP session &mdash; payloads captured 2026-04-03 from Graphonomous v0.3.1</span>
+                <h1>A/B: Causal Chains &mdash; Success vs Partial-Success Propagation</h1>
+                <p class="lead">
+                    Same <code>learn_from_outcome</code> tool, different outcomes:
+                    <b>A</b> reports a success &mdash; confidence boosted +0.075, Q-value rises
+                    0.5&rarr;0.65, then a second success compounds to 0.69/0.755.
+                    <b>B</b> reports partial_success &mdash; smaller boost (+0.024), Q-value
+                    0.5&rarr;0.545. Real MCP payloads showing confidence &amp; Q-value propagation.
+                </p>
+
+                <div class="top-controls">
+                    <button class="btn-active" id="scenarioA">Scenario A &middot; success outcome</button>
+                    <button id="scenarioB">Scenario B &middot; partial_success outcome</button>
+                    <button class="btn-primary" id="playBtn">&#9654; Play demo</button>
+                    <button id="nextBtn">Next bubble</button>
+                    <button id="resetBtn">Reset</button>
+                    <a href="../index.html"><button>&larr; Back to all demos</button></a>
+                    <a href="../../index.html"><button>&larr; Back to landing page</button></a>
+                </div>
+
+                <div class="kpis" id="kpis"></div>
+            </section>
+
+            <section class="layout">
+                <article class="panel">
+                    <div class="panel-head"><div class="panel-title">Chat + tool-call storytelling</div></div>
+                    <div class="chat" id="chat"></div>
+                </article>
+                <aside class="right">
+                    <section class="panel">
+                        <div class="panel-head"><div class="panel-title">Causal nodes</div></div>
+                        <div class="skill-grid" id="skills"></div>
+                    </section>
+                    <section class="panel trace-wrap">
+                        <div class="panel-head"><div class="panel-title">Execution trace + payload explorer</div></div>
+                        <div class="trace-list" id="trace"></div>
+                        <div class="tabs" id="tabs"></div>
+                        <div id="panes"></div>
+                    </section>
+                </aside>
+            </section>
+
+            <section class="terminal-strip">
+                <div class="terminal-head">
+                    <div class="terminal-title">Live tool-call log</div>
+                    <div class="terminal-status" id="terminalStatus">idle</div>
+                </div>
+                <div class="terminal-body" id="terminalBody"></div>
+            </section>
+
+            <p class="footer">
+                Payloads captured 2026-04-03 from a live Graphonomous v0.3.1 MCP session.
+                All learn_from_outcome output structures are authentic MCP tool responses.
+            </p>
+        </div>
+
+        <script>
+const data = {
+    A: {
+        label: "Scenario A \u00b7 success outcome",
+        kpis: [
+            { label: "outcome", value: "success", note: "action succeeded \u2014 positive reinforcement" },
+            { label: "confidence \u0394", value: "+0.075", note: "0.55\u21920.625 after first success" },
+            { label: "Q-value", value: "0.5\u21920.65", note: "first update, q_update_count=1" },
+            { label: "cumulative", value: "0.69 / 0.755", note: "confidence / Q after second success" }
+        ],
+        timeline: [
+            {
+                role: "user", actor: "Developer",
+                text: "I deployed the BM25 hybrid retrieval to production. SHR improved from 84% to 87.2%. Report this as a success outcome.",
+                snippetName: "user_request.txt",
+                snippet: { action: "deploy BM25 hybrid retrieval", result: "SHR +3.2pp", status: "success" }
+            },
+            {
+                role: "assistant", actor: "Graphonomous",
+                text: "Running learn_from_outcome...",
+                snippetName: "learn_from_outcome call",
+                snippet: {
+                    tool: "learn_from_outcome",
+                    arguments: {
+                        status: "success",
+                        action_id: "bm25_production_test_001",
+                        causal_node_ids: "[\"node_1868a606bf9263e552193afe641ac999\"]",
+                        evidence: "{\"shr_before\": 0.84, \"shr_after\": 0.872, \"delta\": \"+3.2pp\", \"test_queries\": 500}"
+                    }
+                }
+            },
+            {
+                role: "assistant", actor: "Graphonomous",
+                text: "Outcome recorded \u2014 success. 1 node updated:\n\u2022 node_1868a6... confidence 0.55\u21920.625 (+0.075)\n\u2022 Q-value 0.5\u21920.65 (q_update_count: 1)\n\nThe graph now has higher confidence that BM25 hybrid search delivers real production gains.",
+                snippetName: "learn_from_outcome result",
+                snippet: {
+                    status: "success",
+                    action_id: "bm25_production_test_001",
+                    retrieval_trace_id: null,
+                    decision_trace_id: null,
+                    updated: 1,
+                    processed: 1,
+                    skipped: 0,
+                    updates: [
+                        { result: "updated", q_update_count: 1, node_id: "node_1868a606bf9263e552193afe641ac999", delta: 0.07500000000000007, new_confidence: 0.6250000000000001, old_confidence: 0.55, new_q_value: 0.65, old_q_value: 0.5 }
+                    ]
+                }
+            },
+            {
+                role: "user", actor: "Developer",
+                text: "Good. Now run a second production test and report that as success too \u2014 let's see cumulative reinforcement.",
+                snippetName: "user_request_2.txt",
+                snippet: { action: "second BM25 production test", status: "success" }
+            },
+            {
+                role: "assistant", actor: "Graphonomous",
+                text: "Running learn_from_outcome for the second test...",
+                snippetName: "learn_from_outcome call (2nd)",
+                snippet: {
+                    tool: "learn_from_outcome",
+                    arguments: {
+                        status: "success",
+                        action_id: "bm25_production_test_002",
+                        causal_node_ids: "[\"node_1868a606bf9263e552193afe641ac999\"]",
+                        evidence: "{\"shr_before\": 0.872, \"shr_after\": 0.891, \"delta\": \"+1.9pp\", \"test_queries\": 500}"
+                    }
+                }
+            },
+            {
+                role: "assistant", actor: "Graphonomous",
+                text: "Second success recorded. Cumulative update on same node:\n\u2022 node_1868a6... confidence 0.625\u21920.690 (+0.065)\n\u2022 Q-value 0.65\u21920.755 (q_update_count: 2)\n\nRepeated successes compound \u2014 each update builds on the previous confidence and Q-value. The learning rate produces diminishing deltas as values approach 1.0.",
+                snippetName: "learn_from_outcome result (2nd)",
+                snippet: {
+                    status: "success",
+                    action_id: "bm25_production_test_002",
+                    retrieval_trace_id: null,
+                    decision_trace_id: null,
+                    updated: 1,
+                    processed: 1,
+                    skipped: 0,
+                    updates: [
+                        { result: "updated", q_update_count: 2, node_id: "node_1868a606bf9263e552193afe641ac999", delta: 0.06500000000000006, new_confidence: 0.6900000000000002, old_confidence: 0.6250000000000001, new_q_value: 0.755, old_q_value: 0.65 }
+                    ]
+                }
+            },
+            {
+                role: "user", actor: "Developer",
+                text: "Cumulative reinforcement working as expected. Confidence went 0.55\u21920.625\u21920.69, Q-value 0.5\u21920.65\u21920.755. Diminishing deltas (+0.075 then +0.065) show the learning rate in action.",
+                snippetName: "user_confirmation.txt",
+                snippet: { assessment: "correct", note: "cumulative success propagation verified" }
+            }
+        ],
+        trace: [
+            { name: "learn_from_outcome", latency: "1 updated", status: "ok", note: "success, confidence 0.55\u21920.625, Q 0.5\u21920.65" },
+            { name: "learn_from_outcome (2nd)", latency: "1 updated", status: "ok", note: "success, confidence 0.625\u21920.69, Q 0.65\u21920.755" }
+        ],
+        skills: [
+            { name: "BM25 hybrid retrieval", conf: "0.690", similarity: "\u2014", body: "Semantic node \u2014 BM25+FTS5 hybrid search with RRF fusion. Confidence boosted twice after consecutive production successes. Q-value: 0.755.", irrelevant: false }
+        ],
+        tabs: {
+            "outcome_success_1.json": {
+                status: "success",
+                action_id: "bm25_production_test_001",
+                retrieval_trace_id: null,
+                decision_trace_id: null,
+                updated: 1,
+                processed: 1,
+                skipped: 0,
+                updates: [
+                    { result: "updated", q_update_count: 1, node_id: "node_1868a606bf9263e552193afe641ac999", delta: 0.07500000000000007, new_confidence: 0.6250000000000001, old_confidence: 0.55, new_q_value: 0.65, old_q_value: 0.5 }
+                ]
+            },
+            "outcome_success_2.json": {
+                status: "success",
+                action_id: "bm25_production_test_002",
+                retrieval_trace_id: null,
+                decision_trace_id: null,
+                updated: 1,
+                processed: 1,
+                skipped: 0,
+                updates: [
+                    { result: "updated", q_update_count: 2, node_id: "node_1868a606bf9263e552193afe641ac999", delta: 0.06500000000000006, new_confidence: 0.6900000000000002, old_confidence: 0.6250000000000001, new_q_value: 0.755, old_q_value: 0.65 }
+                ]
+            }
+        },
+        toolLog: [
+            { ts: "14:31:02.445", tool: "learn_from_outcome", args: "status=\"success\" action_id=\"bm25_production_test_001\"", status: "ok", latency: "" },
+            { ts: "14:31:18.112", tool: "learn_from_outcome", args: "status=\"success\" action_id=\"bm25_production_test_002\"", status: "ok", latency: "" }
+        ]
+    },
+
+    B: {
+        label: "Scenario B \u00b7 partial_success outcome",
+        kpis: [
+            { label: "outcome", value: "partial_success", note: "action partially succeeded \u2014 smaller boost" },
+            { label: "confidence \u0394", value: "+0.024", note: "0.5\u21920.524 (modest increase)" },
+            { label: "Q-value", value: "0.5\u21920.545", note: "q_update_count=1" },
+            { label: "processed", value: "1 / 0 skip", note: "1 processed, 0 skipped" }
+        ],
+        timeline: [
+            {
+                role: "user", actor: "Developer",
+                text: "The cross-encoder reranker improved relevance but added latency. P99 went from 120ms to 180ms \u2014 acceptable but not ideal. Report as partial_success.",
+                snippetName: "user_request.txt",
+                snippet: { action: "deploy cross-encoder reranker", result: "relevance up, latency +50%", status: "partial_success" }
+            },
+            {
+                role: "assistant", actor: "Graphonomous",
+                text: "Running learn_from_outcome...",
+                snippetName: "learn_from_outcome call",
+                snippet: {
+                    tool: "learn_from_outcome",
+                    arguments: {
+                        status: "partial_success",
+                        action_id: "reranker_latency_test_001",
+                        causal_node_ids: "[\"node_7fc8542146d3030763322b61421bc4b3\"]",
+                        evidence: "{\"p99_before\": \"120ms\", \"p99_after\": \"180ms\", \"relevance_gain\": \"+4.1%\", \"concurrent_users\": 25}"
+                    }
+                }
+            },
+            {
+                role: "assistant", actor: "Graphonomous",
+                text: "Outcome recorded \u2014 partial_success. 1 node updated:\n\u2022 node_7fc854... confidence 0.5\u21920.524 (+0.024)\n\u2022 Q-value 0.5\u21920.545 (q_update_count: 1)\n\npartial_success applies a smaller positive delta than full success. The graph records that the reranker works but with caveats.",
+                snippetName: "learn_from_outcome result",
+                snippet: {
+                    status: "partial_success",
+                    action_id: "reranker_latency_test_001",
+                    retrieval_trace_id: null,
+                    decision_trace_id: null,
+                    updated: 1,
+                    processed: 1,
+                    skipped: 0,
+                    updates: [
+                        { result: "updated", q_update_count: 1, node_id: "node_7fc8542146d3030763322b61421bc4b3", delta: 0.02400000000000002, new_confidence: 0.524, old_confidence: 0.5, new_q_value: 0.545, old_q_value: 0.5 }
+                    ]
+                }
+            },
+            {
+                role: "user", actor: "Developer",
+                text: "Compare: success gave +0.075 confidence / +0.15 Q-value. partial_success gives only +0.024 / +0.045. The status directly controls the reinforcement magnitude.",
+                snippetName: "user_confirmation.txt",
+                snippet: { assessment: "correct", note: "partial_success smaller delta vs success confirmed" }
+            }
+        ],
+        trace: [
+            { name: "learn_from_outcome", latency: "1 updated", status: "ok", note: "partial_success, confidence 0.5\u21920.524, Q 0.5\u21920.545" }
+        ],
+        skills: [
+            { name: "Cross-encoder reranker", conf: "0.524", similarity: "\u2014", body: "Semantic node \u2014 Cross-encoder reranker using ms-marco-MiniLM-L-6-v2. Partial success: relevance improved but latency increased. Q-value: 0.545.", irrelevant: false }
+        ],
+        tabs: {
+            "outcome_partial.json": {
+                status: "partial_success",
+                action_id: "reranker_latency_test_001",
+                retrieval_trace_id: null,
+                decision_trace_id: null,
+                updated: 1,
+                processed: 1,
+                skipped: 0,
+                updates: [
+                    { result: "updated", q_update_count: 1, node_id: "node_7fc8542146d3030763322b61421bc4b3", delta: 0.02400000000000002, new_confidence: 0.524, old_confidence: 0.5, new_q_value: 0.545, old_q_value: 0.5 }
+                ]
+            }
+        },
+        toolLog: [
+            { ts: "14:32:11.201", tool: "learn_from_outcome", args: "status=\"partial_success\" action_id=\"reranker_latency_test_001\"", status: "ok", latency: "" }
+        ]
+    }
+};
+
+const els = {
+    scenarioA: document.getElementById("scenarioA"),
+    scenarioB: document.getElementById("scenarioB"),
+    playBtn: document.getElementById("playBtn"),
+    nextBtn: document.getElementById("nextBtn"),
+    resetBtn: document.getElementById("resetBtn"),
+    kpis: document.getElementById("kpis"),
+    chat: document.getElementById("chat"),
+    skills: document.getElementById("skills"),
+    trace: document.getElementById("trace"),
+    tabs: document.getElementById("tabs"),
+    panes: document.getElementById("panes"),
+    terminalBody: document.getElementById("terminalBody"),
+    terminalStatus: document.getElementById("terminalStatus")
+};
+
+let mode = "A", idx = 0, playing = false, logIdx = 0;
+
+function renderKpis() {
+    els.kpis.innerHTML = "";
+    for (const k of data[mode].kpis) {
+        const d = document.createElement("div"); d.className = "kpi";
+        d.innerHTML = `<div class="kpi-label">${k.label}</div><div class="kpi-value${k.danger ? " danger" : ""}">${k.value}</div><div class="kpi-note">${k.note}</div>`;
+        els.kpis.appendChild(d);
+    }
+}
+
+function renderSkills() {
+    els.skills.innerHTML = "";
+    for (const s of data[mode].skills) {
+        const c = document.createElement("div"); c.className = "skill-card";
+        const tag = s.irrelevant ? '<span class="irrelevant-tag">confounder</span>' : "";
+        const confClass = s.irrelevant ? "conf low" : "conf";
+        c.innerHTML = `<div class="skill-top"><div class="skill-name">${s.name}${tag}</div><div class="${confClass}">conf ${s.conf}</div></div><div class="skill-body">${s.body}</div>`;
+        els.skills.appendChild(c);
+    }
+}
+
+function renderTrace() {
+    els.trace.innerHTML = "";
+    for (const t of data[mode].trace) {
+        const item = document.createElement("div"); item.className = "trace-item";
+        item.innerHTML = `<div class="trace-head"><div class="trace-name">${t.name}</div><div class="trace-latency">${t.latency}</div></div><span class="pill ${t.status === "ok" ? "ok" : "warn"}">${t.status}</span><div style="margin-top:5px;color:var(--dim);font-size:11px;line-height:1.4;">${t.note}</div>`;
+        els.trace.appendChild(item);
+    }
+}
+
+function renderTabs() {
+    const tabNames = Object.keys(data[mode].tabs);
+    els.tabs.innerHTML = ""; els.panes.innerHTML = "";
+    tabNames.forEach((name, i) => {
+        const b = document.createElement("button");
+        b.className = `tab ${i === 0 ? "active" : ""}`; b.textContent = name; b.dataset.name = name;
+        const pane = document.createElement("div");
+        pane.className = `pane ${i === 0 ? "active" : ""}`; pane.dataset.name = name;
+        const pre = document.createElement("pre");
+        pre.textContent = JSON.stringify(data[mode].tabs[name], null, 2);
+        pane.appendChild(pre);
+        b.addEventListener("click", () => {
+            [...els.tabs.children].forEach(x => x.classList.toggle("active", x.dataset.name === name));
+            [...els.panes.children].forEach(x => x.classList.toggle("active", x.dataset.name === name));
+        });
+        els.tabs.appendChild(b); els.panes.appendChild(pane);
+    });
+}
+
+function clearTerminal() { els.terminalBody.innerHTML = ""; logIdx = 0; els.terminalStatus.textContent = "idle"; }
+
+function appendLog(entry) {
+    const line = document.createElement("div"); line.className = "log-line";
+    const sc = entry.status === "ok" ? "log-ok" : "log-warn";
+    line.innerHTML = `<span class="log-ts">${entry.ts}</span><span class="log-tool">${entry.tool}</span> <span class="log-dim">(${entry.args})</span> <span class="${sc}">[${entry.status}]</span>${entry.latency ? ` <span class="log-dim">${entry.latency}</span>` : ""}`;
+    els.terminalBody.appendChild(line);
+    els.terminalBody.scrollTop = els.terminalBody.scrollHeight;
+}
+
+function syncLog() {
+    const log = data[mode].toolLog;
+    while (logIdx < log.length) { appendLog(log[logIdx]); logIdx++; }
+    if (logIdx > 0) els.terminalStatus.textContent = `${logIdx} calls logged`;
+}
+
+function bubble(item, step) {
+    const node = document.createElement("div"); node.className = `bubble ${item.role}`;
+    const meta = document.createElement("div"); meta.className = "meta";
+    meta.innerHTML = `<span>${item.actor}</span><span>step ${step + 1}</span>`;
+    const text = document.createElement("div"); text.className = "text"; text.textContent = item.text;
+    const code = document.createElement("div"); code.className = "code";
+    const head = document.createElement("div"); head.className = "code-head";
+    const title = document.createElement("span"); title.textContent = item.snippetName;
+    const copy = document.createElement("button"); copy.textContent = "Copy JSON";
+    copy.style.padding = "4px 8px"; copy.style.fontSize = "11px"; copy.style.borderRadius = "8px";
+    copy.addEventListener("click", async () => {
+        try { await navigator.clipboard.writeText(JSON.stringify(item.snippet, null, 2)); copy.textContent = "Copied"; setTimeout(() => copy.textContent = "Copy JSON", 1000); }
+        catch { copy.textContent = "Copy failed"; setTimeout(() => copy.textContent = "Copy JSON", 1200); }
+    });
+    head.appendChild(title); head.appendChild(copy);
+    const pre = document.createElement("pre"); pre.textContent = JSON.stringify(item.snippet, null, 2);
+    code.appendChild(head); code.appendChild(pre);
+    node.appendChild(meta); node.appendChild(text); node.appendChild(code);
+    return node;
+}
+
+function appendNext() {
+    const timeline = data[mode].timeline;
+    if (idx >= timeline.length) return false;
+    els.chat.appendChild(bubble(timeline[idx], idx));
+    els.chat.scrollTop = els.chat.scrollHeight;
+    idx++; syncLog(); return true;
+}
+
+function resetChat() { idx = 0; els.chat.innerHTML = ""; clearTerminal(); }
+
+async function play() {
+    if (playing) return; playing = true;
+    els.playBtn.textContent = "\u23f8 Playing...";
+    els.terminalStatus.textContent = "streaming...";
+    while (idx < data[mode].timeline.length && playing) { appendNext(); await new Promise(r => setTimeout(r, 720)); }
+    playing = false; els.playBtn.textContent = "\u25b6 Play demo";
+    els.terminalStatus.textContent = `${logIdx} calls logged`;
+}
+
+function setMode(next) {
+    mode = next; playing = false; els.playBtn.textContent = "\u25b6 Play demo";
+    els.scenarioA.classList.toggle("btn-active", next === "A");
+    els.scenarioB.classList.toggle("btn-active", next === "B");
+    renderKpis(); renderSkills(); renderTrace(); renderTabs();
+    resetChat(); appendNext(); appendNext();
+}
+
+els.scenarioA.addEventListener("click", () => setMode("A"));
+els.scenarioB.addEventListener("click", () => setMode("B"));
+els.playBtn.addEventListener("click", () => { if (playing) { playing = false; els.playBtn.textContent = "\u25b6 Play demo"; } else { play(); } });
+els.nextBtn.addEventListener("click", appendNext);
+els.resetBtn.addEventListener("click", () => { playing = false; els.playBtn.textContent = "\u25b6 Play demo"; resetChat(); appendNext(); });
+
+setMode("A");
+        </script>
+    </body>
+</html>

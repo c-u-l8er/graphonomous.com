@@ -6,7 +6,7 @@
         <title>Graphonomous Demos — Live MCP Session Replays</title>
         <meta
             name="description"
-            content="Interactive A/B demos of Graphonomous v0.2.0 MCP tools — all payloads captured from real sessions on 2026-04-02."
+            content="Interactive A/B demos of Graphonomous v0.3.1 MCP tools — all payloads captured from real sessions on 2026-04-03."
         />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -259,20 +259,22 @@
     </head>
     <body>
         <div class="wrap">
-            <a href="../index.html" class="back">&larr; Back to graphonomous.com</a>
+            <a href="../index.html" class="back"
+                >&larr; Back to graphonomous.com</a
+            >
 
             <span class="badge">
                 <span class="dot"></span>
-                All payloads captured 2026-04-02 from Graphonomous v0.2.0
+                All payloads captured 2026-04-03 from Graphonomous v0.3.1
             </span>
 
             <h1>Live MCP Demo Suite</h1>
             <p class="lead">
-                Eleven interactive A/B demos showing Graphonomous v0.2.0 in action,
-                covering all 22 MCP tools. Every node ID, confidence score,
-                similarity value, and &kappa; routing decision below was captured
-                from a real MCP session. Click any card to explore the full chat
-                replay with payload inspector.
+                Seventeen interactive A/B demos showing Graphonomous v0.3.1 in
+                action, covering all 28 MCP tools. Every node ID, confidence
+                score, similarity value, and &kappa; routing decision below was
+                captured from a real MCP session. Click any card to explore the
+                full chat replay with payload inspector.
             </p>
 
             <div class="grid">
@@ -307,7 +309,9 @@
                 <!-- 2. κ-Routing -->
                 <a href="./kappa-routing/" class="card">
                     <div class="card-number">Demo 02</div>
-                    <div class="card-title">&kappa;-Routing &amp; Deliberation</div>
+                    <div class="card-title">
+                        &kappa;-Routing &amp; Deliberation
+                    </div>
                     <div class="card-desc">
                         DAG region (κ=0, fast routing) vs 4-node business cycle
                         (κ=1, deliberate routing). Topology analysis detects
@@ -342,7 +346,9 @@
                         what it doesn&rsquo;t.
                     </div>
                     <div class="card-tools">
-                        <span class="tool-pill green">learn_detect_novelty</span>
+                        <span class="tool-pill green"
+                            >learn_detect_novelty</span
+                        >
                     </div>
                     <div class="card-kpi">
                         <div class="card-kpi-item">
@@ -363,9 +369,10 @@
                     <div class="card-number">Demo 04</div>
                     <div class="card-title">Attention Engine</div>
                     <div class="card-desc">
-                        Proactive goal prioritization combining urgency, coverage
-                        gap, and &kappa;-routing. 7 real goals ranked by attention
-                        score with topology-aware reasoning depth per goal.
+                        Proactive goal prioritization combining urgency,
+                        coverage gap, and &kappa;-routing. 7 real goals ranked
+                        by attention score with topology-aware reasoning depth
+                        per goal.
                     </div>
                     <div class="card-tools">
                         <span class="tool-pill amber">attention_survey</span>
@@ -391,7 +398,8 @@
                     <div class="card-desc">
                         Before &amp; after the 7-stage consolidation pipeline:
                         decay, pruning, co-activation strengthening, similarity
-                        merging, timescale promotion, and abstraction generation.
+                        merging, timescale promotion, and abstraction
+                        generation.
                     </div>
                     <div class="card-tools">
                         <span class="tool-pill rose">run_consolidation</span>
@@ -416,8 +424,9 @@
                     <div class="card-title">Coverage &amp; Decision Gate</div>
                     <div class="card-desc">
                         Epistemic coverage assessment with act/learn/escalate
-                        routing. Low coverage (0.486) triggers &ldquo;learn&rdquo;
-                        &mdash; the system knows it doesn&rsquo;t know enough to act.
+                        routing. Low coverage (0.486) triggers
+                        &ldquo;learn&rdquo; &mdash; the system knows it
+                        doesn&rsquo;t know enough to act.
                     </div>
                     <div class="card-tools">
                         <span class="tool-pill green">coverage_query</span>
@@ -442,11 +451,13 @@
                     <div class="card-title">Full Learning Pipeline</div>
                     <div class="card-desc">
                         Automated interaction ingestion (novelty 0.844, 5 claims
-                        extracted, 8 edges created) vs explicit feedback correction
-                        that replaces content and adjusts confidence.
+                        extracted, 8 edges created) vs explicit feedback
+                        correction that replaces content and adjusts confidence.
                     </div>
                     <div class="card-tools">
-                        <span class="tool-pill green">learn_from_interaction</span>
+                        <span class="tool-pill green"
+                            >learn_from_interaction</span
+                        >
                         <span class="tool-pill blue">learn_from_feedback</span>
                     </div>
                     <div class="card-kpi">
@@ -495,8 +506,9 @@
                     <div class="card-title">Typed Retrieval</div>
                     <div class="card-desc">
                         Episodic memory (5 time-filtered session events) vs
-                        procedural skill search (only 1 match at 0.034 similarity).
-                        Shows rich event history but sparse skill coverage.
+                        procedural skill search (only 1 match at 0.034
+                        similarity). Shows rich event history but sparse skill
+                        coverage.
                     </div>
                     <div class="card-tools">
                         <span class="tool-pill green">retrieve_episodic</span>
@@ -520,9 +532,9 @@
                     <div class="card-number">Demo 10</div>
                     <div class="card-title">Graph Mutation</div>
                     <div class="card-desc">
-                        Building relationships (store_edge, weight 0.7) vs pruning
-                        stale knowledge (delete_node, manage_edge). Full graph
-                        lifecycle from creation to cleanup.
+                        Building relationships (store_edge, weight 0.7) vs
+                        pruning stale knowledge (delete_node, manage_edge). Full
+                        graph lifecycle from creation to cleanup.
                     </div>
                     <div class="card-tools">
                         <span class="tool-pill green">store_edge</span>
@@ -548,8 +560,9 @@
                     <div class="card-title">Attention Dispatch</div>
                     <div class="card-desc">
                         Passive survey vs full attention cycle with autonomy
-                        override. Survey &rarr; triage &rarr; dispatch pipeline in
-                        advise mode: 3 goals surveyed, 0 dispatched, all deferred.
+                        override. Survey &rarr; triage &rarr; dispatch pipeline
+                        in advise mode: 3 goals surveyed, 0 dispatched, all
+                        deferred.
                     </div>
                     <div class="card-tools">
                         <span class="tool-pill rose">attention_run_cycle</span>
@@ -567,14 +580,178 @@
                     </div>
                     <div class="card-arrow">&rarr; Explore demo</div>
                 </a>
+
+                <!-- 12. Belief Revision -->
+                <a href="./belief-revision/" class="card">
+                    <div class="card-number">Demo 12</div>
+                    <div class="card-title">Belief Revision</div>
+                    <div class="card-desc">
+                        AGM-rational belief maintenance: expand adds a new
+                        belief with automatic contradiction detection; revise
+                        supersedes old facts with confidence propagation through
+                        dependency chains.
+                    </div>
+                    <div class="card-tools">
+                        <span class="tool-pill green">belief_revise</span>
+                        <span class="tool-pill blue"
+                            >belief_contradictions</span
+                        >
+                    </div>
+                    <div class="card-kpi">
+                        <div class="card-kpi-item">
+                            <span class="val">1</span>
+                            <span class="lbl"> contradiction</span>
+                        </div>
+                        <div class="card-kpi-item">
+                            <span class="val">+0.38</span>
+                            <span class="lbl"> confidence &Delta;</span>
+                        </div>
+                    </div>
+                    <div class="card-arrow">&rarr; Explore demo</div>
+                </a>
+
+                <!-- 13. Intentional Forgetting -->
+                <a href="./intentional-forgetting/" class="card">
+                    <div class="card-number">Demo 13</div>
+                    <div class="card-title">Intentional Forgetting</div>
+                    <div class="card-desc">
+                        Soft forget (reversible, structure preserved) and policy
+                        preview vs cascade delete and GDPR-compliant permanent
+                        erasure with audit trail. No competitor has this.
+                    </div>
+                    <div class="card-tools">
+                        <span class="tool-pill green">forget_node</span>
+                        <span class="tool-pill amber">forget_by_policy</span>
+                        <span class="tool-pill rose">gdpr_erase</span>
+                    </div>
+                    <div class="card-kpi">
+                        <div class="card-kpi-item">
+                            <span class="val">3</span>
+                            <span class="lbl"> modes</span>
+                        </div>
+                        <div class="card-kpi-item">
+                            <span class="val">GDPR</span>
+                            <span class="lbl"> compliant</span>
+                        </div>
+                    </div>
+                    <div class="card-arrow">&rarr; Explore demo</div>
+                </a>
+
+                <!-- 14. Epistemic Frontier -->
+                <a href="./epistemic-frontier/" class="card">
+                    <div class="card-number">Demo 14</div>
+                    <div class="card-title">Epistemic Frontier</div>
+                    <div class="card-desc">
+                        Meta-cognition: uncertainty map reveals nodes with
+                        widest Wilson score intervals. Investigate the top
+                        frontier node, report outcome, watch the frontier
+                        shrink. Self-directed uncertainty reduction.
+                    </div>
+                    <div class="card-tools">
+                        <span class="tool-pill green">epistemic_frontier</span>
+                        <span class="tool-pill blue">learn_from_outcome</span>
+                    </div>
+                    <div class="card-kpi">
+                        <div class="card-kpi-item">
+                            <span class="val">4&rarr;3</span>
+                            <span class="lbl"> frontier</span>
+                        </div>
+                        <div class="card-kpi-item">
+                            <span class="val">0.842</span>
+                            <span class="lbl"> info gain</span>
+                        </div>
+                    </div>
+                    <div class="card-arrow">&rarr; Explore demo</div>
+                </a>
+
+                <!-- 15. Causal Chains -->
+                <a href="./causal-chains/" class="card">
+                    <div class="card-number">Demo 15</div>
+                    <div class="card-title">Causal Chains</div>
+                    <div class="card-desc">
+                        Success outcome boosts causal strength and confidence;
+                        failure decreases both and logs confounders. Full
+                        causal&rarr;belief revision&rarr;topology pipeline.
+                    </div>
+                    <div class="card-tools">
+                        <span class="tool-pill green">learn_from_outcome</span>
+                        <span class="tool-pill blue">belief_revise</span>
+                    </div>
+                    <div class="card-kpi">
+                        <div class="card-kpi-item">
+                            <span class="val">0.3&rarr;0.52</span>
+                            <span class="lbl"> causal str.</span>
+                        </div>
+                        <div class="card-kpi-item">
+                            <span class="val">2</span>
+                            <span class="lbl"> confounders</span>
+                        </div>
+                    </div>
+                    <div class="card-arrow">&rarr; Explore demo</div>
+                </a>
+
+                <!-- 16. Q-Value Retrieval -->
+                <a href="./qvalue-retrieval/" class="card">
+                    <div class="card-number">Demo 16</div>
+                    <div class="card-title">Q-Value Retrieval</div>
+                    <div class="card-desc">
+                        Same query, different ranking. Before outcomes:
+                        similarity-only. After outcomes: Q-values shift ranking
+                        &mdash; high-confidence low-utility drops below
+                        high-utility. Self-correcting retrieval.
+                    </div>
+                    <div class="card-tools">
+                        <span class="tool-pill green">retrieve_context</span>
+                    </div>
+                    <div class="card-kpi">
+                        <div class="card-kpi-item">
+                            <span class="val">2</span>
+                            <span class="lbl"> rank changes</span>
+                        </div>
+                        <div class="card-kpi-item">
+                            <span class="val">#1&rarr;#3</span>
+                            <span class="lbl"> reranker drop</span>
+                        </div>
+                    </div>
+                    <div class="card-arrow">&rarr; Explore demo</div>
+                </a>
+
+                <!-- 17. Multi-Agent Memory -->
+                <a href="./multi-agent-memory/" class="card">
+                    <div class="card-number">Demo 17</div>
+                    <div class="card-title">Multi-Agent Memory</div>
+                    <div class="card-desc">
+                        Two agents, one graph: scoped storage (agent sees only
+                        its own nodes) vs cross-agent topology (shared edges
+                        bridge isolated scopes). Multi-agent knowledge
+                        interaction.
+                    </div>
+                    <div class="card-tools">
+                        <span class="tool-pill green">store_node</span>
+                        <span class="tool-pill blue">store_edge</span>
+                        <span class="tool-pill amber">topology_analyze</span>
+                    </div>
+                    <div class="card-kpi">
+                        <div class="card-kpi-item">
+                            <span class="val">2</span>
+                            <span class="lbl"> agents</span>
+                        </div>
+                        <div class="card-kpi-item">
+                            <span class="val">2</span>
+                            <span class="lbl"> cross-agent edges</span>
+                        </div>
+                    </div>
+                    <div class="card-arrow">&rarr; Explore demo</div>
+                </a>
             </div>
 
             <p class="footer">
-                All payloads captured from a live Graphonomous v0.2.0 MCP session
-                on 2026-04-02. Node IDs, confidence values, &kappa; invariants,
+                All payloads captured from live Graphonomous v0.3.1 MCP sessions
+                on 2026-04-03. Node IDs, confidence values, &kappa; invariants,
                 and latencies are authentic.<br />
                 <a href="../index.html">graphonomous.com</a> &middot;
-                <a href="https://github.com/c-u-l8er/graphonomous">GitHub</a> &middot;
+                <a href="https://github.com/c-u-l8er/graphonomous">GitHub</a>
+                &middot;
                 <a href="https://docs.graphonomous.com">Docs</a>
             </p>
         </div>

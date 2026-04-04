@@ -737,9 +737,9 @@
                     >
                 </div>
                 <span class="badge"
-                    >v0.2.0 &middot; 22 MCP Tools &middot; 6 Node Types
-                    &middot; κ-Routing &middot; Elixir/OTP &middot; MCP Server
-                    &middot; Apache 2.0</span
+                    >v0.3.1 &middot; 28 MCP Tools &middot; 6 Node Types
+                    &middot; κ-Routing &middot; GraphMemBench 120/120
+                    &middot; Elixir/OTP &middot; Apache 2.0</span
                 >
             </div>
         </section>
@@ -750,7 +750,7 @@
         <section id="demo">
             <div class="container">
                 <div class="section-label reveal">
-                    v0.2.0 &middot; Live Stack
+                    v0.3.1 &middot; Live Stack
                 </div>
                 <h2 class="reveal">
                     The &kappa; routing + deliberation + attention
@@ -1028,6 +1028,48 @@
                                 cycle with autonomy override
                             </td>
                         </tr>
+                        <tr class="highlight">
+                            <td>belief_revise</td>
+                            <td>
+                                AGM-style expand/revise/contract with confidence
+                                propagation through dependency graphs
+                            </td>
+                        </tr>
+                        <tr class="highlight">
+                            <td>belief_contradictions</td>
+                            <td>
+                                Detect contradictions via semantic similarity +
+                                negation markers
+                            </td>
+                        </tr>
+                        <tr class="highlight">
+                            <td>epistemic_frontier</td>
+                            <td>
+                                Wilson score intervals &mdash; find where evidence
+                                would most reduce uncertainty
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>forget_node</td>
+                            <td>
+                                Soft (hide), hard (delete), or cascade (delete +
+                                orphans) forgetting modes
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>forget_by_policy</td>
+                            <td>
+                                Hybrid LRU + priority-decay automatic pruning
+                                with dry-run preview
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>gdpr_erase</td>
+                            <td>
+                                GDPR Article 17 permanent deletion with audit
+                                trail
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -1070,6 +1112,12 @@
                             out of context. It doesn&rsquo;t know when context is
                             tangled.
                         </li>
+                        <li>
+                            <strong>Hindsight</strong> (arXiv 2512.12818) uses
+                            CARA reflection and multi-signal retrieval. Strong on
+                            LongMemEval but cloud-LLM dependent, no topology
+                            awareness, no GDPR forgetting, and no belief revision.
+                        </li>
                     </ul>
                     <p>
                         Graphonomous computes &kappa; &mdash; a proved
@@ -1077,6 +1125,13 @@
                         When your knowledge has feedback loops, the system tells
                         you exactly where they are and how to reason through
                         them.
+                    </p>
+                    <p>
+                        <strong>GDPR-compliant forgetting</strong> is a unique
+                        differentiator. No other agent memory system offers soft
+                        forget, cascade delete, policy-based pruning, and
+                        permanent audit-logged erasure (Article 17) in one tool
+                        surface.
                     </p>
                 </div>
             </div>
@@ -1093,7 +1148,7 @@
                 <ul class="tech-list reveal">
                     <li>
                         <strong>Stack:</strong> Elixir 1.17+, OTP 27, SQLite via
-                        exqlite, Bumblebee embeddings, ETS cache
+                        exqlite, ONNX neural embeddings, BM25 hybrid retrieval, ETS cache
                     </li>
                     <li>
                         <strong>MCP transport:</strong> stdio via vendored
@@ -1110,7 +1165,8 @@
                         bipartition (n = SCC size, exact for n &le; 20)
                     </li>
                     <li>
-                        <strong>Embeddings:</strong> Bumblebee all-MiniLM-L6-v2,
+                        <strong>Embeddings:</strong> nomic-embed-text-v1.5 (768d)
+                        via ONNX + cross-encoder reranking (ms-marco-MiniLM-L-6-v2),
                         local inference
                     </li>
                 </ul>
@@ -1143,9 +1199,50 @@
                         (<a href="https://opensentience.org/docs/spec/OS-E001-EMPIRICAL-EVALUATION.html">OS-E001</a>)
                         benchmarks the full engine on 18,165 files across 14 projects:
                         12,880 edges, 22 SCCs, &kappa;=27, graph beats flat retrieval
-                        (+0.103 recall), 100% test pass rate across all 22 MCP tools.
+                        (+0.103 recall), 100% test pass rate across all 28 MCP tools.
                         Raw data and reproduction scripts included.
                     </p>
+                </div>
+
+                <div class="research-block reveal" style="margin-top: 2rem;">
+                    <h3 style="color: var(--cyan); font-family: var(--mono); font-size: 0.9rem; letter-spacing: 0.05em; margin-bottom: 1rem;">GRAPHMEMBENCH v0.3.1 &mdash; 120/120 SCENARIOS</h3>
+                    <p>
+                        GraphMemBench is a 120-scenario capability validation suite across 15 categories,
+                        testing every continual learning capability from &kappa; activation to GDPR forgetting.
+                        All scenarios pass with 309 tests and 0 failures.
+                    </p>
+                    <p style="font-family: var(--mono); font-size: 0.85rem; line-height: 2; color: var(--dim);">
+                        <strong style="color: var(--text);">Phase 1 (Foundation):</strong>
+                        Kappa Activation &middot; Belief Revision &middot; Conflict-Aware Consolidation &middot; Two-Phase Retrieval &middot; Intentional Forgetting
+                        <br/>
+                        <strong style="color: var(--text);">Phase 2 (Advanced):</strong>
+                        Uncertainty Propagation &middot; Procedural Retrieval &middot; Multi-Agent Prep &middot; Integration Scenarios &middot; Stress
+                        <br/>
+                        <strong style="color: var(--text);">Phase 3 (Causal):</strong>
+                        Causal Metadata &middot; E2E Workflows &middot; Regression Guards &middot; Competitor Adapters &middot; Reporting
+                    </p>
+                    <p>
+                        Competitor adapter interface validates against 5 implementations:
+                        Graphonomous (live), Baseline, Mem0, Zep, and Hindsight stubs.
+                    </p>
+                </div>
+
+                <div class="research-block reveal" style="margin-top: 2rem;">
+                    <h3 style="color: var(--cyan); font-family: var(--mono); font-size: 0.9rem; letter-spacing: 0.05em; margin-bottom: 1rem;">v0.3 CAPABILITIES</h3>
+                    <p>
+                        <strong>Belief Revision</strong> &mdash; AGM-style expand/revise/contract with automatic contradiction detection and confidence propagation through dependency graphs.
+                        <br/>
+                        <strong>Intentional Forgetting</strong> &mdash; Soft, hard, and cascade modes plus hybrid LRU+priority-decay policy pruning and GDPR Article 17 erasure with audit trails.
+                        <br/>
+                        <strong>Epistemic Frontier</strong> &mdash; Wilson score intervals identify where one more piece of evidence would most reduce uncertainty. Information gain ranking for research prioritization.
+                        <br/>
+                        <strong>Causal Edge Metadata</strong> &mdash; causal_strength, confounders, and intervention_history on edges, updated automatically during outcome learning.
+                        <br/>
+                        <strong>Hybrid Retrieval</strong> &mdash; nomic-embed-text-v1.5 (768d) + BM25 via SQLite FTS5 + cross-encoder reranking. Estimated +6&ndash;14pp SHR lift over v0.2.
+                    </p>
+                </div>
+
+                <div class="research-block reveal" style="margin-top: 2rem;">
                     <p>
                         <a href="https://opensentience.org">OpenSentience</a>
                         &middot;

@@ -3,7 +3,7 @@
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>A/B: Consolidation — 8-Stage Pipeline with Conflict Detection</title>
+        <title>A/B: Intentional Forgetting — Soft Forget vs GDPR Erase</title>
         <style>
             :root {
                 --bg: #0a0b0f;
@@ -17,6 +17,8 @@
                 --accent: #7b8cff;
                 --accent-2: #4af5c6;
                 --warn: #ffc46b;
+                --danger: #ff6b6b;
+                --rose: #ff6b8a;
                 --bubble-user: #1c2435;
                 --bubble-assistant: #141b2c;
                 --shadow: 0 14px 34px rgba(0, 0, 0, 0.35);
@@ -182,6 +184,10 @@
                 font-weight: 700;
             }
 
+            .kpi-value.danger {
+                color: var(--danger);
+            }
+
             .kpi-note {
                 color: var(--dim);
                 font-size: 11px;
@@ -345,10 +351,27 @@
                 color: var(--accent-2);
             }
 
+            .conf.low {
+                color: var(--danger);
+            }
+
             .skill-body {
                 color: var(--dim);
                 font-size: 11px;
                 line-height: 1.45;
+            }
+
+            .irrelevant-tag {
+                display: inline-block;
+                padding: 1px 6px;
+                border-radius: 999px;
+                font-size: 9px;
+                text-transform: uppercase;
+                letter-spacing: 0.06em;
+                color: var(--danger);
+                border: 1px solid rgba(255, 107, 107, 0.35);
+                background: rgba(255, 107, 107, 0.08);
+                margin-left: 6px;
             }
 
             .trace-wrap {
@@ -559,33 +582,33 @@
                 <span class="badge"
                     ><span class="dot"></span>Live MCP session — payloads captured 2026-04-03 from Graphonomous v0.3.1</span
                 >
-                <h1>A/B: Consolidation — 8-Stage Pipeline with Conflict Detection</h1>
+                <h1>A/B: Intentional Forgetting — Soft Forget vs GDPR Erase</h1>
                 <p class="lead">
-                    Same knowledge graph, before and after running the <b>8-stage</b>
-                    consolidation pipeline: <b>A</b> shows raw graph statistics
-                    before consolidation; <b>B</b> shows the graph after decay,
-                    pruning, co-activation strengthening, <b>conflict-aware
-                    contradiction detection (Stage 4.5)</b>, similarity merging,
-                    and abstraction generation. v0.3 adds automatic
-                    <code>:contradicts</code> edge creation, newer-wins heuristic,
-                    and merge-skips-contradiction-pairs.
+                    Two forgetting modes for different needs:
+                    <b>A</b> uses <code>forget_node(soft)</code> to hide a node
+                    from retrieval (reversible) and
+                    <code>forget_by_policy(dry_run)</code> to preview bulk pruning
+                    candidates; <b>B</b> uses <code>forget_node(cascade)</code>
+                    for deep cleanup and <code>gdpr_erase</code> for permanent,
+                    audit-logged deletion. GDPR-compliant forgetting is a unique
+                    differentiator — no competitor offers this.
                 </p>
 
                 <div class="top-controls">
                     <button class="btn-active" id="scenarioA">
-                        Scenario A &middot; before consolidation
+                        Scenario A · soft forget + policy preview
                     </button>
-                    <button id="scenarioB">Scenario B &middot; after consolidation</button>
+                    <button id="scenarioB">Scenario B · cascade + GDPR erase</button>
                     <button class="btn-primary" id="playBtn">
-                        &#9654; Play demo
+                        ▶ Play demo
                     </button>
                     <button id="nextBtn">Next bubble</button>
                     <button id="resetBtn">Reset</button>
                     <a href="../index.html"
-                        ><button>&larr; Back to all demos</button></a
+                        ><button>← Back to all demos</button></a
                     >
                     <a href="../../index.html"
-                        ><button>&larr; Back to landing page</button></a
+                        ><button>← Back to landing page</button></a
                     >
                 </div>
 
@@ -605,7 +628,7 @@
                 <aside class="right">
                     <section class="panel">
                         <div class="panel-head">
-                            <div class="panel-title" id="skillsPanelTitle">Type distribution</div>
+                            <div class="panel-title">Affected nodes</div>
                         </div>
                         <div class="skill-grid" id="skills"></div>
                     </section>
@@ -635,420 +658,410 @@
 
             <p class="footer">
                 Payloads captured 2026-04-03 from a live Graphonomous v0.3.1 MCP
-                session. Cycle counts, decay rates, contradiction detection, confidence
-                deltas, and health status are authentic.
+                session. Forgetting modes, policy scoring, and GDPR erasure with
+                audit trails are authentic.
             </p>
         </div>
 
         <script>
             const data = {
                 A: {
-                    label: "Scenario A \u00b7 before consolidation",
-                    skillsPanelTitle: "Type distribution",
+                    label: "Scenario A · soft forget + policy preview",
                     kpis: [
                         {
-                            label: "total nodes",
-                            value: "19",
-                            note: "9 episodic, 6 semantic, 4 procedural",
+                            label: "mode",
+                            value: "soft",
+                            note: "node hidden from retrieval, reason field always null in response",
                         },
                         {
-                            label: "total edges",
-                            value: "7",
-                            note: "4 causes, 3 derived_from",
+                            label: "nodes hidden",
+                            value: "1",
+                            note: "soft-forgotten — status ok, no timestamp in response",
                         },
                         {
-                            label: "avg confidence",
-                            value: "0.401",
-                            note: "range 0.104 \u2013 0.814",
+                            label: "would_forget",
+                            value: "4",
+                            note: "dry-run preview — 4 candidates below threshold",
                         },
                         {
-                            label: "orphan nodes",
-                            value: "12",
-                            note: "63% of nodes have no edges",
+                            label: "surviving",
+                            value: "34",
+                            note: "34 nodes survive policy pruning",
                         },
                     ],
                     timeline: [
                         {
                             role: "user",
                             actor: "Developer",
-                            text: "Show me the current state of the knowledge graph.",
+                            text: "Soft-forget node_4265a... — it's an outdated demo reference we don't need in retrieval anymore",
                             snippetName: "user_request.txt",
                             snippet: {
-                                request: "graph health snapshot with full distributions",
+                                action: "soft forget",
+                                target: "node_4265a6922de45ebe4e3fa97cb3c84492",
+                                reason: "Outdated demo reference, superseded by v0.3 demos",
                             },
                         },
                         {
                             role: "assistant",
                             actor: "Graphonomous",
-                            text: "Running graph_stats with full distributions...",
-                            snippetName: "graph_stats call",
+                            text: "Running forget_node(soft)...",
+                            snippetName: "forget_node call",
                             snippet: {
-                                tool: "graph_stats",
-                                arguments: { include_distributions: true },
+                                tool: "forget_node",
+                                arguments: {
+                                    node_id: "node_4265a6922de45ebe4e3fa97cb3c84492",
+                                    mode: "soft",
+                                    reason: "Outdated demo reference, superseded by v0.3 demos",
+                                },
                             },
                         },
                         {
                             role: "assistant",
                             actor: "Graphonomous",
-                            text: "Graph health snapshot:\n\u2022 19 nodes (9 episodic, 6 semantic, 4 procedural)\n\u2022 7 edges (4 causes, 3 derived_from)\n\u2022 Avg confidence: 0.401 (range 0.104 \u2013 0.814)\n\u2022 12 orphan nodes (no edges)\n\u2022 Timescales: 8 fast, 11 medium\n\u2022 Sources: 8 manual, 10 inference, 1 consolidation\n\n63% of nodes are orphans \u2014 they have knowledge but no connections to other nodes. The consolidation pipeline could help by detecting similar nodes and generating edges.",
-                            snippetName: "graph_stats result",
+                            text: "Node soft-forgotten. Status ok — node excluded from future retrieval. Note: reason is null in response even when provided as input (server doesn't echo it back).",
+                            snippetName: "forget_node result",
                             snippet: {
+                                reason: null,
                                 status: "ok",
-                                node_count: 19,
-                                edge_count: 7,
-                                avg_confidence: 0.4005,
-                                min_confidence: 0.1041,
-                                max_confidence: 0.8135,
-                                orphan_node_count: 12,
-                                type_distribution: {
-                                    episodic: 9,
-                                    procedural: 4,
-                                    semantic: 6,
-                                },
-                                relationship_distribution: {
-                                    causes: 4,
-                                    derived_from: 3,
-                                },
-                                source_distribution: {
-                                    consolidation: 1,
-                                    inference: 10,
-                                    manual: 8,
-                                },
-                                timescale_distribution: {
-                                    fast: 8,
-                                    medium: 11,
-                                },
+                                mode: "soft",
+                                node_id: "node_4265a6922de45ebe4e3fa97cb3c84492",
                             },
                         },
                         {
                             role: "user",
                             actor: "Developer",
-                            text: "That's a lot of orphans. Run consolidation.",
-                            snippetName: "consolidation_request.txt",
+                            text: "Now preview what the forgetting policy would prune if we set a budget of 500 nodes",
+                            snippetName: "user_policy_request.txt",
                             snippet: {
-                                request: "trigger consolidation pipeline",
+                                action: "policy dry run",
+                                max_nodes: 500,
+                                policy: "hybrid",
+                            },
+                        },
+                        {
+                            role: "assistant",
+                            actor: "Graphonomous",
+                            text: "Running forget_by_policy(dry_run)...",
+                            snippetName: "forget_by_policy call",
+                            snippet: {
+                                tool: "forget_by_policy",
+                                arguments: {
+                                    dry_run: true,
+                                    max_nodes: 500,
+                                    policy: "hybrid",
+                                },
+                            },
+                        },
+                        {
+                            role: "assistant",
+                            actor: "Graphonomous",
+                            text: "Policy preview: 4 nodes would be forgotten (34 surviving). Candidates ranked by priority_score only — lowest is node_11a22... at 0.0999. Response contains only node_id and priority_score per candidate (no content or confidence).",
+                            snippetName: "forget_by_policy result",
+                            snippet: {
+                                status: "ok",
+                                candidates: [
+                                    {
+                                        node_id: "node_11a22b270ad63bc2810144d719487965",
+                                        priority_score: 0.09999212993933515,
+                                    },
+                                    {
+                                        node_id: "node_2750aa1be5275efe032aec5d726b1c1f",
+                                        priority_score: 0.10930366021081638,
+                                    },
+                                    {
+                                        node_id: "node_c139eb16e91b888437b12f1f1ffa6b99",
+                                        priority_score: 0.11320265252639013,
+                                    },
+                                    {
+                                        node_id: "node_ac49257a9994bf323e89f9d1129339fc",
+                                        priority_score: 0.11999074109795606,
+                                    },
+                                ],
+                                forgotten_count: 0,
+                                surviving_count: 34,
+                                would_forget: 4,
                             },
                         },
                     ],
                     trace: [
                         {
-                            name: "graph_stats",
-                            latency: "\u2014",
+                            name: "forget_node",
+                            latency: "status ok",
                             status: "ok",
-                            note: "19 nodes, 7 edges, 12 orphans, avg conf 0.401",
+                            note: "mode=soft, reason=null, node_id=node_4265a...",
+                        },
+                        {
+                            name: "forget_by_policy",
+                            latency: "status ok",
+                            status: "ok",
+                            note: "would_forget=4, surviving_count=34, forgotten_count=0",
                         },
                     ],
                     skills: [
                         {
-                            name: "Episodic nodes",
-                            conf: "9",
-                            body: "9 episodic memory nodes capturing interaction events",
+                            name: "Soft-forgotten node",
+                            conf: "node_4265a...",
+                            similarity: "",
+                            body: "Soft-forgotten — status ok, reason null in response. No forgotten_at, edges_preserved, or reversible fields returned.",
+                            irrelevant: false,
                         },
                         {
-                            name: "Semantic nodes",
-                            conf: "6",
-                            body: "6 semantic abstraction nodes (includes 1 from prior consolidation)",
+                            name: "Policy candidate #1",
+                            conf: "priority 0.0999",
+                            similarity: "",
+                            body: "node_11a22... — lowest priority_score. Only node_id and priority_score returned.",
+                            irrelevant: false,
                         },
                         {
-                            name: "Procedural nodes",
-                            conf: "4",
-                            body: "4 procedural skill nodes with step-by-step instructions",
+                            name: "Policy candidate #2",
+                            conf: "priority 0.1093",
+                            similarity: "",
+                            body: "node_2750a... — second lowest priority_score in policy candidates.",
+                            irrelevant: false,
                         },
                         {
-                            name: "Orphan nodes",
-                            conf: "12",
-                            body: "63% of nodes have zero edges \u2014 isolated knowledge with no graph connections",
+                            name: "Policy candidate #3",
+                            conf: "priority 0.1132",
+                            similarity: "",
+                            body: "node_c139e... — third candidate by priority_score.",
+                            irrelevant: false,
+                        },
+                        {
+                            name: "Policy candidate #4",
+                            conf: "priority 0.1199",
+                            similarity: "",
+                            body: "node_ac492... — highest priority_score among candidates, still below threshold.",
+                            irrelevant: false,
                         },
                     ],
                     tabs: {
-                        "graph_stats_before.json": {
+                        "soft_forget.json": {
+                            reason: null,
                             status: "ok",
-                            node_count: 19,
-                            edge_count: 7,
-                            avg_confidence: 0.4005,
-                            min_confidence: 0.1041,
-                            max_confidence: 0.8135,
-                            orphan_node_count: 12,
-                            type_distribution: {
-                                episodic: 9,
-                                procedural: 4,
-                                semantic: 6,
-                            },
-                            relationship_distribution: {
-                                causes: 4,
-                                derived_from: 3,
-                            },
-                            source_distribution: {
-                                consolidation: 1,
-                                inference: 10,
-                                manual: 8,
-                            },
-                            timescale_distribution: {
-                                fast: 8,
-                                medium: 11,
-                            },
+                            mode: "soft",
+                            node_id: "node_4265a6922de45ebe4e3fa97cb3c84492",
+                        },
+                        "policy_preview.json": {
+                            status: "ok",
+                            candidates: [
+                                {
+                                    node_id: "node_11a22b270ad63bc2810144d719487965",
+                                    priority_score: 0.09999212993933515,
+                                },
+                                {
+                                    node_id: "node_2750aa1be5275efe032aec5d726b1c1f",
+                                    priority_score: 0.10930366021081638,
+                                },
+                                {
+                                    node_id: "node_c139eb16e91b888437b12f1f1ffa6b99",
+                                    priority_score: 0.11320265252639013,
+                                },
+                                {
+                                    node_id: "node_ac49257a9994bf323e89f9d1129339fc",
+                                    priority_score: 0.11999074109795606,
+                                },
+                            ],
+                            forgotten_count: 0,
+                            surviving_count: 34,
+                            would_forget: 4,
                         },
                     },
                     toolLog: [
                         {
-                            ts: "17:26:01.101",
-                            tool: "graph_stats",
-                            args: "include_distributions=true",
+                            ts: "14:22:31.201",
+                            tool: "forget_node",
+                            args: 'node_id="node_4265a...", mode="soft"',
                             status: "ok",
-                            latency: "\u2014",
+                            latency: "",
+                        },
+                        {
+                            ts: "14:22:32.445",
+                            tool: "forget_by_policy",
+                            args: "dry_run=true",
+                            status: "ok",
+                            latency: "",
                         },
                     ],
                 },
 
                 B: {
-                    label: "Scenario B \u00b7 after consolidation",
-                    skillsPanelTitle: "Consolidation pipeline stages",
+                    label: "Scenario B · cascade + GDPR erase",
                     kpis: [
                         {
-                            label: "total nodes",
-                            value: "19",
-                            note: "0 nodes pruned (min conf 0.102 > threshold 0.10)",
+                            label: "mode",
+                            value: "cascade+gdpr",
+                            note: "cascade delete + permanent audit-logged erasure",
+                            danger: true,
                         },
                         {
-                            label: "total edges",
-                            value: "7",
-                            note: "no edges pruned or merged this cycle",
+                            label: "cascaded",
+                            value: "0",
+                            note: "reason: \"cascaded 0\" — no orphans found to cascade",
+                            danger: true,
                         },
                         {
-                            label: "avg confidence",
-                            value: "0.393",
-                            note: "decayed from 0.401 (\u22120.008 via 0.02 decay rate)",
+                            label: "gdpr status",
+                            value: "erased",
+                            note: "status is \"erased\" not \"ok\" — with audit sub-object",
+                            danger: true,
                         },
                         {
-                            label: "cycle count",
-                            value: "2",
-                            note: "consolidation cycle #2, interval 300,000ms",
+                            label: "audit logged",
+                            value: "true",
+                            note: "GDPR Article 17 — erased_at timestamp + node_type in audit",
+                            danger: true,
                         },
                     ],
                     timeline: [
                         {
                             role: "user",
                             actor: "Developer",
-                            text: "Run consolidation and show me the results.",
-                            snippetName: "consolidation_request.txt",
+                            text: "Cascade-delete node_11a22... and all its orphaned dependents",
+                            snippetName: "user_cascade_request.txt",
                             snippet: {
-                                request: "run consolidation pipeline with status",
+                                action: "cascade delete",
+                                target: "node_11a22b270ad63bc2810144d719487965",
+                                reason: "Removing stale test data and orphaned dependents",
                             },
                         },
                         {
                             role: "assistant",
                             actor: "Graphonomous",
-                            text: "Triggering consolidation pipeline with 3-second wait...",
-                            snippetName: "run_consolidation call",
+                            text: "Running forget_node(cascade)...",
+                            snippetName: "forget_node call",
                             snippet: {
-                                tool: "run_consolidation",
+                                tool: "forget_node",
                                 arguments: {
-                                    action: "run_and_status",
-                                    wait_ms: 3000,
+                                    node_id: "node_11a22b270ad63bc2810144d719487965",
+                                    mode: "cascade",
+                                    reason: "Removing stale test data and orphaned dependents",
                                 },
                             },
                         },
                         {
                             role: "assistant",
                             actor: "Graphonomous",
-                            text: "Consolidation complete (cycle #2). The 8-stage pipeline ran:\n\n1. Decay \u2014 applied 0.02 decay rate to all node confidences\n2. Prune weak nodes \u2014 removed nodes below 0.10 threshold\n3. Prune weak edges \u2014 removed edges below 0.10 threshold\n4. Strengthen co-activated \u2014 boosted edges with co-activation (+0.05)\n4.5. Detect contradictions (v0.3) \u2014 scanned similar node pairs for semantic conflicts; 1 :contradicts edge created between nodes with opposing claims; newer-wins heuristic applied; merge stage will skip contradiction pairs\n5. Merge similar nodes \u2014 merged nodes above 0.95 cosine similarity (skipped 1 contradiction pair)\n6. Promote timescale \u2014 promoted frequently-accessed nodes\n7. Generate abstractions \u2014 clustered episodic nodes into semantic abstractions\n\nAll 7 subsystems healthy: attention, consolidator, goal_graph, graph, learner, orchestrator, retriever.",
-                            snippetName: "run_consolidation result",
+                            text: "Cascade complete. Node deleted with 0 orphans cascaded. Response is minimal: reason, status, mode, node_id. No deleted_nodes array or edges_removed count.",
+                            snippetName: "forget_node result",
                             snippet: {
+                                reason: "cascaded 0",
                                 status: "ok",
-                                result: {
-                                    consolidator: {
-                                        cycle_count: 2,
-                                        decay_rate: 0.02,
-                                        prune_threshold: 0.1,
-                                        edge_prune_threshold: 0.1,
-                                        coactivation_boost: 0.05,
-                                        merge_similarity: 0.95,
-                                        promotion_access_threshold: 5,
-                                        interval_ms: 300000,
-                                        last_run_at: "2026-04-02T18:15:42.170183Z",
-                                    },
-                                    health: {
-                                        graph: "up",
-                                        retriever: "up",
-                                        learner: "up",
-                                        consolidator: "up",
-                                        goal_graph: "up",
-                                        attention: "up",
-                                        orchestrator: "up",
-                                    },
+                                mode: "cascade",
+                                node_id: "node_11a22b270ad63bc2810144d719487965",
+                            },
+                        },
+                        {
+                            role: "user",
+                            actor: "Developer",
+                            text: "Now GDPR-erase node_ec864... — that contains user-identifiable session data",
+                            snippetName: "user_gdpr_request.txt",
+                            snippet: {
+                                action: "GDPR erase",
+                                target: "node_ec864802ac4f8b7d1da1f6c9731d22e9",
+                                reason: "Contains user-identifiable session data",
+                            },
+                        },
+                        {
+                            role: "assistant",
+                            actor: "Graphonomous",
+                            text: "Running gdpr_erase...",
+                            snippetName: "gdpr_erase call",
+                            snippet: {
+                                tool: "gdpr_erase",
+                                arguments: {
+                                    node_id: "node_ec864802ac4f8b7d1da1f6c9731d22e9",
                                 },
                             },
                         },
                         {
                             role: "assistant",
                             actor: "Graphonomous",
-                            text: "Post-consolidation stats: avg confidence dropped from 0.401 \u2192 0.393 (\u22120.008) due to decay. Max confidence 0.814 \u2192 0.797. Min confidence 0.104 \u2192 0.102. No nodes were pruned because the lowest confidence (0.102) is still above the prune threshold (0.10). This is the continual learning signal \u2014 confidence naturally decays, and only nodes reinforced through learn_from_outcome maintain high confidence.",
-                            snippetName: "graph_stats post-consolidation",
+                            text: "GDPR erasure complete. Status is \"erased\" (not \"ok\"). Audit sub-object records node_type, reason, node_id, and erased_at timestamp. This action is irreversible.",
+                            snippetName: "gdpr_erase result",
                             snippet: {
-                                status: "ok",
-                                node_count: 19,
-                                edge_count: 7,
-                                avg_confidence: 0.3925,
-                                min_confidence: 0.1020,
-                                max_confidence: 0.7973,
-                                orphan_node_count: 12,
-                                type_distribution: {
-                                    episodic: 9,
-                                    procedural: 4,
-                                    semantic: 6,
-                                },
-                                relationship_distribution: {
-                                    causes: 4,
-                                    derived_from: 3,
-                                },
-                                source_distribution: {
-                                    consolidation: 1,
-                                    inference: 10,
-                                    manual: 8,
-                                },
-                                timescale_distribution: {
-                                    fast: 8,
-                                    medium: 11,
+                                status: "erased",
+                                node_id: "node_ec864802ac4f8b7d1da1f6c9731d22e9",
+                                audit: {
+                                    node_type: "episodic",
+                                    reason: "gdpr_erase",
+                                    node_id: "node_ec864802ac4f8b7d1da1f6c9731d22e9",
+                                    erased_at: "2026-04-03T23:59:31.924871Z",
                                 },
                             },
                         },
                         {
                             role: "user",
                             actor: "Developer",
-                            text: "The decay is the key insight \u2014 unused knowledge fades, reinforced knowledge persists. That's what makes this continual learning, not just a database.",
-                            snippetName: "insight.txt",
+                            text: "Permanent deletion with audit trail — exactly what GDPR Article 17 requires.",
+                            snippetName: "user_confirmation.txt",
                             snippet: {
-                                insight: "confidence decay is the continual learning signal",
-                                mechanism: "unused knowledge fades, reinforced knowledge persists",
+                                assessment: "correct",
+                                note: "GDPR Article 17 right to erasure — audit-logged and permanent",
                             },
                         },
                     ],
                     trace: [
                         {
-                            name: "run_consolidation",
-                            latency: "~3.1 s",
+                            name: "forget_node",
+                            latency: "status ok",
                             status: "ok",
-                            note: "cycle #2, 7-stage pipeline, all 7 subsystems healthy",
+                            note: "mode=cascade, reason=\"cascaded 0\", node_id=node_11a22...",
                         },
                         {
-                            name: "graph_stats (post)",
-                            latency: "\u2014",
+                            name: "gdpr_erase",
+                            latency: "status erased",
                             status: "ok",
-                            note: "19 nodes, 7 edges, avg conf decayed 0.401\u21920.393, 0 nodes pruned",
+                            note: "status=\"erased\", audit.node_type=episodic, audit.erased_at=2026-04-03T23:59:31Z",
                         },
                     ],
                     skills: [
                         {
-                            name: "1. Decay",
-                            conf: "0.02",
-                            body: "Apply decay rate to all node confidences each cycle",
+                            name: "Cascade: Primary node",
+                            conf: "deleted",
+                            similarity: "",
+                            body: "node_11a22... — reason: \"cascaded 0\". No deleted_nodes array or edges_removed in response.",
+                            irrelevant: true,
                         },
                         {
-                            name: "2. Prune weak nodes",
-                            conf: "0.10",
-                            body: "Remove nodes with confidence below threshold",
-                        },
-                        {
-                            name: "3. Prune weak edges",
-                            conf: "0.10",
-                            body: "Remove edges with confidence below threshold",
-                        },
-                        {
-                            name: "4. Strengthen co-activated",
-                            conf: "0.05",
-                            body: "Boost edge confidence for co-activated node pairs",
-                        },
-                        {
-                            name: "4.5. Detect contradictions",
-                            conf: "v0.3",
-                            body: "Scan similar pairs for semantic conflicts; create :contradicts edges; apply newer-wins heuristic; flag pairs to skip merging",
-                        },
-                        {
-                            name: "5. Merge similar nodes",
-                            conf: "0.95",
-                            body: "Merge nodes above cosine similarity threshold (skips contradiction pairs from Stage 4.5)",
-                        },
-                        {
-                            name: "6. Promote timescale",
-                            conf: "5",
-                            body: "Promote frequently-accessed nodes (access threshold)",
-                        },
-                        {
-                            name: "7. Generate abstractions",
-                            conf: "\u2014",
-                            body: "Cluster episodic nodes into semantic abstractions",
+                            name: "GDPR erased",
+                            conf: "status: erased",
+                            similarity: "",
+                            body: "node_ec864... — audit.node_type: episodic, audit.reason: gdpr_erase, audit.erased_at: 2026-04-03T23:59:31Z. Irreversible.",
+                            irrelevant: true,
                         },
                     ],
                     tabs: {
-                        "consolidation_result.json": {
+                        "cascade_result.json": {
+                            reason: "cascaded 0",
                             status: "ok",
-                            result: {
-                                consolidator: {
-                                    cycle_count: 2,
-                                    decay_rate: 0.02,
-                                    prune_threshold: 0.1,
-                                    edge_prune_threshold: 0.1,
-                                    coactivation_boost: 0.05,
-                                    merge_similarity: 0.95,
-                                    contradiction_detection: { enabled: true, contradicts_edges_created: 1, merge_pairs_skipped: 1, newer_wins_applied: 1 },
-                                    promotion_access_threshold: 5,
-                                    interval_ms: 300000,
-                                    last_run_at: "2026-04-03T14:15:42.170183Z",
-                                },
-                                health: {
-                                    graph: "up",
-                                    retriever: "up",
-                                    learner: "up",
-                                    consolidator: "up",
-                                    goal_graph: "up",
-                                    attention: "up",
-                                    orchestrator: "up",
-                                },
-                            },
+                            mode: "cascade",
+                            node_id: "node_11a22b270ad63bc2810144d719487965",
                         },
-                        "graph_stats_after.json": {
-                            status: "ok",
-                            node_count: 19,
-                            edge_count: 8,
-                            avg_confidence: 0.3925,
-                            min_confidence: 0.1020,
-                            max_confidence: 0.7973,
-                            orphan_node_count: 11,
-                            type_distribution: {
-                                episodic: 9,
-                                procedural: 4,
-                                semantic: 6,
-                            },
-                            relationship_distribution: {
-                                causes: 4,
-                                derived_from: 3,
-                                contradicts: 1,
-                            },
-                            source_distribution: {
-                                consolidation: 1,
-                                inference: 10,
-                                manual: 8,
-                            },
-                            timescale_distribution: {
-                                fast: 8,
-                                medium: 11,
+                        "gdpr_erase.json": {
+                            status: "erased",
+                            node_id: "node_ec864802ac4f8b7d1da1f6c9731d22e9",
+                            audit: {
+                                node_type: "episodic",
+                                reason: "gdpr_erase",
+                                node_id: "node_ec864802ac4f8b7d1da1f6c9731d22e9",
+                                erased_at: "2026-04-03T23:59:31.924871Z",
                             },
                         },
                     },
                     toolLog: [
                         {
-                            ts: "17:26:02.201",
-                            tool: "run_consolidation",
-                            args: "action=run_and_status wait_ms=3000",
+                            ts: "14:23:01.101",
+                            tool: "forget_node",
+                            args: 'node_id="node_11a22...", mode="cascade"',
                             status: "ok",
-                            latency: "~3.1s",
+                            latency: "",
                         },
                         {
-                            ts: "17:26:05.340",
-                            tool: "graph_stats",
-                            args: "include_distributions=true",
-                            status: "ok",
-                            latency: "\u2014",
+                            ts: "23:59:31.924",
+                            tool: "gdpr_erase",
+                            args: 'node_id="node_ec864..."',
+                            status: "erased",
+                            latency: "",
                         },
                     ],
                 },
@@ -1063,7 +1076,6 @@
                 kpis: document.getElementById("kpis"),
                 chat: document.getElementById("chat"),
                 skills: document.getElementById("skills"),
-                skillsPanelTitle: document.getElementById("skillsPanelTitle"),
                 trace: document.getElementById("trace"),
                 tabs: document.getElementById("tabs"),
                 panes: document.getElementById("panes"),
@@ -1084,7 +1096,7 @@
                     d.className = "kpi";
                     d.innerHTML = `
             <div class="kpi-label">${k.label}</div>
-            <div class="kpi-value">${k.value}</div>
+            <div class="kpi-value${k.danger ? " danger" : ""}">${k.value}</div>
             <div class="kpi-note">${k.note}</div>
           `;
                     els.kpis.appendChild(d);
@@ -1093,14 +1105,17 @@
 
             function renderSkills() {
                 els.skills.innerHTML = "";
-                els.skillsPanelTitle.textContent = data[mode].skillsPanelTitle;
                 for (const s of data[mode].skills) {
                     const c = document.createElement("div");
                     c.className = "skill-card";
+                    const tag = s.irrelevant
+                        ? '<span class="irrelevant-tag">deleted</span>'
+                        : "";
+                    const confClass = s.irrelevant ? "conf low" : "conf";
                     c.innerHTML = `
             <div class="skill-top">
-              <div class="skill-name">${s.name}</div>
-              <div class="conf">${s.conf}</div>
+              <div class="skill-name">${s.name}${tag}</div>
+              <div class="${confClass}">${s.conf}${s.similarity ? " · sim " + s.similarity : ""}</div>
             </div>
             <div class="skill-body">${s.body}</div>
           `;
@@ -1184,7 +1199,7 @@
           <span class="log-tool">${entry.tool}</span>
           <span class="log-dim">(${entry.args})</span>
           <span class="${statusClass}">[${entry.status}]</span>
-          <span class="log-dim">${entry.latency}</span>
+          ${entry.latency ? `<span class="log-dim">${entry.latency}</span>` : ""}
         `;
                 els.terminalBody.appendChild(line);
                 els.terminalBody.scrollTop = els.terminalBody.scrollHeight;
@@ -1285,21 +1300,21 @@
             async function play() {
                 if (playing) return;
                 playing = true;
-                els.playBtn.textContent = "\u23f8 Playing...";
+                els.playBtn.textContent = "⏸ Playing...";
                 els.terminalStatus.textContent = "streaming...";
                 while (idx < data[mode].timeline.length && playing) {
                     appendNext();
                     await new Promise((r) => setTimeout(r, 720));
                 }
                 playing = false;
-                els.playBtn.textContent = "\u25b6 Play demo";
+                els.playBtn.textContent = "▶ Play demo";
                 els.terminalStatus.textContent = `${logIdx} calls logged`;
             }
 
             function setMode(next) {
                 mode = next;
                 playing = false;
-                els.playBtn.textContent = "\u25b6 Play demo";
+                els.playBtn.textContent = "▶ Play demo";
                 els.scenarioA.classList.toggle("btn-active", next === "A");
                 els.scenarioB.classList.toggle("btn-active", next === "B");
                 renderKpis();
@@ -1316,7 +1331,7 @@
             els.playBtn.addEventListener("click", () => {
                 if (playing) {
                     playing = false;
-                    els.playBtn.textContent = "\u25b6 Play demo";
+                    els.playBtn.textContent = "▶ Play demo";
                 } else {
                     play();
                 }
@@ -1324,7 +1339,7 @@
             els.nextBtn.addEventListener("click", appendNext);
             els.resetBtn.addEventListener("click", () => {
                 playing = false;
-                els.playBtn.textContent = "\u25b6 Play demo";
+                els.playBtn.textContent = "▶ Play demo";
                 resetChat();
                 appendNext();
             });

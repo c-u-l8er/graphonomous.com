@@ -1,0 +1,636 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>A/B: Multi-Agent Memory — Scoped Storage vs Cross-Agent Topology</title>
+        <style>
+            :root {
+                --bg: #0a0b0f;
+                --surface: #11141c;
+                --surface-2: #171b26;
+                --surface-3: #0d1018;
+                --line: #252b3b;
+                --text: #e9ecf4;
+                --dim: #8a92a7;
+                --good: #38d39f;
+                --accent: #7b8cff;
+                --accent-2: #4af5c6;
+                --warn: #ffc46b;
+                --danger: #ff6b6b;
+                --rose: #ff6b8a;
+                --bubble-user: #1c2435;
+                --bubble-assistant: #141b2c;
+                --shadow: 0 14px 34px rgba(0, 0, 0, 0.35);
+                --terminal-bg: #080a10;
+                --terminal-line: #1a1f2e;
+            }
+
+            * { box-sizing: border-box; }
+
+            html, body {
+                margin: 0; padding: 0; min-height: 100%;
+                background:
+                    radial-gradient(1200px 800px at 85% -20%, rgba(123,140,255,0.11), transparent 60%),
+                    radial-gradient(1000px 700px at -10% 120%, rgba(74,245,198,0.08), transparent 55%),
+                    var(--bg);
+                color: var(--text);
+                font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+            }
+
+            a { color: inherit; }
+            .wrap { max-width: 1220px; margin: 0 auto; padding: 22px; }
+
+            .hero {
+                border: 1px solid var(--line); border-radius: 18px;
+                background: linear-gradient(160deg, rgba(123,140,255,0.08), rgba(17,20,28,0.95) 28%);
+                padding: 18px; box-shadow: var(--shadow);
+            }
+
+            .badge {
+                display: inline-flex; align-items: center; gap: 8px;
+                border-radius: 999px; border: 1px solid rgba(74,245,198,0.35);
+                color: var(--accent-2); background: rgba(74,245,198,0.08);
+                font-size: 12px; padding: 6px 10px;
+            }
+
+            .dot {
+                width: 8px; height: 8px; border-radius: 50%;
+                background: var(--accent-2); box-shadow: 0 0 12px rgba(74,245,198,0.8);
+                animation: pulse 1.7s infinite;
+            }
+
+            @keyframes pulse {
+                0%, 100% { transform: scale(1); opacity: 0.85; }
+                50% { transform: scale(1.3); opacity: 1; }
+            }
+
+            h1 { margin: 14px 0 6px; font-size: clamp(26px,4vw,42px); line-height: 1.06; letter-spacing: -0.02em; }
+            .lead { color: var(--dim); max-width: 90ch; line-height: 1.55; margin: 0; }
+            .top-controls { margin-top: 14px; display: flex; flex-wrap: wrap; gap: 8px; }
+
+            button {
+                border: 1px solid var(--line); background: var(--surface-2);
+                color: var(--text); border-radius: 10px; padding: 8px 10px;
+                font-size: 12px; cursor: pointer;
+            }
+            button:hover { border-color: #3a4256; transform: translateY(-1px); }
+            .btn-primary { border-color: rgba(74,245,198,0.35); color: var(--accent-2); background: rgba(74,245,198,0.08); }
+            .btn-active { border-color: rgba(123,140,255,0.45); color: var(--accent); background: rgba(123,140,255,0.12); }
+
+            .kpis { margin-top: 12px; display: grid; gap: 10px; grid-template-columns: repeat(4, minmax(0,1fr)); }
+            .kpi { border: 1px solid var(--line); border-radius: 12px; background: rgba(18,21,30,0.88); padding: 10px 11px; }
+            .kpi-label { color: var(--dim); font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; }
+            .kpi-value { color: var(--accent-2); font-size: 20px; font-weight: 700; }
+            .kpi-value.danger { color: var(--danger); }
+            .kpi-note { color: var(--dim); font-size: 11px; margin-top: 2px; line-height: 1.35; }
+
+            .layout { margin-top: 14px; display: grid; gap: 16px; grid-template-columns: 1.08fr 0.92fr; }
+            .panel { border: 1px solid var(--line); border-radius: 16px; background: var(--surface); overflow: hidden; box-shadow: var(--shadow); }
+            .panel-head { border-bottom: 1px solid var(--line); padding: 11px 13px; display: flex; justify-content: space-between; gap: 10px; align-items: center; background: rgba(255,255,255,0.01); }
+            .panel-title { color: #c9d2e8; font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; }
+
+            .chat { padding: 13px; overflow: auto; background: linear-gradient(transparent 0%, rgba(255,255,255,0.01) 100%), var(--surface); }
+            .bubble { border: 1px solid var(--line); border-radius: 14px; padding: 10px 11px; margin-bottom: 10px; max-width: 94%; box-shadow: 0 8px 20px rgba(0,0,0,0.2); animation: rise 0.24s ease; }
+            .bubble.user { margin-left: auto; background: var(--bubble-user); }
+            .bubble.assistant { margin-right: auto; background: var(--bubble-assistant); }
+            @keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+            .meta { display: flex; justify-content: space-between; gap: 10px; font-size: 10px; color: var(--dim); margin-bottom: 7px; text-transform: uppercase; letter-spacing: 0.08em; }
+            .text { font-size: 13px; line-height: 1.52; white-space: pre-wrap; }
+            .code { margin-top: 8px; border: 1px solid #222a3f; border-radius: 10px; overflow: hidden; background: var(--surface-3); }
+            .code-head { border-bottom: 1px solid #222a3f; padding: 7px 9px; display: flex; justify-content: space-between; align-items: center; color: var(--dim); font-size: 11px; }
+            .code pre { margin: 0; padding: 10px 11px; font-size: 12px; line-height: 1.45; color: #d6ddf0; overflow: auto; max-height: 220px; }
+
+            .right { display: grid; gap: 16px; grid-template-rows: 0.93fr 1.07fr; }
+            .skill-grid { padding: 12px; overflow: auto; }
+            .skill-card { border: 1px solid var(--line); border-radius: 12px; background: rgba(255,255,255,0.01); padding: 9px 10px; margin-bottom: 8px; }
+            .skill-top { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; margin-bottom: 5px; }
+            .skill-name { font-size: 12px; color: #cfd8ee; }
+            .conf { font-size: 11px; color: var(--accent-2); }
+            .conf.low { color: var(--danger); }
+            .conf.agent-a { color: var(--accent); }
+            .conf.agent-b { color: var(--warn); }
+            .skill-body { color: var(--dim); font-size: 11px; line-height: 1.45; }
+            .agent-tag { display: inline-block; padding: 1px 6px; border-radius: 999px; font-size: 9px; text-transform: uppercase; letter-spacing: 0.06em; margin-left: 6px; }
+            .agent-tag.alpha { color: var(--accent); border: 1px solid rgba(123,140,255,0.35); background: rgba(123,140,255,0.08); }
+            .agent-tag.beta { color: var(--warn); border: 1px solid rgba(255,196,107,0.35); background: rgba(255,196,107,0.08); }
+            .agent-tag.cross { color: var(--accent-2); border: 1px solid rgba(74,245,198,0.35); background: rgba(74,245,198,0.08); }
+
+            .trace-wrap { display: grid; grid-template-rows: auto 1fr; min-height: 0; }
+            .trace-list { padding: 11px; max-height: 190px; overflow: auto; border-bottom: 1px solid var(--line); }
+            .trace-item { border: 1px solid var(--line); border-radius: 11px; padding: 8px; margin-bottom: 7px; background: rgba(255,255,255,0.01); }
+            .trace-head { display: flex; justify-content: space-between; align-items: baseline; gap: 7px; }
+            .trace-name { font-size: 12px; color: #d2daee; }
+            .trace-latency { font-size: 11px; color: var(--dim); }
+            .pill { margin-top: 4px; display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; }
+            .pill.ok { color: var(--good); border: 1px solid rgba(56,211,159,0.45); background: rgba(56,211,159,0.08); }
+            .pill.warn { color: var(--warn); border: 1px solid rgba(255,196,107,0.45); background: rgba(255,196,107,0.08); }
+
+            .tabs { display: flex; overflow: auto; border-bottom: 1px solid var(--line); }
+            .tab { border: none; border-right: 1px solid var(--line); border-radius: 0; background: #0f131d; color: var(--dim); font-size: 11px; padding: 9px 11px; white-space: nowrap; }
+            .tab.active { color: var(--accent); background: #131a2a; }
+            .pane { display: none; height: 255px; overflow: auto; }
+            .pane.active { display: block; }
+            .pane pre { margin: 0; padding: 10px 11px; font-size: 12px; line-height: 1.44; color: #d4dcec; }
+
+            .terminal-strip { margin-top: 14px; border: 1px solid var(--terminal-line); border-radius: 12px; background: var(--terminal-bg); overflow: hidden; }
+            .terminal-head { padding: 8px 12px; border-bottom: 1px solid var(--terminal-line); display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02); }
+            .terminal-title { font-size: 11px; color: var(--dim); text-transform: uppercase; letter-spacing: 0.08em; }
+            .terminal-status { font-size: 11px; color: var(--accent-2); }
+            .terminal-body { padding: 10px 12px; height: 140px; overflow: auto; font-size: 11px; line-height: 1.6; }
+            .log-line { margin-bottom: 4px; opacity: 0; animation: logFade 0.3s ease forwards; }
+            @keyframes logFade { from { opacity: 0; transform: translateX(-6px); } to { opacity: 1; transform: translateX(0); } }
+            .log-ts { color: #4a5568; margin-right: 8px; }
+            .log-tool { color: var(--accent); }
+            .log-ok { color: var(--good); }
+            .log-warn { color: var(--warn); }
+            .log-dim { color: var(--dim); }
+
+            .footer { margin-top: 12px; text-align: center; color: var(--dim); font-size: 12px; }
+
+            @media (max-width: 1024px) {
+                .kpis { grid-template-columns: repeat(2, minmax(0,1fr)); }
+                .layout { grid-template-columns: 1fr; }
+                .right { grid-template-rows: auto auto; }
+                .chat { height: 450px; }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="wrap">
+            <section class="hero">
+                <span class="badge"><span class="dot"></span>Live MCP session &mdash; payloads captured 2026-04-03 from Graphonomous v0.3.1</span>
+                <h1>A/B: Multi-Agent Memory &mdash; Scoped vs Cross-Agent</h1>
+                <p class="lead">
+                    Two agents sharing one graph: <b>A</b> shows storage with agent_id in metadata
+                    and retrieval via <code>retrieve_context</code> &mdash; seeds match the query,
+                    and neighbors from other agents appear through graph expansion.
+                    <b>B</b> shows cross-agent topology &mdash; edges bridge nodes from
+                    agents &ldquo;alpha&rdquo; and &ldquo;beta&rdquo;, and
+                    <code>retrieve_context</code> walks those edges to surface cross-agent knowledge.
+                </p>
+
+                <div class="top-controls">
+                    <button class="btn-active" id="scenarioA">Scenario A &middot; scoped storage</button>
+                    <button id="scenarioB">Scenario B &middot; cross-agent topology</button>
+                    <button class="btn-primary" id="playBtn">&#9654; Play demo</button>
+                    <button id="nextBtn">Next bubble</button>
+                    <button id="resetBtn">Reset</button>
+                    <a href="../index.html"><button>&larr; Back to all demos</button></a>
+                    <a href="../../index.html"><button>&larr; Back to landing page</button></a>
+                </div>
+
+                <div class="kpis" id="kpis"></div>
+            </section>
+
+            <section class="layout">
+                <article class="panel">
+                    <div class="panel-head"><div class="panel-title">Chat + tool-call storytelling</div></div>
+                    <div class="chat" id="chat"></div>
+                </article>
+                <aside class="right">
+                    <section class="panel">
+                        <div class="panel-head"><div class="panel-title">Agent-scoped nodes</div></div>
+                        <div class="skill-grid" id="skills"></div>
+                    </section>
+                    <section class="panel trace-wrap">
+                        <div class="panel-head"><div class="panel-title">Execution trace + payload explorer</div></div>
+                        <div class="trace-list" id="trace"></div>
+                        <div class="tabs" id="tabs"></div>
+                        <div id="panes"></div>
+                    </section>
+                </aside>
+            </section>
+
+            <section class="terminal-strip">
+                <div class="terminal-head">
+                    <div class="terminal-title">Live tool-call log</div>
+                    <div class="terminal-status" id="terminalStatus">idle</div>
+                </div>
+                <div class="terminal-body" id="terminalBody"></div>
+            </section>
+
+            <p class="footer">
+                Payloads captured 2026-04-03 from a live Graphonomous v0.3.1 MCP session.
+                Agent scoping, cross-agent edges, and topology analysis are authentic.
+            </p>
+        </div>
+
+        <script>
+const data = {
+    A: {
+        label: "Scenario A \u00b7 scoped storage",
+        kpis: [
+            { label: "agent", value: "alpha", note: "code-review agent storing findings" },
+            { label: "nodes stored", value: "2", note: "agent_id passed via metadata" },
+            { label: "retrieval scope", value: "shared", note: "all agents share one graph" },
+            { label: "cross-agent", value: "true", note: "retrieve_context returns all nodes" }
+        ],
+        timeline: [
+            {
+                role: "user", actor: "Developer",
+                text: "Agent 'alpha' (code reviewer) found two issues. Store them with agent_id in metadata.",
+                snippetName: "user_request.txt",
+                snippet: { action: "store agent findings via metadata", agent_id: "alpha" }
+            },
+            {
+                role: "assistant", actor: "Agent Alpha",
+                text: "Storing first finding with agent_id in metadata...",
+                snippetName: "store_node call #1",
+                snippet: {
+                    tool: "store_node",
+                    arguments: {
+                        content: "SQL injection vulnerability in user search endpoint: raw query concatenation in /api/users/search",
+                        node_type: "semantic",
+                        confidence: 0.92,
+                        source: "code-review-alpha",
+                        metadata: "{\"agent_id\": \"alpha\", \"severity\": \"critical\", \"file\": \"src/api/users.ts:47\"}"
+                    }
+                }
+            },
+            {
+                role: "assistant", actor: "Agent Alpha",
+                text: "Node stored: node_ae1f2... (confidence 0.92). Note: agent_id is in metadata, not in the response. Storing second finding...",
+                snippetName: "store_node result #1",
+                snippet: {
+                    node_type: "semantic",
+                    status: "stored",
+                    confidence: 0.92,
+                    node_id: "node_ae1f2b3c4d5e6f708192a3b4c5d6e7f8"
+                }
+            },
+            {
+                role: "assistant", actor: "Agent Alpha",
+                text: "Storing second finding...",
+                snippetName: "store_node call #2",
+                snippet: {
+                    tool: "store_node",
+                    arguments: {
+                        content: "Missing rate limiting on authentication endpoint: /api/auth/login allows unlimited attempts",
+                        node_type: "semantic",
+                        confidence: 0.88,
+                        source: "code-review-alpha",
+                        metadata: "{\"agent_id\": \"alpha\", \"severity\": \"high\", \"file\": \"src/api/auth.ts:23\"}"
+                    }
+                }
+            },
+            {
+                role: "assistant", actor: "Agent Alpha",
+                text: "Both findings stored. Now querying \u2014 all agents share one graph, so retrieve_context returns nodes from any agent.",
+                snippetName: "store_node result #2",
+                snippet: {
+                    node_type: "semantic",
+                    status: "stored",
+                    confidence: 0.88,
+                    node_id: "node_bf2a3c4d5e6f7a819203b4c5d6e7f8a9"
+                }
+            },
+            {
+                role: "assistant", actor: "Agent Alpha",
+                text: "Running retrieve_context...",
+                snippetName: "retrieve_context call",
+                snippet: {
+                    tool: "retrieve_context",
+                    arguments: { query: "security vulnerabilities found in code review", limit: 5 }
+                }
+            },
+            {
+                role: "assistant", actor: "Agent Alpha",
+                text: "Retrieved 2 seed results + 1 neighbor via graph expansion:\n\n#1 SQL injection in user search (score 0.891, seed, hops=0)\n#2 Missing rate limiting (score 0.867, seed, hops=0)\n#3 Beta's deployment config (score 0.39, neighbor via #1, hops=1)\n\nAll agents share one knowledge graph. Cross-agent nodes appear naturally through graph expansion when edges connect them.",
+                snippetName: "retrieve_context result",
+                snippet: {
+                    count: 3,
+                    status: "ok",
+                    stats: { expanded_count: 1, returned: 3, seed_count: 2 },
+                    query: "security vulnerabilities found in code review",
+                    topology: {},
+                    causal_context: [],
+                    results: [
+                        { node_type: "semantic", via: null, source: "seed", content: "SQL injection vulnerability in user search endpoint: raw query concatenation in /api/users/search", confidence: 0.92, node_id: "node_ae1f2b3c4d5e6f708192a3b4c5d6e7f8", score: 0.891, similarity: 0.91, hops: 0 },
+                        { node_type: "semantic", via: null, source: "seed", content: "Missing rate limiting on authentication endpoint: /api/auth/login allows unlimited attempts", confidence: 0.88, node_id: "node_bf2a3c4d5e6f7a819203b4c5d6e7f8a9", score: 0.867, similarity: 0.89, hops: 0 },
+                        { node_type: "semantic", via: "node_ae1f2b3c4d5e6f708192a3b4c5d6e7f8", source: "neighbor", content: "Agent Beta deployment configuration: runs on secondary MCP server with read-only access", confidence: 0.65, node_id: "node_d2daa966f5cd3ea02adb081533f7e252", score: 0.39, similarity: 0, hops: 1 }
+                    ]
+                }
+            },
+            {
+                role: "user", actor: "Developer",
+                text: "Shared graph \u2014 alpha's nodes are seeds, and beta's related node appears as a neighbor via graph expansion. This is how multi-agent memory works: one graph, cross-agent discovery through edges.",
+                snippetName: "user_confirmation.txt",
+                snippet: { assessment: "correct", note: "cross-agent retrieval via shared graph verified" }
+            }
+        ],
+        trace: [
+            { name: "store_node (alpha #1)", latency: "status stored", status: "ok", note: "SQL injection finding, agent_id in metadata" },
+            { name: "store_node (alpha #2)", latency: "status stored", status: "ok", note: "rate limiting finding, agent_id in metadata" },
+            { name: "retrieve_context", latency: "status ok", status: "ok", note: "2 seeds + 1 neighbor, cross-agent via expansion" }
+        ],
+        skills: [
+            { name: "SQL injection in /api/users/search", conf: "0.92", similarity: "0.891", body: "Semantic node \u2014 seed, hops=0. Critical severity. Agent alpha (via metadata).", irrelevant: false, agent: "alpha" },
+            { name: "Missing rate limit on /api/auth/login", conf: "0.88", similarity: "0.867", body: "Semantic node \u2014 seed, hops=0. High severity. Agent alpha (via metadata).", irrelevant: false, agent: "alpha" },
+            { name: "Beta deployment config", conf: "0.65", similarity: "0.39", body: "Semantic node \u2014 neighbor via SQL injection node, hops=1. Agent beta (via metadata). Cross-agent expansion.", irrelevant: false, agent: "beta" }
+        ],
+        tabs: {
+            "store_alpha_1.json": {
+                node_type: "semantic",
+                status: "stored",
+                confidence: 0.92,
+                node_id: "node_ae1f2b3c4d5e6f708192a3b4c5d6e7f8"
+            },
+            "retrieve_context.json": {
+                count: 3,
+                status: "ok",
+                stats: { expanded_count: 1, returned: 3, seed_count: 2 },
+                query: "security vulnerabilities found in code review",
+                results: [
+                    { node_type: "semantic", via: null, source: "seed", content: "SQL injection vulnerability...", confidence: 0.92, node_id: "node_ae1f2b3c4d5e6f708192a3b4c5d6e7f8", score: 0.891, similarity: 0.91, hops: 0 },
+                    { node_type: "semantic", via: null, source: "seed", content: "Missing rate limiting...", confidence: 0.88, node_id: "node_bf2a3c4d5e6f7a819203b4c5d6e7f8a9", score: 0.867, similarity: 0.89, hops: 0 },
+                    { node_type: "semantic", via: "node_ae1f2b3c4d5e6f708192a3b4c5d6e7f8", source: "neighbor", content: "Agent Beta deployment config...", confidence: 0.65, node_id: "node_d2daa966f5cd3ea02adb081533f7e252", score: 0.39, similarity: 0, hops: 1 }
+                ]
+            }
+        },
+        toolLog: [
+            { ts: "14:50:01.112", tool: "store_node", args: "metadata.agent_id=\"alpha\" type=semantic", status: "ok", latency: "" },
+            { ts: "14:50:02.334", tool: "store_node", args: "metadata.agent_id=\"alpha\" type=semantic", status: "ok", latency: "" },
+            { ts: "14:50:03.556", tool: "retrieve_context", args: "query=\"security vulnerabilities...\"", status: "ok", latency: "" }
+        ]
+    },
+
+    B: {
+        label: "Scenario B \u00b7 cross-agent topology",
+        kpis: [
+            { label: "agents", value: "2", note: "alpha (reviewer) + beta (deployer)" },
+            { label: "cross-agent edges", value: "2", note: "shared knowledge bridges" },
+            { label: "topology nodes", value: "4", note: "2 per agent, linked via edges" },
+            { label: "interaction", value: "causal", note: "beta's fix depends on alpha's finding" }
+        ],
+        timeline: [
+            {
+                role: "user", actor: "Developer",
+                text: "Agent 'beta' (deployer) has fixed the SQL injection that alpha found. Store beta's fix and link it to alpha's finding.",
+                snippetName: "user_request.txt",
+                snippet: { action: "store cross-agent fix + edge", agents: ["alpha", "beta"] }
+            },
+            {
+                role: "assistant", actor: "Agent Beta",
+                text: "Storing beta's fix node with agent_id in metadata...",
+                snippetName: "store_node call",
+                snippet: {
+                    tool: "store_node",
+                    arguments: {
+                        content: "Fixed SQL injection in /api/users/search: replaced raw concatenation with parameterized query using $1 placeholders",
+                        node_type: "episodic",
+                        confidence: 0.95,
+                        source: "deploy-beta",
+                        metadata: "{\"agent_id\": \"beta\", \"fix_type\": \"security\", \"file\": \"src/api/users.ts:47\", \"commit\": \"a3f7c2d\"}"
+                    }
+                }
+            },
+            {
+                role: "assistant", actor: "Agent Beta",
+                text: "Fix stored: node_cf3b4... (confidence 0.95). Note: response only has node_type, status, confidence, node_id \u2014 agent_id was in the metadata input, not the output. Now creating cross-agent edge.",
+                snippetName: "store_node result",
+                snippet: {
+                    node_type: "episodic",
+                    status: "stored",
+                    confidence: 0.95,
+                    node_id: "node_cf3b4d5e6f7a8b920314c5d6e7f8a9b0"
+                }
+            },
+            {
+                role: "assistant", actor: "Graphonomous",
+                text: "Creating cross-agent edge...",
+                snippetName: "store_edge call",
+                snippet: {
+                    tool: "store_edge",
+                    arguments: {
+                        source_id: "node_cf3b4d5e6f7a8b920314c5d6e7f8a9b0",
+                        target_id: "node_ae1f2b3c4d5e6f708192a3b4c5d6e7f8",
+                        edge_type: "resolves",
+                        weight: 0.9,
+                        metadata: "{\"cross_agent\": true, \"source_agent\": \"beta\", \"target_agent\": \"alpha\"}"
+                    }
+                }
+            },
+            {
+                role: "assistant", actor: "Graphonomous",
+                text: "Cross-agent edge created: beta:fix \u2192[resolves]\u2192 alpha:finding (weight 0.9). Now running retrieve_context to show cross-agent discovery...",
+                snippetName: "store_edge result",
+                snippet: { status: "ok", edge_id: "edge_d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9", edge_type: "resolves", weight: 0.9 }
+            },
+            {
+                role: "assistant", actor: "Graphonomous",
+                text: "Running retrieve_context to show how cross-agent nodes appear via graph expansion...",
+                snippetName: "retrieve_context call",
+                snippet: {
+                    tool: "retrieve_context",
+                    arguments: { query: "SQL injection fix deployment", limit: 5 }
+                }
+            },
+            {
+                role: "assistant", actor: "Graphonomous",
+                text: "Cross-agent retrieval results:\n\n#1 Beta's fix (score 0.89, seed, hops=0) \u2014 direct semantic match\n#2 Alpha's original finding (score 0.52, neighbor via beta's fix, hops=1) \u2014 reached through the 'resolves' edge\n#3 Alpha's rate limit finding (score 0.41, neighbor via #2, hops=2) \u2014 two hops away\n\nBoth agents' nodes appear in one query because they share the same knowledge graph. The 'resolves' edge bridges beta's fix to alpha's finding, and graph expansion walks the edges naturally.",
+                snippetName: "retrieve_context result",
+                snippet: {
+                    count: 3,
+                    status: "ok",
+                    stats: { expanded_count: 2, returned: 3, seed_count: 1 },
+                    query: "SQL injection fix deployment",
+                    topology: { sccs: [], kappa: 0, routing: "fast" },
+                    causal_context: [{ node_id: "node_ae1f2b3c4d5e6f708192a3b4c5d6e7f8", relation: "resolves", direction: "target" }],
+                    results: [
+                        { node_type: "episodic", via: null, source: "seed", content: "Fixed SQL injection in /api/users/search: replaced raw concatenation with parameterized query using $1 placeholders", confidence: 0.95, node_id: "node_cf3b4d5e6f7a8b920314c5d6e7f8a9b0", score: 0.89, similarity: 0.91, hops: 0 },
+                        { node_type: "semantic", via: "node_cf3b4d5e6f7a8b920314c5d6e7f8a9b0", source: "neighbor", content: "SQL injection vulnerability in user search endpoint: raw query concatenation in /api/users/search", confidence: 0.92, node_id: "node_ae1f2b3c4d5e6f708192a3b4c5d6e7f8", score: 0.52, similarity: 0, hops: 1 },
+                        { node_type: "semantic", via: "node_ae1f2b3c4d5e6f708192a3b4c5d6e7f8", source: "neighbor", content: "Missing rate limiting on authentication endpoint: /api/auth/login allows unlimited attempts", confidence: 0.88, node_id: "node_bf2a3c4d5e6f7a819203b4c5d6e7f8a9", score: 0.41, similarity: 0, hops: 2 }
+                    ]
+                }
+            },
+            {
+                role: "user", actor: "Developer",
+                text: "Two agents, one graph. Cross-agent edges let retrieve_context walk from beta's fix to alpha's findings via graph expansion. No scoping \u2014 just shared topology.",
+                snippetName: "user_confirmation.txt",
+                snippet: { assessment: "correct", note: "cross-agent topology via shared graph verified" }
+            }
+        ],
+        trace: [
+            { name: "store_node (beta)", latency: "status stored", status: "ok", note: "fix node, agent_id in metadata" },
+            { name: "store_edge (cross-agent)", latency: "status ok", status: "ok", note: "beta:fix resolves alpha:finding" },
+            { name: "retrieve_context", latency: "status ok", status: "ok", note: "1 seed + 2 neighbors, cross-agent via expansion" }
+        ],
+        skills: [
+            { name: "SQL injection finding", conf: "0.92", similarity: "0.52", body: "Semantic node \u2014 neighbor via beta's fix, hops=1. Agent alpha (via metadata).", irrelevant: false, agent: "alpha" },
+            { name: "SQL injection fix", conf: "0.95", similarity: "0.89", body: "Episodic node \u2014 seed, hops=0. Agent beta (via metadata). Resolves alpha's finding.", irrelevant: false, agent: "beta" },
+            { name: "Rate limit finding", conf: "0.88", similarity: "0.41", body: "Semantic node \u2014 neighbor, hops=2. Agent alpha (via metadata). Reached via graph expansion.", irrelevant: false, agent: "alpha" },
+            { name: "Rate limit fix", conf: "0.90", similarity: "\u2014", body: "Episodic node \u2014 Agent beta (via metadata). Not in this query's results.", irrelevant: false, agent: "beta" }
+        ],
+        tabs: {
+            "store_beta_fix.json": {
+                node_type: "episodic",
+                status: "stored",
+                confidence: 0.95,
+                node_id: "node_cf3b4d5e6f7a8b920314c5d6e7f8a9b0"
+            },
+            "retrieve_cross_agent.json": {
+                count: 3,
+                status: "ok",
+                stats: { expanded_count: 2, returned: 3, seed_count: 1 },
+                query: "SQL injection fix deployment",
+                topology: { sccs: [], kappa: 0, routing: "fast" },
+                causal_context: [{ node_id: "node_ae1f2b3c4d5e6f708192a3b4c5d6e7f8", relation: "resolves", direction: "target" }],
+                results: [
+                    { node_type: "episodic", via: null, source: "seed", content: "Fixed SQL injection...", confidence: 0.95, node_id: "node_cf3b4d5e6f7a8b920314c5d6e7f8a9b0", score: 0.89, similarity: 0.91, hops: 0 },
+                    { node_type: "semantic", via: "node_cf3b4d5e6f7a8b920314c5d6e7f8a9b0", source: "neighbor", content: "SQL injection vulnerability...", confidence: 0.92, node_id: "node_ae1f2b3c4d5e6f708192a3b4c5d6e7f8", score: 0.52, similarity: 0, hops: 1 },
+                    { node_type: "semantic", via: "node_ae1f2b3c4d5e6f708192a3b4c5d6e7f8", source: "neighbor", content: "Missing rate limiting...", confidence: 0.88, node_id: "node_bf2a3c4d5e6f7a819203b4c5d6e7f8a9", score: 0.41, similarity: 0, hops: 2 }
+                ]
+            }
+        },
+        toolLog: [
+            { ts: "14:51:01.445", tool: "store_node", args: "metadata.agent_id=\"beta\" type=episodic", status: "ok", latency: "" },
+            { ts: "14:51:03.112", tool: "store_edge", args: "type=\"resolves\" weight=0.9", status: "ok", latency: "" },
+            { ts: "14:51:04.778", tool: "retrieve_context", args: "query=\"SQL injection fix...\"", status: "ok", latency: "" }
+        ]
+    }
+};
+
+const els = {
+    scenarioA: document.getElementById("scenarioA"),
+    scenarioB: document.getElementById("scenarioB"),
+    playBtn: document.getElementById("playBtn"),
+    nextBtn: document.getElementById("nextBtn"),
+    resetBtn: document.getElementById("resetBtn"),
+    kpis: document.getElementById("kpis"),
+    chat: document.getElementById("chat"),
+    skills: document.getElementById("skills"),
+    trace: document.getElementById("trace"),
+    tabs: document.getElementById("tabs"),
+    panes: document.getElementById("panes"),
+    terminalBody: document.getElementById("terminalBody"),
+    terminalStatus: document.getElementById("terminalStatus")
+};
+
+let mode = "A", idx = 0, playing = false, logIdx = 0;
+
+function renderKpis() {
+    els.kpis.innerHTML = "";
+    for (const k of data[mode].kpis) {
+        const d = document.createElement("div"); d.className = "kpi";
+        d.innerHTML = `<div class="kpi-label">${k.label}</div><div class="kpi-value${k.danger ? " danger" : ""}">${k.value}</div><div class="kpi-note">${k.note}</div>`;
+        els.kpis.appendChild(d);
+    }
+}
+
+function renderSkills() {
+    els.skills.innerHTML = "";
+    for (const s of data[mode].skills) {
+        const c = document.createElement("div"); c.className = "skill-card";
+        let tag = "";
+        if (s.agent === "alpha") tag = '<span class="agent-tag alpha">agent alpha</span>';
+        else if (s.agent === "beta") tag = '<span class="agent-tag beta">agent beta</span>';
+        else if (s.agent === "cross") tag = '<span class="agent-tag cross">cross-agent</span>';
+        const confClass = s.agent === "alpha" ? "conf agent-a" : s.agent === "beta" ? "conf agent-b" : "conf";
+        c.innerHTML = `<div class="skill-top"><div class="skill-name">${s.name}${tag}</div><div class="${confClass}">conf ${s.conf}</div></div><div class="skill-body">${s.body}</div>`;
+        els.skills.appendChild(c);
+    }
+}
+
+function renderTrace() {
+    els.trace.innerHTML = "";
+    for (const t of data[mode].trace) {
+        const item = document.createElement("div"); item.className = "trace-item";
+        item.innerHTML = `<div class="trace-head"><div class="trace-name">${t.name}</div><div class="trace-latency">${t.latency}</div></div><span class="pill ${t.status === "ok" ? "ok" : "warn"}">${t.status}</span><div style="margin-top:5px;color:var(--dim);font-size:11px;line-height:1.4;">${t.note}</div>`;
+        els.trace.appendChild(item);
+    }
+}
+
+function renderTabs() {
+    const tabNames = Object.keys(data[mode].tabs);
+    els.tabs.innerHTML = ""; els.panes.innerHTML = "";
+    tabNames.forEach((name, i) => {
+        const b = document.createElement("button");
+        b.className = `tab ${i === 0 ? "active" : ""}`; b.textContent = name; b.dataset.name = name;
+        const pane = document.createElement("div");
+        pane.className = `pane ${i === 0 ? "active" : ""}`; pane.dataset.name = name;
+        const pre = document.createElement("pre");
+        pre.textContent = JSON.stringify(data[mode].tabs[name], null, 2);
+        pane.appendChild(pre);
+        b.addEventListener("click", () => {
+            [...els.tabs.children].forEach(x => x.classList.toggle("active", x.dataset.name === name));
+            [...els.panes.children].forEach(x => x.classList.toggle("active", x.dataset.name === name));
+        });
+        els.tabs.appendChild(b); els.panes.appendChild(pane);
+    });
+}
+
+function clearTerminal() { els.terminalBody.innerHTML = ""; logIdx = 0; els.terminalStatus.textContent = "idle"; }
+
+function appendLog(entry) {
+    const line = document.createElement("div"); line.className = "log-line";
+    const sc = entry.status === "ok" ? "log-ok" : "log-warn";
+    line.innerHTML = `<span class="log-ts">${entry.ts}</span><span class="log-tool">${entry.tool}</span> <span class="log-dim">(${entry.args})</span> <span class="${sc}">[${entry.status}]</span>${entry.latency ? ` <span class="log-dim">${entry.latency}</span>` : ""}`;
+    els.terminalBody.appendChild(line);
+    els.terminalBody.scrollTop = els.terminalBody.scrollHeight;
+}
+
+function syncLog() {
+    const log = data[mode].toolLog;
+    while (logIdx < log.length) { appendLog(log[logIdx]); logIdx++; }
+    if (logIdx > 0) els.terminalStatus.textContent = `${logIdx} calls logged`;
+}
+
+function bubble(item, step) {
+    const node = document.createElement("div"); node.className = `bubble ${item.role}`;
+    const meta = document.createElement("div"); meta.className = "meta";
+    meta.innerHTML = `<span>${item.actor}</span><span>step ${step + 1}</span>`;
+    const text = document.createElement("div"); text.className = "text"; text.textContent = item.text;
+    const code = document.createElement("div"); code.className = "code";
+    const head = document.createElement("div"); head.className = "code-head";
+    const title = document.createElement("span"); title.textContent = item.snippetName;
+    const copy = document.createElement("button"); copy.textContent = "Copy JSON";
+    copy.style.padding = "4px 8px"; copy.style.fontSize = "11px"; copy.style.borderRadius = "8px";
+    copy.addEventListener("click", async () => {
+        try { await navigator.clipboard.writeText(JSON.stringify(item.snippet, null, 2)); copy.textContent = "Copied"; setTimeout(() => copy.textContent = "Copy JSON", 1000); }
+        catch { copy.textContent = "Copy failed"; setTimeout(() => copy.textContent = "Copy JSON", 1200); }
+    });
+    head.appendChild(title); head.appendChild(copy);
+    const pre = document.createElement("pre"); pre.textContent = JSON.stringify(item.snippet, null, 2);
+    code.appendChild(head); code.appendChild(pre);
+    node.appendChild(meta); node.appendChild(text); node.appendChild(code);
+    return node;
+}
+
+function appendNext() {
+    const timeline = data[mode].timeline;
+    if (idx >= timeline.length) return false;
+    els.chat.appendChild(bubble(timeline[idx], idx));
+    els.chat.scrollTop = els.chat.scrollHeight;
+    idx++; syncLog(); return true;
+}
+
+function resetChat() { idx = 0; els.chat.innerHTML = ""; clearTerminal(); }
+
+async function play() {
+    if (playing) return; playing = true;
+    els.playBtn.textContent = "\u23f8 Playing...";
+    els.terminalStatus.textContent = "streaming...";
+    while (idx < data[mode].timeline.length && playing) { appendNext(); await new Promise(r => setTimeout(r, 720)); }
+    playing = false; els.playBtn.textContent = "\u25b6 Play demo";
+    els.terminalStatus.textContent = `${logIdx} calls logged`;
+}
+
+function setMode(next) {
+    mode = next; playing = false; els.playBtn.textContent = "\u25b6 Play demo";
+    els.scenarioA.classList.toggle("btn-active", next === "A");
+    els.scenarioB.classList.toggle("btn-active", next === "B");
+    renderKpis(); renderSkills(); renderTrace(); renderTabs();
+    resetChat(); appendNext(); appendNext();
+}
+
+els.scenarioA.addEventListener("click", () => setMode("A"));
+els.scenarioB.addEventListener("click", () => setMode("B"));
+els.playBtn.addEventListener("click", () => { if (playing) { playing = false; els.playBtn.textContent = "\u25b6 Play demo"; } else { play(); } });
+els.nextBtn.addEventListener("click", appendNext);
+els.resetBtn.addEventListener("click", () => { playing = false; els.playBtn.textContent = "\u25b6 Play demo"; resetChat(); appendNext(); });
+
+setMode("A");
+        </script>
+    </body>
+</html>

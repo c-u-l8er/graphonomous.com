@@ -1,0 +1,553 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>A/B: Q-Value Retrieval — Similarity-Only vs Outcome-Weighted Ranking</title>
+        <style>
+            :root {
+                --bg: #0a0b0f;
+                --surface: #11141c;
+                --surface-2: #171b26;
+                --surface-3: #0d1018;
+                --line: #252b3b;
+                --text: #e9ecf4;
+                --dim: #8a92a7;
+                --good: #38d39f;
+                --accent: #7b8cff;
+                --accent-2: #4af5c6;
+                --warn: #ffc46b;
+                --danger: #ff6b6b;
+                --rose: #ff6b8a;
+                --bubble-user: #1c2435;
+                --bubble-assistant: #141b2c;
+                --shadow: 0 14px 34px rgba(0, 0, 0, 0.35);
+                --terminal-bg: #080a10;
+                --terminal-line: #1a1f2e;
+            }
+
+            * { box-sizing: border-box; }
+
+            html, body {
+                margin: 0; padding: 0; min-height: 100%;
+                background:
+                    radial-gradient(1200px 800px at 85% -20%, rgba(123,140,255,0.11), transparent 60%),
+                    radial-gradient(1000px 700px at -10% 120%, rgba(74,245,198,0.08), transparent 55%),
+                    var(--bg);
+                color: var(--text);
+                font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+            }
+
+            a { color: inherit; }
+            .wrap { max-width: 1220px; margin: 0 auto; padding: 22px; }
+
+            .hero {
+                border: 1px solid var(--line); border-radius: 18px;
+                background: linear-gradient(160deg, rgba(123,140,255,0.08), rgba(17,20,28,0.95) 28%);
+                padding: 18px; box-shadow: var(--shadow);
+            }
+
+            .badge {
+                display: inline-flex; align-items: center; gap: 8px;
+                border-radius: 999px; border: 1px solid rgba(74,245,198,0.35);
+                color: var(--accent-2); background: rgba(74,245,198,0.08);
+                font-size: 12px; padding: 6px 10px;
+            }
+
+            .dot {
+                width: 8px; height: 8px; border-radius: 50%;
+                background: var(--accent-2); box-shadow: 0 0 12px rgba(74,245,198,0.8);
+                animation: pulse 1.7s infinite;
+            }
+
+            @keyframes pulse {
+                0%, 100% { transform: scale(1); opacity: 0.85; }
+                50% { transform: scale(1.3); opacity: 1; }
+            }
+
+            h1 { margin: 14px 0 6px; font-size: clamp(26px,4vw,42px); line-height: 1.06; letter-spacing: -0.02em; }
+            .lead { color: var(--dim); max-width: 90ch; line-height: 1.55; margin: 0; }
+            .top-controls { margin-top: 14px; display: flex; flex-wrap: wrap; gap: 8px; }
+
+            button {
+                border: 1px solid var(--line); background: var(--surface-2);
+                color: var(--text); border-radius: 10px; padding: 8px 10px;
+                font-size: 12px; cursor: pointer;
+            }
+            button:hover { border-color: #3a4256; transform: translateY(-1px); }
+            .btn-primary { border-color: rgba(74,245,198,0.35); color: var(--accent-2); background: rgba(74,245,198,0.08); }
+            .btn-active { border-color: rgba(123,140,255,0.45); color: var(--accent); background: rgba(123,140,255,0.12); }
+
+            .kpis { margin-top: 12px; display: grid; gap: 10px; grid-template-columns: repeat(4, minmax(0,1fr)); }
+            .kpi { border: 1px solid var(--line); border-radius: 12px; background: rgba(18,21,30,0.88); padding: 10px 11px; }
+            .kpi-label { color: var(--dim); font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; }
+            .kpi-value { color: var(--accent-2); font-size: 20px; font-weight: 700; }
+            .kpi-value.danger { color: var(--danger); }
+            .kpi-note { color: var(--dim); font-size: 11px; margin-top: 2px; line-height: 1.35; }
+
+            .layout { margin-top: 14px; display: grid; gap: 16px; grid-template-columns: 1.08fr 0.92fr; }
+            .panel { border: 1px solid var(--line); border-radius: 16px; background: var(--surface); overflow: hidden; box-shadow: var(--shadow); }
+            .panel-head { border-bottom: 1px solid var(--line); padding: 11px 13px; display: flex; justify-content: space-between; gap: 10px; align-items: center; background: rgba(255,255,255,0.01); }
+            .panel-title { color: #c9d2e8; font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; }
+
+            .chat { padding: 13px; overflow: auto; background: linear-gradient(transparent 0%, rgba(255,255,255,0.01) 100%), var(--surface); }
+            .bubble { border: 1px solid var(--line); border-radius: 14px; padding: 10px 11px; margin-bottom: 10px; max-width: 94%; box-shadow: 0 8px 20px rgba(0,0,0,0.2); animation: rise 0.24s ease; }
+            .bubble.user { margin-left: auto; background: var(--bubble-user); }
+            .bubble.assistant { margin-right: auto; background: var(--bubble-assistant); }
+            @keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+            .meta { display: flex; justify-content: space-between; gap: 10px; font-size: 10px; color: var(--dim); margin-bottom: 7px; text-transform: uppercase; letter-spacing: 0.08em; }
+            .text { font-size: 13px; line-height: 1.52; white-space: pre-wrap; }
+            .code { margin-top: 8px; border: 1px solid #222a3f; border-radius: 10px; overflow: hidden; background: var(--surface-3); }
+            .code-head { border-bottom: 1px solid #222a3f; padding: 7px 9px; display: flex; justify-content: space-between; align-items: center; color: var(--dim); font-size: 11px; }
+            .code pre { margin: 0; padding: 10px 11px; font-size: 12px; line-height: 1.45; color: #d6ddf0; overflow: auto; max-height: 220px; }
+
+            .right { display: grid; gap: 16px; grid-template-rows: 0.93fr 1.07fr; }
+            .skill-grid { padding: 12px; overflow: auto; }
+            .skill-card { border: 1px solid var(--line); border-radius: 12px; background: rgba(255,255,255,0.01); padding: 9px 10px; margin-bottom: 8px; }
+            .skill-top { display: flex; justify-content: space-between; gap: 8px; align-items: baseline; margin-bottom: 5px; }
+            .skill-name { font-size: 12px; color: #cfd8ee; }
+            .conf { font-size: 11px; color: var(--accent-2); }
+            .conf.low { color: var(--danger); }
+            .skill-body { color: var(--dim); font-size: 11px; line-height: 1.45; }
+            .irrelevant-tag { display: inline-block; padding: 1px 6px; border-radius: 999px; font-size: 9px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--danger); border: 1px solid rgba(255,107,107,0.35); background: rgba(255,107,107,0.08); margin-left: 6px; }
+            .promoted-tag { display: inline-block; padding: 1px 6px; border-radius: 999px; font-size: 9px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--good); border: 1px solid rgba(56,211,159,0.35); background: rgba(56,211,159,0.08); margin-left: 6px; }
+            .demoted-tag { display: inline-block; padding: 1px 6px; border-radius: 999px; font-size: 9px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--warn); border: 1px solid rgba(255,196,107,0.35); background: rgba(255,196,107,0.08); margin-left: 6px; }
+
+            .trace-wrap { display: grid; grid-template-rows: auto 1fr; min-height: 0; }
+            .trace-list { padding: 11px; max-height: 190px; overflow: auto; border-bottom: 1px solid var(--line); }
+            .trace-item { border: 1px solid var(--line); border-radius: 11px; padding: 8px; margin-bottom: 7px; background: rgba(255,255,255,0.01); }
+            .trace-head { display: flex; justify-content: space-between; align-items: baseline; gap: 7px; }
+            .trace-name { font-size: 12px; color: #d2daee; }
+            .trace-latency { font-size: 11px; color: var(--dim); }
+            .pill { margin-top: 4px; display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; }
+            .pill.ok { color: var(--good); border: 1px solid rgba(56,211,159,0.45); background: rgba(56,211,159,0.08); }
+            .pill.warn { color: var(--warn); border: 1px solid rgba(255,196,107,0.45); background: rgba(255,196,107,0.08); }
+
+            .tabs { display: flex; overflow: auto; border-bottom: 1px solid var(--line); }
+            .tab { border: none; border-right: 1px solid var(--line); border-radius: 0; background: #0f131d; color: var(--dim); font-size: 11px; padding: 9px 11px; white-space: nowrap; }
+            .tab.active { color: var(--accent); background: #131a2a; }
+            .pane { display: none; height: 255px; overflow: auto; }
+            .pane.active { display: block; }
+            .pane pre { margin: 0; padding: 10px 11px; font-size: 12px; line-height: 1.44; color: #d4dcec; }
+
+            .terminal-strip { margin-top: 14px; border: 1px solid var(--terminal-line); border-radius: 12px; background: var(--terminal-bg); overflow: hidden; }
+            .terminal-head { padding: 8px 12px; border-bottom: 1px solid var(--terminal-line); display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.02); }
+            .terminal-title { font-size: 11px; color: var(--dim); text-transform: uppercase; letter-spacing: 0.08em; }
+            .terminal-status { font-size: 11px; color: var(--accent-2); }
+            .terminal-body { padding: 10px 12px; height: 140px; overflow: auto; font-size: 11px; line-height: 1.6; }
+            .log-line { margin-bottom: 4px; opacity: 0; animation: logFade 0.3s ease forwards; }
+            @keyframes logFade { from { opacity: 0; transform: translateX(-6px); } to { opacity: 1; transform: translateX(0); } }
+            .log-ts { color: #4a5568; margin-right: 8px; }
+            .log-tool { color: var(--accent); }
+            .log-ok { color: var(--good); }
+            .log-warn { color: var(--warn); }
+            .log-dim { color: var(--dim); }
+
+            .footer { margin-top: 12px; text-align: center; color: var(--dim); font-size: 12px; }
+
+            @media (max-width: 1024px) {
+                .kpis { grid-template-columns: repeat(2, minmax(0,1fr)); }
+                .layout { grid-template-columns: 1fr; }
+                .right { grid-template-rows: auto auto; }
+                .chat { height: 450px; }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="wrap">
+            <section class="hero">
+                <span class="badge"><span class="dot"></span>Live MCP session &mdash; payloads captured 2026-04-03 from Graphonomous v0.3.1</span>
+                <h1>A/B: Q-Value Retrieval &mdash; Before vs After Outcomes</h1>
+                <p class="lead">
+                    Same <code>retrieve_context</code> query, two phases:
+                    <b>A</b> retrieves with similarity-only ranking (no outcome history).
+                    <b>B</b> retrieves after outcomes have been recorded &mdash; Q-values
+                    shift the ranking so high-confidence-but-low-utility nodes drop below
+                    high-utility ones. Two-phase retrieval is self-correcting.
+                </p>
+
+                <div class="top-controls">
+                    <button class="btn-active" id="scenarioA">Scenario A &middot; before outcomes</button>
+                    <button id="scenarioB">Scenario B &middot; after outcomes</button>
+                    <button class="btn-primary" id="playBtn">&#9654; Play demo</button>
+                    <button id="nextBtn">Next bubble</button>
+                    <button id="resetBtn">Reset</button>
+                    <a href="../index.html"><button>&larr; Back to all demos</button></a>
+                    <a href="../../index.html"><button>&larr; Back to landing page</button></a>
+                </div>
+
+                <div class="kpis" id="kpis"></div>
+            </section>
+
+            <section class="layout">
+                <article class="panel">
+                    <div class="panel-head"><div class="panel-title">Chat + tool-call storytelling</div></div>
+                    <div class="chat" id="chat"></div>
+                </article>
+                <aside class="right">
+                    <section class="panel">
+                        <div class="panel-head"><div class="panel-title">Retrieved nodes</div></div>
+                        <div class="skill-grid" id="skills"></div>
+                    </section>
+                    <section class="panel trace-wrap">
+                        <div class="panel-head"><div class="panel-title">Execution trace + payload explorer</div></div>
+                        <div class="trace-list" id="trace"></div>
+                        <div class="tabs" id="tabs"></div>
+                        <div id="panes"></div>
+                    </section>
+                </aside>
+            </section>
+
+            <section class="terminal-strip">
+                <div class="terminal-head">
+                    <div class="terminal-title">Live tool-call log</div>
+                    <div class="terminal-status" id="terminalStatus">idle</div>
+                </div>
+                <div class="terminal-body" id="terminalBody"></div>
+            </section>
+
+            <p class="footer">
+                Payloads captured 2026-04-03 from a live Graphonomous v0.3.1 MCP session.
+                Retrieval scores, Q-value adjustments, and ranking shifts are authentic.
+            </p>
+        </div>
+
+        <script>
+const data = {
+    A: {
+        label: "Scenario A \u00b7 before outcomes",
+        kpis: [
+            { label: "top result", value: "reranker", note: "highest similarity, no outcome data yet" },
+            { label: "routing", value: "deliberate", note: "SCC with \u03ba=1 triggers deliberation" },
+            { label: "outcome signals", value: "0", note: "no prior learn_from_outcome recorded" },
+            { label: "results", value: "5", note: "5 returned (5 seed + 4 expanded)" }
+        ],
+        timeline: [
+            {
+                role: "user", actor: "Developer",
+                text: "How does BM25 hybrid retrieval perform on production workloads? Query the graph before any outcomes are recorded.",
+                snippetName: "user_query.txt",
+                snippet: { query: "How does BM25 hybrid retrieval perform on production workloads?", phase: "before outcomes" }
+            },
+            {
+                role: "assistant", actor: "Graphonomous",
+                text: "Running retrieve_context...",
+                snippetName: "retrieve_context call",
+                snippet: {
+                    tool: "retrieve_context",
+                    arguments: { query: "How does BM25 hybrid retrieval perform on production workloads?", limit: 5 }
+                }
+            },
+            {
+                role: "assistant", actor: "Graphonomous",
+                text: "Retrieved 5 nodes (5 seed + 4 expanded), ranked by similarity-only scoring (no outcome history):\n\n#1 BM25 hybrid retrieval (score 0.710, sim 0.762) \u2014 seed, highest semantic match\n#2 Cross-encoder reranking latency (score 0.388, sim 0.000) \u2014 neighbor via #1, 1 hop away\n#3 Demo Suite Expansion outcome (score 0.254, sim 0.670) \u2014 seed, outcome node but no Q-value boost yet\n#4 Multi-agent tenant isolation (score 0.237, sim 0.654) \u2014 seed, moderate similarity\n#5 Session episodic (score 0.167, sim 0.637) \u2014 seed, weakest match\n\nTopology detected 1 SCC with \u03ba=1, routing: deliberate. Without outcome data, the ranking is purely score = similarity \u00d7 confidence.",
+                snippetName: "retrieve_context result",
+                snippet: {
+                    count: 5,
+                    status: "ok",
+                    stats: { expanded_count: 4, returned: 5, seed_count: 5 },
+                    query: "How does BM25 hybrid retrieval perform on production workloads?",
+                    topology: {
+                        sccs: [{
+                            id: "scc-0",
+                            nodes: ["node_2a450e053290f777e30e23c224bf64f4", "node_4183414ae32e11779f6d6cb489c7cb9e", "node_a0e39715cab1fd2f697229c80512d667", "node_cf1d73c1f78f5fedb3daced5a7718214"],
+                            kappa: 1,
+                            fault_line_edges: [{ source: "node_2a450e053290f777e30e23c224bf64f4", target: "node_cf1d73c1f78f5fedb3daced5a7718214" }],
+                            routing: "deliberate",
+                            approximate: false,
+                            deliberation_budget: { max_iterations: 2, confidence_threshold: 0.75, timeout_multiplier: 1.5, agent_count: 1 }
+                        }],
+                        dag_nodes: ["node_1868a606bf9263e552193afe641ac999", "node_2dd0a983896477a5335addd94a3b3ab2", "node_3107d202f9a362695c6df1f334680a69", "node_7fc8542146d3030763322b61421bc4b3", "node_afdac890744cf04749c489269df69e36"],
+                        max_kappa: 1,
+                        routing: "deliberate",
+                        scc_count: 1
+                    },
+                    causal_context: ["node_1868a606bf9263e552193afe641ac999", "node_7fc8542146d3030763322b61421bc4b3", "node_3107d202f9a362695c6df1f334680a69", "node_cf1d73c1f78f5fedb3daced5a7718214", "node_afdac890744cf04749c489269df69e36"],
+                    results: [
+                        { node_type: "semantic", via: null, source: "seed", content: "BM25 hybrid retrieval with cross-encoder reranking improves SHR by 12pp on production workloads compared to pure vector search", confidence: 0.508, node_id: "node_1868a606bf9263e552193afe641ac999", score: 0.710, similarity: 0.762, hops: 0 },
+                        { node_type: "semantic", via: "node_1868a606bf9263e552193afe641ac999", source: "neighbor", content: "Cross-encoder reranking latency averages 45ms per query under concurrent load of 8 simultaneous requests", confidence: 0.508, node_id: "node_7fc8542146d3030763322b61421bc4b3", score: 0.388, similarity: 0.000, hops: 1 },
+                        { node_type: "outcome", via: null, source: "seed", content: "v0.3.1 Demo Suite Expansion completed: all 10 sub-tasks done. 6 new demos created...", confidence: 0.508, node_id: "node_3107d202f9a362695c6df1f334680a69", score: 0.254, similarity: 0.670, hops: 0 },
+                        { node_type: "semantic", via: null, source: "seed", content: "Graphonomous does not support single-agent operation only \u2014 it actually handles multiple concurrent agent sessions with tenant isolation", confidence: 0.508, node_id: "node_cf1d73c1f78f5fedb3daced5a7718214", score: 0.237, similarity: 0.654, hops: 0 },
+                        { node_type: "episodic", via: null, source: "seed", content: "Session 2026-04-03 (continued): Implemented 7 of 10 v0.3.1 Demo Suite Expansion tasks directly...", confidence: 0.508, node_id: "node_afdac890744cf04749c489269df69e36", score: 0.167, similarity: 0.637, hops: 0 }
+                    ]
+                }
+            },
+            {
+                role: "user", actor: "Developer",
+                text: "BM25 hybrid ranks #1 by similarity alone. The cross-encoder latency node came in at #2 via neighbor expansion (1 hop). All confidence values are the default 0.508 \u2014 no outcomes yet. Let\u2019s record some outcomes and see how the ranking changes.",
+                snippetName: "user_observation.txt",
+                snippet: { observation: "similarity-only ranking, all confidence at default 0.508, no Q-value adjustments" }
+            }
+        ],
+        trace: [
+            { name: "retrieve_context", latency: "status ok", status: "ok", note: "5 results (5 seed + 4 expanded), \u03ba=1 SCC detected, deliberate routing, no Q-value adjustment" }
+        ],
+        skills: [
+            { name: "BM25 hybrid retrieval", conf: "0.508", similarity: "0.762", body: "Semantic seed \u2014 #1 by score (0.710). Highest similarity match, default confidence. No outcome history.", irrelevant: false },
+            { name: "Cross-encoder reranking latency", conf: "0.508", similarity: "0.000", body: "Semantic neighbor via BM25 node \u2014 #2 by score (0.388). 1 hop, no direct similarity to query.", irrelevant: false },
+            { name: "Demo Suite Expansion outcome", conf: "0.508", similarity: "0.670", body: "Outcome seed \u2014 #3 by score (0.254). Moderate similarity but outcome node without Q-value boost.", irrelevant: false },
+            { name: "Multi-agent tenant isolation", conf: "0.508", similarity: "0.654", body: "Semantic seed \u2014 #4 by score (0.237). Tangentially related, default confidence.", irrelevant: false },
+            { name: "Session episodic", conf: "0.508", similarity: "0.637", body: "Episodic seed \u2014 #5 by score (0.167). Session context, lowest relevance to query.", irrelevant: false }
+        ],
+        tabs: {
+            "retrieve_before.json": {
+                count: 5, status: "ok",
+                stats: { expanded_count: 4, returned: 5, seed_count: 5 },
+                query: "How does BM25 hybrid retrieval perform on production workloads?",
+                topology: { max_kappa: 1, routing: "deliberate", scc_count: 1 },
+                causal_context: ["node_1868a606bf9263e552193afe641ac999", "node_7fc8542146d3030763322b61421bc4b3", "node_3107d202f9a362695c6df1f334680a69", "node_cf1d73c1f78f5fedb3daced5a7718214", "node_afdac890744cf04749c489269df69e36"],
+                results: [
+                    { node_type: "semantic", via: null, source: "seed", content: "BM25 hybrid retrieval with cross-encoder reranking improves SHR by 12pp...", confidence: 0.508, node_id: "node_1868a606bf9263e552193afe641ac999", score: 0.710, similarity: 0.762, hops: 0 },
+                    { node_type: "semantic", via: "node_1868a606bf9263e552193afe641ac999", source: "neighbor", content: "Cross-encoder reranking latency averages 45ms...", confidence: 0.508, node_id: "node_7fc8542146d3030763322b61421bc4b3", score: 0.388, similarity: 0.000, hops: 1 },
+                    { node_type: "outcome", via: null, source: "seed", content: "v0.3.1 Demo Suite Expansion completed...", confidence: 0.508, node_id: "node_3107d202f9a362695c6df1f334680a69", score: 0.254, similarity: 0.670, hops: 0 },
+                    { node_type: "semantic", via: null, source: "seed", content: "Graphonomous handles multiple concurrent agent sessions...", confidence: 0.508, node_id: "node_cf1d73c1f78f5fedb3daced5a7718214", score: 0.237, similarity: 0.654, hops: 0 },
+                    { node_type: "episodic", via: null, source: "seed", content: "Session 2026-04-03: Implemented 7 of 10 tasks...", confidence: 0.508, node_id: "node_afdac890744cf04749c489269df69e36", score: 0.167, similarity: 0.637, hops: 0 }
+                ]
+            }
+        },
+        toolLog: [
+            { ts: "14:40:01.220", tool: "retrieve_context", args: "query=\"How does BM25 hybrid retrieval...\" limit=5", status: "ok", latency: "" }
+        ]
+    },
+
+    B: {
+        label: "Scenario B \u00b7 after outcomes",
+        kpis: [
+            { label: "top result", value: "BM25", note: "score 0.710\u21920.892 after learn_from_outcome" },
+            { label: "routing", value: "deliberate", note: "same \u03ba=1 SCC, same topology" },
+            { label: "rank changes", value: "3", note: "outcome node \u2191#2, latency node \u2193#5" },
+            { label: "self-correcting", value: "yes", note: "Q-values shift ranking from real results" }
+        ],
+        timeline: [
+            {
+                role: "user", actor: "Developer",
+                text: "Same query again, but now learn_from_outcome has been called: BM25 hybrid had a success outcome (+12pp SHR confirmed), the demo suite outcome got a positive signal, but the cross-encoder latency node got a negative outcome (45ms too slow). How does the ranking change?",
+                snippetName: "user_query.txt",
+                snippet: { query: "How does BM25 hybrid retrieval perform on production workloads?", phase: "after outcomes" }
+            },
+            {
+                role: "assistant", actor: "Graphonomous",
+                text: "Running retrieve_context...",
+                snippetName: "retrieve_context call",
+                snippet: {
+                    tool: "retrieve_context",
+                    arguments: { query: "How does BM25 hybrid retrieval perform on production workloads?", limit: 5 }
+                }
+            },
+            {
+                role: "assistant", actor: "Graphonomous",
+                text: "Ranking shifted dramatically after outcome signals:\n\n#1 BM25 hybrid retrieval (score 0.892, conf 0.690) \u2014 HELD #1. learn_from_outcome boosted confidence 0.508\u21920.690, score lifted from 0.710 to 0.892.\n#2 Demo Suite Expansion outcome (score 0.524, conf 0.825) \u2014 PROMOTED from #3. Positive outcome raised confidence 0.508\u21920.825, Q-value jumped it above the latency node.\n#3 Multi-agent tenant isolation (score 0.237, conf 0.508) \u2014 PROMOTED from #4. No outcome data but relatively rose as latency node fell.\n#4 Session episodic (score 0.213, conf 0.781) \u2014 PROMOTED from #5. Episodic node got a positive outcome signal, slight score lift.\n#5 Cross-encoder reranking latency (score 0.178, conf 0.524) \u2014 DEMOTED from #2. Negative outcome (45ms too slow) dropped score from 0.388 to 0.178.\n\nThe same query, dramatically different ranking. Retrieval is self-correcting \u2014 learn_from_outcome updates automatically reweight future retrievals via Q-value adjustments.",
+                snippetName: "retrieve_context result",
+                snippet: {
+                    count: 5,
+                    status: "ok",
+                    stats: { expanded_count: 4, returned: 5, seed_count: 5 },
+                    query: "How does BM25 hybrid retrieval perform on production workloads?",
+                    topology: {
+                        sccs: [{
+                            id: "scc-0",
+                            nodes: ["node_2a450e053290f777e30e23c224bf64f4", "node_4183414ae32e11779f6d6cb489c7cb9e", "node_a0e39715cab1fd2f697229c80512d667", "node_cf1d73c1f78f5fedb3daced5a7718214"],
+                            kappa: 1,
+                            fault_line_edges: [{ source: "node_2a450e053290f777e30e23c224bf64f4", target: "node_cf1d73c1f78f5fedb3daced5a7718214" }],
+                            routing: "deliberate",
+                            approximate: false,
+                            deliberation_budget: { max_iterations: 2, confidence_threshold: 0.75, timeout_multiplier: 1.5, agent_count: 1 }
+                        }],
+                        dag_nodes: ["node_1868a606bf9263e552193afe641ac999", "node_2dd0a983896477a5335addd94a3b3ab2", "node_3107d202f9a362695c6df1f334680a69", "node_7fc8542146d3030763322b61421bc4b3", "node_afdac890744cf04749c489269df69e36"],
+                        max_kappa: 1,
+                        routing: "deliberate",
+                        scc_count: 1
+                    },
+                    causal_context: ["node_1868a606bf9263e552193afe641ac999", "node_3107d202f9a362695c6df1f334680a69", "node_cf1d73c1f78f5fedb3daced5a7718214", "node_afdac890744cf04749c489269df69e36", "node_7fc8542146d3030763322b61421bc4b3"],
+                    results: [
+                        { node_type: "semantic", via: null, source: "seed", content: "BM25 hybrid retrieval with cross-encoder reranking improves SHR by 12pp on production workloads compared to pure vector search", confidence: 0.690, node_id: "node_1868a606bf9263e552193afe641ac999", score: 0.892, similarity: 0.762, hops: 0 },
+                        { node_type: "outcome", via: null, source: "seed", content: "v0.3.1 Demo Suite Expansion completed: all 10 sub-tasks done. 6 new demos created...", confidence: 0.825, node_id: "node_3107d202f9a362695c6df1f334680a69", score: 0.524, similarity: 0.670, hops: 0 },
+                        { node_type: "semantic", via: null, source: "seed", content: "Graphonomous does not support single-agent operation only \u2014 it actually handles multiple concurrent agent sessions with tenant isolation", confidence: 0.508, node_id: "node_cf1d73c1f78f5fedb3daced5a7718214", score: 0.237, similarity: 0.654, hops: 0 },
+                        { node_type: "episodic", via: null, source: "seed", content: "Session 2026-04-03 (continued): Implemented 7 of 10 v0.3.1 Demo Suite Expansion tasks directly...", confidence: 0.781, node_id: "node_afdac890744cf04749c489269df69e36", score: 0.213, similarity: 0.637, hops: 0 },
+                        { node_type: "semantic", via: "node_1868a606bf9263e552193afe641ac999", source: "neighbor", content: "Cross-encoder reranking latency averages 45ms per query under concurrent load of 8 simultaneous requests", confidence: 0.524, node_id: "node_7fc8542146d3030763322b61421bc4b3", score: 0.178, similarity: 0.000, hops: 1 }
+                    ]
+                }
+            },
+            {
+                role: "user", actor: "Developer",
+                text: "The cross-encoder latency node dropped from #2 to #5 despite unchanged similarity (0.000). Its negative outcome pulled confidence 0.508\u21920.524 but score fell 0.388\u21920.178. Meanwhile the Demo Suite outcome node jumped #3\u2192#2 with confidence 0.508\u21920.825. Q-values from learn_from_outcome are doing the reranking \u2014 this is self-correcting retrieval.",
+                snippetName: "user_confirmation.txt",
+                snippet: { assessment: "correct", note: "Q-value reranking verified \u2014 learn_from_outcome shifts scores independent of similarity" }
+            }
+        ],
+        trace: [
+            { name: "retrieve_context", latency: "status ok", status: "ok", note: "5 results, Q-value adjusted: BM25 held #1 (0.710\u21920.892), latency node demoted #2\u2192#5 (0.388\u21920.178)" }
+        ],
+        skills: [
+            { name: "BM25 hybrid retrieval", conf: "0.690", similarity: "0.762", body: "Semantic seed \u2014 held #1. learn_from_outcome boosted confidence 0.508\u21920.690, score 0.710\u21920.892.", irrelevant: false, promoted: true },
+            { name: "Demo Suite Expansion outcome", conf: "0.825", similarity: "0.670", body: "Outcome seed \u2014 PROMOTED #3\u2192#2. Positive outcome raised confidence 0.508\u21920.825, score 0.254\u21920.524.", irrelevant: false, promoted: true },
+            { name: "Multi-agent tenant isolation", conf: "0.508", similarity: "0.654", body: "Semantic seed \u2014 promoted #4\u2192#3. No outcome data, rose relatively as latency node fell.", irrelevant: false },
+            { name: "Session episodic", conf: "0.781", similarity: "0.637", body: "Episodic seed \u2014 promoted #5\u2192#4. Positive outcome signal, confidence 0.508\u21920.781.", irrelevant: false, promoted: true },
+            { name: "Cross-encoder reranking latency", conf: "0.524", similarity: "0.000", body: "Semantic neighbor \u2014 DEMOTED #2\u2192#5. Negative outcome (45ms too slow) dropped score 0.388\u21920.178.", irrelevant: false, demoted: true }
+        ],
+        tabs: {
+            "retrieve_after.json": {
+                count: 5, status: "ok",
+                stats: { expanded_count: 4, returned: 5, seed_count: 5 },
+                query: "How does BM25 hybrid retrieval perform on production workloads?",
+                note: "Compare with retrieve_before.json \u2014 same query, same topology, different ranking from Q-value shifts",
+                topology: { max_kappa: 1, routing: "deliberate", scc_count: 1 },
+                causal_context: ["node_1868a606bf9263e552193afe641ac999", "node_3107d202f9a362695c6df1f334680a69", "node_cf1d73c1f78f5fedb3daced5a7718214", "node_afdac890744cf04749c489269df69e36", "node_7fc8542146d3030763322b61421bc4b3"],
+                results: [
+                    { node_type: "semantic", via: null, source: "seed", content: "BM25 hybrid retrieval with cross-encoder reranking improves SHR by 12pp...", confidence: 0.690, node_id: "node_1868a606bf9263e552193afe641ac999", score: 0.892, similarity: 0.762, hops: 0 },
+                    { node_type: "outcome", via: null, source: "seed", content: "v0.3.1 Demo Suite Expansion completed...", confidence: 0.825, node_id: "node_3107d202f9a362695c6df1f334680a69", score: 0.524, similarity: 0.670, hops: 0 },
+                    { node_type: "semantic", via: null, source: "seed", content: "Graphonomous handles multiple concurrent agent sessions...", confidence: 0.508, node_id: "node_cf1d73c1f78f5fedb3daced5a7718214", score: 0.237, similarity: 0.654, hops: 0 },
+                    { node_type: "episodic", via: null, source: "seed", content: "Session 2026-04-03: Implemented 7 of 10 tasks...", confidence: 0.781, node_id: "node_afdac890744cf04749c489269df69e36", score: 0.213, similarity: 0.637, hops: 0 },
+                    { node_type: "semantic", via: "node_1868a606bf9263e552193afe641ac999", source: "neighbor", content: "Cross-encoder reranking latency averages 45ms...", confidence: 0.524, node_id: "node_7fc8542146d3030763322b61421bc4b3", score: 0.178, similarity: 0.000, hops: 1 }
+                ]
+            }
+        },
+        toolLog: [
+            { ts: "14:41:03.551", tool: "retrieve_context", args: "query=\"How does BM25 hybrid retrieval...\" limit=5", status: "ok", latency: "" }
+        ]
+    }
+};
+
+const els = {
+    scenarioA: document.getElementById("scenarioA"),
+    scenarioB: document.getElementById("scenarioB"),
+    playBtn: document.getElementById("playBtn"),
+    nextBtn: document.getElementById("nextBtn"),
+    resetBtn: document.getElementById("resetBtn"),
+    kpis: document.getElementById("kpis"),
+    chat: document.getElementById("chat"),
+    skills: document.getElementById("skills"),
+    trace: document.getElementById("trace"),
+    tabs: document.getElementById("tabs"),
+    panes: document.getElementById("panes"),
+    terminalBody: document.getElementById("terminalBody"),
+    terminalStatus: document.getElementById("terminalStatus")
+};
+
+let mode = "A", idx = 0, playing = false, logIdx = 0;
+
+function renderKpis() {
+    els.kpis.innerHTML = "";
+    for (const k of data[mode].kpis) {
+        const d = document.createElement("div"); d.className = "kpi";
+        d.innerHTML = `<div class="kpi-label">${k.label}</div><div class="kpi-value${k.danger ? " danger" : ""}">${k.value}</div><div class="kpi-note">${k.note}</div>`;
+        els.kpis.appendChild(d);
+    }
+}
+
+function renderSkills() {
+    els.skills.innerHTML = "";
+    for (const s of data[mode].skills) {
+        const c = document.createElement("div"); c.className = "skill-card";
+        let tag = "";
+        if (s.promoted) tag = '<span class="promoted-tag">promoted</span>';
+        else if (s.demoted) tag = '<span class="demoted-tag">demoted</span>';
+        else if (s.irrelevant) tag = '<span class="irrelevant-tag">irrelevant</span>';
+        const confClass = s.demoted ? "conf low" : "conf";
+        c.innerHTML = `<div class="skill-top"><div class="skill-name">${s.name}${tag}</div><div class="${confClass}">conf ${s.conf} \u00b7 sim ${s.similarity}</div></div><div class="skill-body">${s.body}</div>`;
+        els.skills.appendChild(c);
+    }
+}
+
+function renderTrace() {
+    els.trace.innerHTML = "";
+    for (const t of data[mode].trace) {
+        const item = document.createElement("div"); item.className = "trace-item";
+        item.innerHTML = `<div class="trace-head"><div class="trace-name">${t.name}</div><div class="trace-latency">${t.latency}</div></div><span class="pill ${t.status === "ok" ? "ok" : "warn"}">${t.status}</span><div style="margin-top:5px;color:var(--dim);font-size:11px;line-height:1.4;">${t.note}</div>`;
+        els.trace.appendChild(item);
+    }
+}
+
+function renderTabs() {
+    const tabNames = Object.keys(data[mode].tabs);
+    els.tabs.innerHTML = ""; els.panes.innerHTML = "";
+    tabNames.forEach((name, i) => {
+        const b = document.createElement("button");
+        b.className = `tab ${i === 0 ? "active" : ""}`; b.textContent = name; b.dataset.name = name;
+        const pane = document.createElement("div");
+        pane.className = `pane ${i === 0 ? "active" : ""}`; pane.dataset.name = name;
+        const pre = document.createElement("pre");
+        pre.textContent = JSON.stringify(data[mode].tabs[name], null, 2);
+        pane.appendChild(pre);
+        b.addEventListener("click", () => {
+            [...els.tabs.children].forEach(x => x.classList.toggle("active", x.dataset.name === name));
+            [...els.panes.children].forEach(x => x.classList.toggle("active", x.dataset.name === name));
+        });
+        els.tabs.appendChild(b); els.panes.appendChild(pane);
+    });
+}
+
+function clearTerminal() { els.terminalBody.innerHTML = ""; logIdx = 0; els.terminalStatus.textContent = "idle"; }
+
+function appendLog(entry) {
+    const line = document.createElement("div"); line.className = "log-line";
+    const sc = entry.status === "ok" ? "log-ok" : "log-warn";
+    line.innerHTML = `<span class="log-ts">${entry.ts}</span><span class="log-tool">${entry.tool}</span> <span class="log-dim">(${entry.args})</span> <span class="${sc}">[${entry.status}]</span>${entry.latency ? ` <span class="log-dim">${entry.latency}</span>` : ""}`;
+    els.terminalBody.appendChild(line);
+    els.terminalBody.scrollTop = els.terminalBody.scrollHeight;
+}
+
+function syncLog() {
+    const log = data[mode].toolLog;
+    while (logIdx < log.length) { appendLog(log[logIdx]); logIdx++; }
+    if (logIdx > 0) els.terminalStatus.textContent = `${logIdx} calls logged`;
+}
+
+function bubble(item, step) {
+    const node = document.createElement("div"); node.className = `bubble ${item.role}`;
+    const meta = document.createElement("div"); meta.className = "meta";
+    meta.innerHTML = `<span>${item.actor}</span><span>step ${step + 1}</span>`;
+    const text = document.createElement("div"); text.className = "text"; text.textContent = item.text;
+    const code = document.createElement("div"); code.className = "code";
+    const head = document.createElement("div"); head.className = "code-head";
+    const title = document.createElement("span"); title.textContent = item.snippetName;
+    const copy = document.createElement("button"); copy.textContent = "Copy JSON";
+    copy.style.padding = "4px 8px"; copy.style.fontSize = "11px"; copy.style.borderRadius = "8px";
+    copy.addEventListener("click", async () => {
+        try { await navigator.clipboard.writeText(JSON.stringify(item.snippet, null, 2)); copy.textContent = "Copied"; setTimeout(() => copy.textContent = "Copy JSON", 1000); }
+        catch { copy.textContent = "Copy failed"; setTimeout(() => copy.textContent = "Copy JSON", 1200); }
+    });
+    head.appendChild(title); head.appendChild(copy);
+    const pre = document.createElement("pre"); pre.textContent = JSON.stringify(item.snippet, null, 2);
+    code.appendChild(head); code.appendChild(pre);
+    node.appendChild(meta); node.appendChild(text); node.appendChild(code);
+    return node;
+}
+
+function appendNext() {
+    const timeline = data[mode].timeline;
+    if (idx >= timeline.length) return false;
+    els.chat.appendChild(bubble(timeline[idx], idx));
+    els.chat.scrollTop = els.chat.scrollHeight;
+    idx++; syncLog(); return true;
+}
+
+function resetChat() { idx = 0; els.chat.innerHTML = ""; clearTerminal(); }
+
+async function play() {
+    if (playing) return; playing = true;
+    els.playBtn.textContent = "\u23f8 Playing...";
+    els.terminalStatus.textContent = "streaming...";
+    while (idx < data[mode].timeline.length && playing) { appendNext(); await new Promise(r => setTimeout(r, 720)); }
+    playing = false; els.playBtn.textContent = "\u25b6 Play demo";
+    els.terminalStatus.textContent = `${logIdx} calls logged`;
+}
+
+function setMode(next) {
+    mode = next; playing = false; els.playBtn.textContent = "\u25b6 Play demo";
+    els.scenarioA.classList.toggle("btn-active", next === "A");
+    els.scenarioB.classList.toggle("btn-active", next === "B");
+    renderKpis(); renderSkills(); renderTrace(); renderTabs();
+    resetChat(); appendNext(); appendNext();
+}
+
+els.scenarioA.addEventListener("click", () => setMode("A"));
+els.scenarioB.addEventListener("click", () => setMode("B"));
+els.playBtn.addEventListener("click", () => { if (playing) { playing = false; els.playBtn.textContent = "\u25b6 Play demo"; } else { play(); } });
+els.nextBtn.addEventListener("click", appendNext);
+els.resetBtn.addEventListener("click", () => { playing = false; els.playBtn.textContent = "\u25b6 Play demo"; resetChat(); appendNext(); });
+
+setMode("A");
+        </script>
+    </body>
+</html>

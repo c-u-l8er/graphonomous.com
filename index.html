@@ -699,13 +699,13 @@
         </nav>
 
         <!-- HERO -->
-        <section class="hero" style="margin-top: 3.2rem;">
+        <section class="hero" style="margin-top: 3.2rem">
             <canvas id="graph-canvas"></canvas>
             <div class="container">
                 <h1>Knowledge graphs that<br />know when to think</h1>
                 <p class="subline">
-                    The only agent memory that detects circular dependencies
-                    in your knowledge, routes reasoning depth automatically,
+                    The only agent memory that detects circular dependencies in
+                    your knowledge, routes reasoning depth automatically,
                     revises beliefs formally, and forgets on command.
                     Open-source MCP server &mdash; works with any model.
                 </p>
@@ -725,9 +725,9 @@
                     >
                 </div>
                 <span class="badge"
-                    >v0.3.1 &middot; 28 MCP Tools &middot; 6 Node Types
-                    &middot; &kappa;-Routing &middot; GraphMemBench 120/120
-                    &middot; Elixir/OTP &middot; Apache 2.0</span
+                    >v0.3.1 &middot; 28 MCP Tools &middot; 6 Node Types &middot;
+                    &kappa;-Routing &middot; GraphMemBench 120/120 &middot;
+                    Elixir/OTP &middot; Apache 2.0</span
                 >
             </div>
         </section>
@@ -817,53 +817,139 @@
         <section id="capabilities">
             <div class="container">
                 <div class="section-label reveal">Only in Graphonomous</div>
-                <h2 class="reveal">Capabilities no other agent memory <em>has</em></h2>
+                <h2 class="reveal">
+                    Capabilities no other agent memory <em>has</em>
+                </h2>
                 <p class="lead reveal">
-                    Every agent memory system retrieves context. These six capabilities
-                    go beyond retrieval &mdash; each one is demonstrated with real MCP payloads.
+                    Every agent memory system retrieves context. These six
+                    capabilities go beyond retrieval &mdash; each one is
+                    demonstrated with real MCP payloads.
                 </p>
 
-                <div class="steps-grid" style="grid-template-columns: repeat(3, 1fr);">
-                    <a href="./demo/kappa-routing/" class="step-card cyan reveal" style="text-decoration: none; color: inherit; transition: border-color 0.25s, transform 0.2s;">
+                <div
+                    class="steps-grid"
+                    style="grid-template-columns: repeat(3, 1fr)"
+                >
+                    <a
+                        href="./demo/kappa-routing/"
+                        class="step-card cyan reveal"
+                        style="
+                            text-decoration: none;
+                            color: inherit;
+                            transition:
+                                border-color 0.25s,
+                                transform 0.2s;
+                        "
+                    >
                         <h3>&kappa;-Routing</h3>
-                        <p>Detects circular dependencies via Tarjan&rsquo;s algorithm.
-                           Routes &kappa;=0 regions to fast retrieval, &kappa;&gt;0 to
-                           deliberation with computed budgets.</p>
+                        <p>
+                            Detects circular dependencies via Tarjan&rsquo;s
+                            algorithm. Routes &kappa;=0 regions to fast
+                            retrieval, &kappa;&gt;0 to deliberation with
+                            computed budgets.
+                        </p>
                     </a>
-                    <a href="./demo/belief-revision/" class="step-card blue reveal" style="text-decoration: none; color: inherit; transition: border-color 0.25s, transform 0.2s;">
+                    <a
+                        href="./demo/belief-revision/"
+                        class="step-card blue reveal"
+                        style="
+                            text-decoration: none;
+                            color: inherit;
+                            transition:
+                                border-color 0.25s,
+                                transform 0.2s;
+                        "
+                    >
                         <h3>Belief Revision</h3>
-                        <p>AGM-rational expand/revise/contract. Detects contradictions
-                           automatically and propagates confidence changes through
-                           dependency chains.</p>
+                        <p>
+                            AGM-rational expand/revise/contract. Detects
+                            contradictions automatically and propagates
+                            confidence changes through dependency chains.
+                        </p>
                     </a>
-                    <a href="./demo/intentional-forgetting/" class="step-card rose reveal" style="text-decoration: none; color: inherit; transition: border-color 0.25s, transform 0.2s;">
+                    <a
+                        href="./demo/intentional-forgetting/"
+                        class="step-card rose reveal"
+                        style="
+                            text-decoration: none;
+                            color: inherit;
+                            transition:
+                                border-color 0.25s,
+                                transform 0.2s;
+                        "
+                    >
                         <h3>Intentional Forgetting</h3>
-                        <p>Soft hide, cascade delete, policy-based pruning, and
-                           GDPR Article 17 permanent erasure with audit trail.
-                           Three forgetting modes in one tool surface.</p>
+                        <p>
+                            Soft hide, cascade delete, policy-based pruning, and
+                            GDPR Article 17 permanent erasure with audit trail.
+                            Three forgetting modes in one tool surface.
+                        </p>
                     </a>
-                    <a href="./demo/epistemic-frontier/" class="step-card cyan reveal" style="text-decoration: none; color: inherit; transition: border-color 0.25s, transform 0.2s;">
+                    <a
+                        href="./demo/epistemic-frontier/"
+                        class="step-card cyan reveal"
+                        style="
+                            text-decoration: none;
+                            color: inherit;
+                            transition:
+                                border-color 0.25s,
+                                transform 0.2s;
+                        "
+                    >
                         <h3>Epistemic Frontier</h3>
-                        <p>Wilson score intervals reveal where one more piece of evidence
-                           would most reduce uncertainty. The system directs its own
-                           investigation priorities.</p>
+                        <p>
+                            Wilson score intervals reveal where one more piece
+                            of evidence would most reduce uncertainty. The
+                            system directs its own investigation priorities.
+                        </p>
                     </a>
-                    <a href="./demo/attention-engine/" class="step-card blue reveal" style="text-decoration: none; color: inherit; transition: border-color 0.25s, transform 0.2s;">
+                    <a
+                        href="./demo/attention-engine/"
+                        class="step-card blue reveal"
+                        style="
+                            text-decoration: none;
+                            color: inherit;
+                            transition:
+                                border-color 0.25s,
+                                transform 0.2s;
+                        "
+                    >
                         <h3>Attention Engine</h3>
-                        <p>Proactive goal prioritization combining urgency, coverage gaps,
-                           and topology-aware reasoning depth. Survey &rarr; triage &rarr;
-                           dispatch with autonomy controls.</p>
+                        <p>
+                            Proactive goal prioritization combining urgency,
+                            coverage gaps, and topology-aware reasoning depth.
+                            Survey &rarr; triage &rarr; dispatch with autonomy
+                            controls.
+                        </p>
                     </a>
-                    <a href="./demo/qvalue-retrieval/" class="step-card rose reveal" style="text-decoration: none; color: inherit; transition: border-color 0.25s, transform 0.2s;">
+                    <a
+                        href="./demo/qvalue-retrieval/"
+                        class="step-card rose reveal"
+                        style="
+                            text-decoration: none;
+                            color: inherit;
+                            transition:
+                                border-color 0.25s,
+                                transform 0.2s;
+                        "
+                    >
                         <h3>Q-Value Retrieval</h3>
-                        <p>Retrieval rankings shift based on outcome feedback. High-confidence
-                           but low-utility knowledge drops in ranking automatically.
-                           Self-correcting memory.</p>
+                        <p>
+                            Retrieval rankings shift based on outcome feedback.
+                            High-confidence but low-utility knowledge drops in
+                            ranking automatically. Self-correcting memory.
+                        </p>
                     </a>
                 </div>
 
-                <p class="caption reveal" style="text-align: center; margin-top: 2rem;">
-                    <a href="./demo/" style="font-family: var(--mono); font-size: 0.85rem;">
+                <p
+                    class="caption reveal"
+                    style="text-align: center; margin: 2em auto"
+                >
+                    <a
+                        href="./demo/"
+                        style="font-family: var(--mono); font-size: 0.85rem"
+                    >
                         All 17 interactive demos with real MCP payloads &rarr;
                     </a>
                 </p>
@@ -939,21 +1025,19 @@
                         <tr>
                             <td>store_edge</td>
                             <td>
-                                Create directed relationships between nodes
-                                (16 edge types, default weight 0.3)
+                                Create directed relationships between nodes (16
+                                edge types, default weight 0.3)
                             </td>
                         </tr>
                         <tr>
                             <td>delete_node</td>
-                            <td>
-                                Remove a node and its connected edges
-                            </td>
+                            <td>Remove a node and its connected edges</td>
                         </tr>
                         <tr>
                             <td>manage_edge</td>
                             <td>
-                                Edge lifecycle &mdash; list, update weight/decay,
-                                delete
+                                Edge lifecycle &mdash; list, update
+                                weight/decay, delete
                             </td>
                         </tr>
                         <tr class="highlight">
@@ -991,14 +1075,13 @@
                         </tr>
                         <tr>
                             <td>retrieve_episodic</td>
-                            <td>
-                                Time-range filtered episodic node retrieval
-                            </td>
+                            <td>Time-range filtered episodic node retrieval</td>
                         </tr>
                         <tr>
                             <td>retrieve_procedural</td>
                             <td>
-                                Semantic search scoped to procedural how-to nodes
+                                Semantic search scoped to procedural how-to
+                                nodes
                             </td>
                         </tr>
                         <tr>
@@ -1024,7 +1107,8 @@
                         <tr>
                             <td>learn_detect_novelty</td>
                             <td>
-                                Similarity-based novelty scoring for new concepts
+                                Similarity-based novelty scoring for new
+                                concepts
                             </td>
                         </tr>
                         <tr>
@@ -1050,9 +1134,7 @@
                         </tr>
                         <tr>
                             <td>review_goal</td>
-                            <td>
-                                Coverage-driven decision gate for goals
-                            </td>
+                            <td>Coverage-driven decision gate for goals</td>
                         </tr>
                         <tr>
                             <td>run_consolidation</td>
@@ -1092,8 +1174,8 @@
                         <tr class="highlight">
                             <td>epistemic_frontier</td>
                             <td>
-                                Wilson score intervals &mdash; find where evidence
-                                would most reduce uncertainty
+                                Wilson score intervals &mdash; find where
+                                evidence would most reduce uncertainty
                             </td>
                         </tr>
                         <tr>
@@ -1138,32 +1220,35 @@
                     </p>
                     <ul>
                         <li>
-                            <strong>Claude Code KAIROS</strong> (leaked March 2026)
-                            uses a single memory timescale with flat key-value context.
-                            Graphonomous uses 4 timescales (working &rarr; short &rarr;
-                            long &rarr; consolidated) with a typed knowledge graph.
-                            KAIROS is locked to Claude. Graphonomous is MCP-native
+                            <strong>Claude Code KAIROS</strong> (leaked March
+                            2026) uses a single memory timescale with flat
+                            key-value context. Graphonomous uses 4 timescales
+                            (working &rarr; short &rarr; long &rarr;
+                            consolidated) with a typed knowledge graph. KAIROS
+                            is locked to Claude. Graphonomous is MCP-native
                             &mdash; works with any model.
                         </li>
                         <li>
                             <strong>Mem0</strong> stores facts with smart
-                            updates. It doesn&rsquo;t detect circular dependencies.
+                            updates. It doesn&rsquo;t detect circular
+                            dependencies.
                         </li>
                         <li>
                             <strong>Zep / Graphiti</strong> builds temporal
-                            knowledge graphs. It doesn&rsquo;t route inference based
-                            on topology.
+                            knowledge graphs. It doesn&rsquo;t route inference
+                            based on topology.
                         </li>
                         <li>
                             <strong>Letta (MemGPT)</strong> pages memory in and
-                            out of context. It doesn&rsquo;t know when context is
-                            tangled.
+                            out of context. It doesn&rsquo;t know when context
+                            is tangled.
                         </li>
                         <li>
                             <strong>Hindsight</strong> (arXiv 2512.12818) uses
-                            CARA reflection and multi-signal retrieval. Strong on
-                            LongMemEval but cloud-LLM dependent, no topology
-                            awareness, no GDPR forgetting, and no belief revision.
+                            CARA reflection and multi-signal retrieval. Strong
+                            on LongMemEval but cloud-LLM dependent, no topology
+                            awareness, no GDPR forgetting, and no belief
+                            revision.
                         </li>
                     </ul>
                     <p>
@@ -1195,7 +1280,8 @@
                 <ul class="tech-list reveal">
                     <li>
                         <strong>Stack:</strong> Elixir 1.17+, OTP 27, SQLite via
-                        exqlite, ONNX neural embeddings, BM25 hybrid retrieval, ETS cache
+                        exqlite, ONNX neural embeddings, BM25 hybrid retrieval,
+                        ETS cache
                     </li>
                     <li>
                         <strong>MCP transport:</strong> stdio via vendored
@@ -1212,9 +1298,9 @@
                         bipartition (n = SCC size, exact for n &le; 20)
                     </li>
                     <li>
-                        <strong>Embeddings:</strong> nomic-embed-text-v1.5 (768d)
-                        via ONNX + cross-encoder reranking (ms-marco-MiniLM-L-6-v2),
-                        local inference
+                        <strong>Embeddings:</strong> nomic-embed-text-v1.5
+                        (768d) via ONNX + cross-encoder reranking
+                        (ms-marco-MiniLM-L-6-v2), local inference
                     </li>
                 </ul>
             </div>
@@ -1242,58 +1328,119 @@
                         open research protocols OS-001 through OS-008.
                     </p>
                     <p>
-                        The first empirical evaluation
-                        (<a href="https://opensentience.org/docs/spec/OS-E001-EMPIRICAL-EVALUATION.html">OS-E001</a>)
-                        benchmarks the full engine on 18,165 files across 14 projects:
-                        12,880 edges, 22 SCCs, &kappa;=27, graph beats flat retrieval
-                        (+0.103 recall), 100% test pass rate across all 28 MCP tools.
-                        Raw data and reproduction scripts included.
+                        The first empirical evaluation (<a
+                            href="https://opensentience.org/docs/spec/OS-E001-EMPIRICAL-EVALUATION.html"
+                            >OS-E001</a
+                        >) benchmarks the full engine on 18,165 files across 14
+                        projects: 12,880 edges, 22 SCCs, &kappa;=27, graph beats
+                        flat retrieval (+0.103 recall), 100% test pass rate
+                        across all 28 MCP tools. Raw data and reproduction
+                        scripts included.
                     </p>
                 </div>
 
-                <div class="research-block reveal" style="margin-top: 2rem;">
-                    <h3 style="color: var(--cyan); font-family: var(--mono); font-size: 0.9rem; letter-spacing: 0.05em; margin-bottom: 1rem;">GRAPHMEMBENCH v0.3.1 &mdash; 120/120 SCENARIOS</h3>
+                <div class="research-block reveal" style="margin-top: 2rem">
+                    <h3
+                        style="
+                            color: var(--cyan);
+                            font-family: var(--mono);
+                            font-size: 0.9rem;
+                            letter-spacing: 0.05em;
+                            margin-bottom: 1rem;
+                        "
+                    >
+                        GRAPHMEMBENCH v0.3.1 &mdash; 120/120 SCENARIOS
+                    </h3>
                     <p>
-                        GraphMemBench is a 120-scenario capability validation suite across 15 categories,
-                        testing every continual learning capability from &kappa; activation to GDPR forgetting.
-                        All scenarios pass with 309 tests and 0 failures.
+                        GraphMemBench is a 120-scenario capability validation
+                        suite across 15 categories, testing every continual
+                        learning capability from &kappa; activation to GDPR
+                        forgetting. All scenarios pass with 309 tests and 0
+                        failures.
                     </p>
-                    <p style="font-family: var(--mono); font-size: 0.85rem; line-height: 2; color: var(--dim);">
-                        <strong style="color: var(--text);">Phase 1 (Foundation):</strong>
-                        Kappa Activation &middot; Belief Revision &middot; Conflict-Aware Consolidation &middot; Two-Phase Retrieval &middot; Intentional Forgetting
-                        <br/>
-                        <strong style="color: var(--text);">Phase 2 (Advanced):</strong>
-                        Uncertainty Propagation &middot; Procedural Retrieval &middot; Multi-Agent Prep &middot; Integration Scenarios &middot; Stress
-                        <br/>
-                        <strong style="color: var(--text);">Phase 3 (Causal):</strong>
-                        Causal Metadata &middot; E2E Workflows &middot; Regression Guards &middot; Competitor Adapters &middot; Reporting
+                    <p
+                        style="
+                            font-family: var(--mono);
+                            font-size: 0.85rem;
+                            line-height: 2;
+                            color: var(--dim);
+                        "
+                    >
+                        <strong style="color: var(--text)"
+                            >Phase 1 (Foundation):</strong
+                        >
+                        Kappa Activation &middot; Belief Revision &middot;
+                        Conflict-Aware Consolidation &middot; Two-Phase
+                        Retrieval &middot; Intentional Forgetting
+                        <br />
+                        <strong style="color: var(--text)"
+                            >Phase 2 (Advanced):</strong
+                        >
+                        Uncertainty Propagation &middot; Procedural Retrieval
+                        &middot; Multi-Agent Prep &middot; Integration Scenarios
+                        &middot; Stress
+                        <br />
+                        <strong style="color: var(--text)"
+                            >Phase 3 (Causal):</strong
+                        >
+                        Causal Metadata &middot; E2E Workflows &middot;
+                        Regression Guards &middot; Competitor Adapters &middot;
+                        Reporting
                     </p>
                     <p>
-                        Competitor adapter interface validates against 5 implementations:
-                        Graphonomous (live), Baseline, Mem0, Zep, and Hindsight stubs.
+                        Competitor adapter interface validates against 5
+                        implementations: Graphonomous (live), Baseline, Mem0,
+                        Zep, and Hindsight stubs.
                     </p>
                 </div>
 
-                <div class="research-block reveal" style="margin-top: 2rem;">
-                    <h3 style="color: var(--cyan); font-family: var(--mono); font-size: 0.9rem; letter-spacing: 0.05em; margin-bottom: 1rem;">v0.3 CAPABILITIES</h3>
+                <div class="research-block reveal" style="margin-top: 2rem">
+                    <h3
+                        style="
+                            color: var(--cyan);
+                            font-family: var(--mono);
+                            font-size: 0.9rem;
+                            letter-spacing: 0.05em;
+                            margin-bottom: 1rem;
+                        "
+                    >
+                        v0.3 CAPABILITIES
+                    </h3>
                     <p>
-                        <strong>Belief Revision</strong> &mdash; AGM-style expand/revise/contract with automatic contradiction detection and confidence propagation through dependency graphs.
-                        <br/>
-                        <strong>Intentional Forgetting</strong> &mdash; Soft, hard, and cascade modes plus hybrid LRU+priority-decay policy pruning and GDPR Article 17 erasure with audit trails.
-                        <br/>
-                        <strong>Epistemic Frontier</strong> &mdash; Wilson score intervals identify where one more piece of evidence would most reduce uncertainty. Information gain ranking for research prioritization.
-                        <br/>
-                        <strong>Causal Edge Metadata</strong> &mdash; causal_strength, confounders, and intervention_history on edges, updated automatically during outcome learning.
-                        <br/>
-                        <strong>Hybrid Retrieval</strong> &mdash; nomic-embed-text-v1.5 (768d) + BM25 via SQLite FTS5 + cross-encoder reranking. Estimated +6&ndash;14pp SHR lift over v0.2.
+                        <strong>Belief Revision</strong> &mdash; AGM-style
+                        expand/revise/contract with automatic contradiction
+                        detection and confidence propagation through dependency
+                        graphs.
+                        <br />
+                        <strong>Intentional Forgetting</strong> &mdash; Soft,
+                        hard, and cascade modes plus hybrid LRU+priority-decay
+                        policy pruning and GDPR Article 17 erasure with audit
+                        trails.
+                        <br />
+                        <strong>Epistemic Frontier</strong> &mdash; Wilson score
+                        intervals identify where one more piece of evidence
+                        would most reduce uncertainty. Information gain ranking
+                        for research prioritization.
+                        <br />
+                        <strong>Causal Edge Metadata</strong> &mdash;
+                        causal_strength, confounders, and intervention_history
+                        on edges, updated automatically during outcome learning.
+                        <br />
+                        <strong>Hybrid Retrieval</strong> &mdash;
+                        nomic-embed-text-v1.5 (768d) + BM25 via SQLite FTS5 +
+                        cross-encoder reranking. Estimated +6&ndash;14pp SHR
+                        lift over v0.2.
                     </p>
                 </div>
 
-                <div class="research-block reveal" style="margin-top: 2rem;">
+                <div class="research-block reveal" style="margin-top: 2rem">
                     <p>
                         <a href="https://opensentience.org">OpenSentience</a>
                         &middot;
-                        <a href="https://opensentience.org/docs/spec/OS-E001-EMPIRICAL-EVALUATION.html">OS-E001 Benchmark</a>
+                        <a
+                            href="https://opensentience.org/docs/spec/OS-E001-EMPIRICAL-EVALUATION.html"
+                            >OS-E001 Benchmark</a
+                        >
                         &middot;
                         <a href="https://ampersandboxdesign.com"
                             >Ampersand Box Design</a
@@ -1323,7 +1470,10 @@
                         <a href="https://opensentience.org">OpenSentience</a>
                     </li>
                     <li>
-                        <a href="https://opensentience.org/docs/spec/OS-E001-EMPIRICAL-EVALUATION.html">OS-E001 Benchmark</a>
+                        <a
+                            href="https://opensentience.org/docs/spec/OS-E001-EMPIRICAL-EVALUATION.html"
+                            >OS-E001 Benchmark</a
+                        >
                     </li>
                     <li>
                         <a href="https://ampersandboxdesign.com/protocol.html"

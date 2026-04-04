@@ -698,47 +698,35 @@
             </div>
         </nav>
 
-        <!-- TOPICAL BANNER -->
-        <div style="background: linear-gradient(90deg, rgba(255,107,138,0.12), rgba(74,245,198,0.08)); border-bottom: 1px solid rgba(255,107,138,0.2); padding: 0.65rem 0; text-align: center; margin-top: 3.2rem;">
-            <span style="font-family: var(--mono); font-size: 0.72rem; color: var(--rose); letter-spacing: 0.04em;">
-                Claude Code&rsquo;s KAIROS autonomous agent just leaked &mdash;
-                <span style="color: var(--text);">Graphonomous is the open-source version that&rsquo;s already more capable.</span>
-                <a href="#different" style="color: var(--cyan); margin-left: 0.5rem;">See the comparison &darr;</a>
-            </span>
-        </div>
-
         <!-- HERO -->
-        <section class="hero">
+        <section class="hero" style="margin-top: 3.2rem;">
             <canvas id="graph-canvas"></canvas>
             <div class="container">
                 <h1>Knowledge graphs that<br />know when to think</h1>
                 <p class="subline">
-                    Graphonomous gives AI agents real memory that persists,
-                    learns, and knows when its own knowledge has circular
-                    dependencies. It&rsquo;s an open-source MCP server &mdash;
-                    plug it into Claude, ChatGPT, Cursor, or any model.
+                    The only agent memory that detects circular dependencies
+                    in your knowledge, routes reasoning depth automatically,
+                    revises beliefs formally, and forgets on command.
+                    Open-source MCP server &mdash; works with any model.
                 </p>
                 <div class="cta-row">
+                    <a href="./demo/" class="btn btn-primary"
+                        >See 17 Live Demos</a
+                    >
                     <a
                         href="https://github.com/c-u-l8er/graphonomous"
-                        class="btn btn-primary"
+                        class="btn btn-secondary"
                         >&#9733; Star on GitHub</a
                     >
                     <a
                         href="https://docs.graphonomous.com"
-                        class="btn btn-secondary"
-                        >Read Documentation</a
-                    >
-                    <a href="https://opensentience.org" class="btn btn-ghost"
-                        >Read the Theory</a
-                    >
-                    <a href="./demo/" class="btn btn-secondary"
-                        >Live A/B Demos</a
+                        class="btn btn-ghost"
+                        >Documentation</a
                     >
                 </div>
                 <span class="badge"
                     >v0.3.1 &middot; 28 MCP Tools &middot; 6 Node Types
-                    &middot; κ-Routing &middot; GraphMemBench 120/120
+                    &middot; &kappa;-Routing &middot; GraphMemBench 120/120
                     &middot; Elixir/OTP &middot; Apache 2.0</span
                 >
             </div>
@@ -819,6 +807,65 @@
                     identified the exact edge (Product Quality &rarr; Market
                     Share) where the feedback loop is weakest. No other agent
                     memory system does this.
+                </p>
+            </div>
+        </section>
+
+        <hr class="sep" />
+
+        <!-- UNIQUE CAPABILITIES -->
+        <section id="capabilities">
+            <div class="container">
+                <div class="section-label reveal">Only in Graphonomous</div>
+                <h2 class="reveal">Capabilities no other agent memory <em>has</em></h2>
+                <p class="lead reveal">
+                    Every agent memory system retrieves context. These six capabilities
+                    go beyond retrieval &mdash; each one is demonstrated with real MCP payloads.
+                </p>
+
+                <div class="steps-grid" style="grid-template-columns: repeat(3, 1fr);">
+                    <a href="./demo/kappa-routing/" class="step-card cyan reveal" style="text-decoration: none; color: inherit; transition: border-color 0.25s, transform 0.2s;">
+                        <h3>&kappa;-Routing</h3>
+                        <p>Detects circular dependencies via Tarjan&rsquo;s algorithm.
+                           Routes &kappa;=0 regions to fast retrieval, &kappa;&gt;0 to
+                           deliberation with computed budgets.</p>
+                    </a>
+                    <a href="./demo/belief-revision/" class="step-card blue reveal" style="text-decoration: none; color: inherit; transition: border-color 0.25s, transform 0.2s;">
+                        <h3>Belief Revision</h3>
+                        <p>AGM-rational expand/revise/contract. Detects contradictions
+                           automatically and propagates confidence changes through
+                           dependency chains.</p>
+                    </a>
+                    <a href="./demo/intentional-forgetting/" class="step-card rose reveal" style="text-decoration: none; color: inherit; transition: border-color 0.25s, transform 0.2s;">
+                        <h3>Intentional Forgetting</h3>
+                        <p>Soft hide, cascade delete, policy-based pruning, and
+                           GDPR Article 17 permanent erasure with audit trail.
+                           Three forgetting modes in one tool surface.</p>
+                    </a>
+                    <a href="./demo/epistemic-frontier/" class="step-card cyan reveal" style="text-decoration: none; color: inherit; transition: border-color 0.25s, transform 0.2s;">
+                        <h3>Epistemic Frontier</h3>
+                        <p>Wilson score intervals reveal where one more piece of evidence
+                           would most reduce uncertainty. The system directs its own
+                           investigation priorities.</p>
+                    </a>
+                    <a href="./demo/attention-engine/" class="step-card blue reveal" style="text-decoration: none; color: inherit; transition: border-color 0.25s, transform 0.2s;">
+                        <h3>Attention Engine</h3>
+                        <p>Proactive goal prioritization combining urgency, coverage gaps,
+                           and topology-aware reasoning depth. Survey &rarr; triage &rarr;
+                           dispatch with autonomy controls.</p>
+                    </a>
+                    <a href="./demo/qvalue-retrieval/" class="step-card rose reveal" style="text-decoration: none; color: inherit; transition: border-color 0.25s, transform 0.2s;">
+                        <h3>Q-Value Retrieval</h3>
+                        <p>Retrieval rankings shift based on outcome feedback. High-confidence
+                           but low-utility knowledge drops in ranking automatically.
+                           Self-correcting memory.</p>
+                    </a>
+                </div>
+
+                <p class="caption reveal" style="text-align: center; margin-top: 2rem;">
+                    <a href="./demo/" style="font-family: var(--mono); font-size: 0.85rem;">
+                        All 17 interactive demos with real MCP payloads &rarr;
+                    </a>
                 </p>
             </div>
         </section>

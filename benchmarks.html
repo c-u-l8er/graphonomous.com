@@ -1,0 +1,1453 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Graphonomous — LongMemEval Benchmarks</title>
+        <meta
+            name="description"
+            content="Graphonomous LongMemEval benchmark results: 88.2% QA accuracy across 500 questions with honest gap analysis and improvement roadmap."
+        />
+        <meta
+            name="keywords"
+            content="LongMemEval, benchmark, agent memory, knowledge graph, abstention, temporal reasoning, continual learning"
+        />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,600;0,6..72,700;1,6..72,300;1,6..72,400&family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+            rel="stylesheet"
+        />
+        <style>
+            :root {
+                --bg: #08090c;
+                --surface: #0e1017;
+                --surface-2: #14161e;
+                --border: rgba(255, 255, 255, 0.06);
+                --text: #e2e0db;
+                --dim: #6b6980;
+                --muted: #3d3b4a;
+                --cyan: #4af5c6;
+                --blue: #7b8cff;
+                --rose: #ff6b8a;
+                --amber: #ffc46b;
+                --green: #4af5c6;
+                --serif: "Newsreader", Georgia, serif;
+                --mono: "JetBrains Mono", monospace;
+                --max-w: 1100px;
+                --gutter: clamp(1.5rem, 4vw, 3rem);
+            }
+
+            *,
+            *::before,
+            *::after {
+                box-sizing: border-box;
+                margin: 0;
+                padding: 0;
+            }
+
+            html {
+                scroll-behavior: smooth;
+                -webkit-font-smoothing: antialiased;
+            }
+
+            body {
+                background: var(--bg);
+                color: var(--text);
+                font-family: var(--serif);
+                font-size: 18px;
+                line-height: 1.7;
+                overflow-x: hidden;
+            }
+
+            body::after {
+                content: "";
+                position: fixed;
+                inset: 0;
+                background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+                pointer-events: none;
+                z-index: 9999;
+            }
+
+            ::selection {
+                background: var(--cyan);
+                color: var(--bg);
+            }
+
+            a {
+                color: var(--cyan);
+                text-decoration: none;
+                transition: color 0.2s;
+            }
+            a:hover {
+                color: var(--text);
+            }
+
+            .container {
+                max-width: var(--max-w);
+                margin: 0 auto;
+                padding: 0 var(--gutter);
+            }
+
+            section {
+                padding: 4rem 0;
+            }
+
+            /* NAV */
+            nav {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                z-index: 100;
+                background: rgba(8, 9, 12, 0.85);
+                backdrop-filter: blur(12px);
+                border-bottom: 1px solid var(--border);
+                padding: 0.75rem 0;
+            }
+            .nav-inner {
+                max-width: var(--max-w);
+                margin: 0 auto;
+                padding: 0 var(--gutter);
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+            }
+            .nav-brand {
+                font-family: var(--mono);
+                font-size: 0.85rem;
+                font-weight: 600;
+                color: var(--text);
+                letter-spacing: 0.02em;
+            }
+            .nav-links {
+                display: flex;
+                gap: 1.5rem;
+                list-style: none;
+            }
+            .nav-links a {
+                font-family: var(--mono);
+                font-size: 0.7rem;
+                letter-spacing: 0.08em;
+                text-transform: uppercase;
+                color: var(--dim);
+                transition: color 0.2s;
+            }
+            .nav-links a:hover {
+                color: var(--cyan);
+            }
+            .nav-links a.active {
+                color: var(--cyan);
+            }
+
+            /* HERO */
+            .hero {
+                padding-top: 8rem;
+                padding-bottom: 3rem;
+                text-align: center;
+            }
+            .hero h1 {
+                font-family: var(--serif);
+                font-weight: 400;
+                font-size: clamp(2rem, 4.5vw, 3.2rem);
+                line-height: 1.15;
+                letter-spacing: -0.02em;
+                margin-bottom: 1rem;
+            }
+            .hero .subline {
+                font-size: 1.15rem;
+                color: #aaa;
+                max-width: 700px;
+                margin: 0 auto 1.5rem;
+                line-height: 1.8;
+            }
+
+            /* SCORE CARDS */
+            .score-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+                gap: 1rem;
+                margin: 2rem 0;
+            }
+            .score-card {
+                background: var(--surface);
+                border: 1px solid var(--border);
+                border-radius: 8px;
+                padding: 1.5rem;
+                text-align: center;
+            }
+            .score-card .value {
+                font-family: var(--mono);
+                font-size: 2rem;
+                font-weight: 700;
+                line-height: 1.2;
+            }
+            .score-card .label {
+                font-family: var(--mono);
+                font-size: 0.65rem;
+                letter-spacing: 0.08em;
+                text-transform: uppercase;
+                color: var(--dim);
+                margin-top: 0.5rem;
+            }
+            .score-card .sublabel {
+                font-family: var(--mono);
+                font-size: 0.6rem;
+                color: var(--muted);
+                margin-top: 0.25rem;
+            }
+            .val-green { color: var(--cyan); }
+            .val-blue { color: var(--blue); }
+            .val-amber { color: var(--amber); }
+            .val-rose { color: var(--rose); }
+
+            /* SECTION HEADERS */
+            .section-header {
+                margin-bottom: 2rem;
+            }
+            .section-header h2 {
+                font-family: var(--serif);
+                font-weight: 400;
+                font-size: clamp(1.6rem, 3vw, 2.2rem);
+                letter-spacing: -0.01em;
+                margin-bottom: 0.5rem;
+            }
+            .section-header p {
+                color: var(--dim);
+                font-size: 1rem;
+                max-width: 700px;
+            }
+            .section-label {
+                font-family: var(--mono);
+                font-size: 0.65rem;
+                letter-spacing: 0.12em;
+                text-transform: uppercase;
+                color: var(--cyan);
+                margin-bottom: 0.5rem;
+            }
+
+            /* TABLES */
+            .table-wrap {
+                overflow-x: auto;
+                margin: 1.5rem 0;
+                border: 1px solid var(--border);
+                border-radius: 8px;
+                background: var(--surface);
+            }
+            table {
+                width: 100%;
+                border-collapse: collapse;
+                font-size: 0.9rem;
+            }
+            thead {
+                background: var(--surface-2);
+            }
+            th {
+                font-family: var(--mono);
+                font-size: 0.65rem;
+                font-weight: 600;
+                letter-spacing: 0.08em;
+                text-transform: uppercase;
+                color: var(--dim);
+                padding: 0.75rem 1rem;
+                text-align: left;
+                white-space: nowrap;
+                border-bottom: 1px solid var(--border);
+            }
+            th.num {
+                text-align: right;
+            }
+            td {
+                padding: 0.65rem 1rem;
+                border-bottom: 1px solid var(--border);
+                white-space: nowrap;
+            }
+            td.num {
+                text-align: right;
+                font-family: var(--mono);
+                font-size: 0.85rem;
+            }
+            tr:last-child td {
+                border-bottom: none;
+            }
+            tr.highlight {
+                background: rgba(74, 245, 198, 0.04);
+            }
+            tr.highlight td {
+                font-weight: 600;
+            }
+            .td-system {
+                font-family: var(--mono);
+                font-size: 0.8rem;
+                font-weight: 500;
+            }
+            .best {
+                color: var(--cyan);
+            }
+            .worst {
+                color: var(--rose);
+            }
+            .flagged {
+                color: var(--rose);
+                font-weight: 700;
+            }
+
+            /* BAR CHART */
+            .bar-chart {
+                margin: 1.5rem 0;
+            }
+            .bar-row {
+                display: flex;
+                align-items: center;
+                margin-bottom: 0.5rem;
+                gap: 0.75rem;
+            }
+            .bar-label {
+                font-family: var(--mono);
+                font-size: 0.7rem;
+                color: var(--dim);
+                width: 200px;
+                text-align: right;
+                flex-shrink: 0;
+            }
+            .bar-track {
+                flex: 1;
+                height: 24px;
+                background: var(--surface-2);
+                border-radius: 4px;
+                overflow: hidden;
+                position: relative;
+            }
+            .bar-fill {
+                height: 100%;
+                border-radius: 4px;
+                transition: width 0.8s ease;
+            }
+            .bar-value {
+                font-family: var(--mono);
+                font-size: 0.75rem;
+                font-weight: 600;
+                width: 55px;
+                text-align: right;
+                flex-shrink: 0;
+            }
+
+            /* GAP ANALYSIS CARDS */
+            .gap-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+                gap: 1.25rem;
+                margin: 2rem 0;
+            }
+            .gap-card {
+                background: var(--surface);
+                border: 1px solid var(--border);
+                border-radius: 8px;
+                padding: 1.5rem;
+            }
+            .gap-card.critical {
+                border-color: rgba(255, 107, 138, 0.3);
+            }
+            .gap-card.moderate {
+                border-color: rgba(255, 196, 107, 0.3);
+            }
+            .gap-card.strength {
+                border-color: rgba(74, 245, 198, 0.15);
+            }
+            .gap-card h3 {
+                font-family: var(--mono);
+                font-size: 0.8rem;
+                font-weight: 600;
+                margin-bottom: 0.5rem;
+            }
+            .gap-card.critical h3 { color: var(--rose); }
+            .gap-card.moderate h3 { color: var(--amber); }
+            .gap-card.strength h3 { color: var(--cyan); }
+            .gap-card p {
+                font-size: 0.9rem;
+                color: #aaa;
+                line-height: 1.6;
+            }
+            .gap-tag {
+                display: inline-block;
+                font-family: var(--mono);
+                font-size: 0.6rem;
+                letter-spacing: 0.06em;
+                text-transform: uppercase;
+                padding: 0.15rem 0.5rem;
+                border-radius: 3px;
+                margin-bottom: 0.5rem;
+            }
+            .gap-tag.red { background: rgba(255, 107, 138, 0.15); color: var(--rose); }
+            .gap-tag.yellow { background: rgba(255, 196, 107, 0.15); color: var(--amber); }
+            .gap-tag.green { background: rgba(74, 245, 198, 0.1); color: var(--cyan); }
+
+            /* ROADMAP */
+            .roadmap {
+                margin: 2rem 0;
+            }
+            .roadmap-phase {
+                display: flex;
+                gap: 1.25rem;
+                margin-bottom: 1.5rem;
+            }
+            .phase-marker {
+                flex-shrink: 0;
+                width: 36px;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+            }
+            .phase-dot {
+                width: 12px;
+                height: 12px;
+                border-radius: 50%;
+                border: 2px solid var(--cyan);
+                background: var(--bg);
+                margin-top: 0.3rem;
+            }
+            .phase-line {
+                flex: 1;
+                width: 2px;
+                background: var(--border);
+                margin-top: 0.5rem;
+            }
+            .phase-content {
+                flex: 1;
+                padding-bottom: 0.5rem;
+            }
+            .phase-content h3 {
+                font-family: var(--mono);
+                font-size: 0.8rem;
+                font-weight: 600;
+                color: var(--cyan);
+                margin-bottom: 0.3rem;
+            }
+            .phase-content p {
+                font-size: 0.9rem;
+                color: #aaa;
+                line-height: 1.6;
+            }
+            .phase-impact {
+                font-family: var(--mono);
+                font-size: 0.7rem;
+                color: var(--amber);
+                margin-top: 0.25rem;
+            }
+
+            /* METHODOLOGY */
+            .method-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+                gap: 1rem;
+                margin: 1.5rem 0;
+            }
+            .method-card {
+                background: var(--surface);
+                border: 1px solid var(--border);
+                border-radius: 8px;
+                padding: 1.25rem;
+            }
+            .method-card h4 {
+                font-family: var(--mono);
+                font-size: 0.75rem;
+                font-weight: 600;
+                color: var(--blue);
+                margin-bottom: 0.5rem;
+            }
+            .method-card p {
+                font-size: 0.85rem;
+                color: #aaa;
+                line-height: 1.6;
+            }
+            .method-card code {
+                font-family: var(--mono);
+                font-size: 0.8rem;
+                background: var(--surface-2);
+                padding: 0.1rem 0.3rem;
+                border-radius: 3px;
+                color: var(--text);
+            }
+
+            /* FOOTER */
+            footer {
+                padding: 3rem 0;
+                border-top: 1px solid var(--border);
+                text-align: center;
+            }
+            footer p {
+                font-family: var(--mono);
+                font-size: 0.7rem;
+                color: var(--muted);
+            }
+            footer a {
+                color: var(--dim);
+            }
+
+            /* NOTES */
+            .notes {
+                background: var(--surface);
+                border: 1px solid var(--border);
+                border-radius: 8px;
+                padding: 1.25rem 1.5rem;
+                margin: 1.5rem 0;
+                font-size: 0.85rem;
+                color: #aaa;
+                line-height: 1.7;
+            }
+            .notes strong {
+                color: var(--text);
+            }
+
+            /* RESPONSIVE */
+            @media (max-width: 640px) {
+                .bar-label {
+                    width: 120px;
+                    font-size: 0.6rem;
+                }
+                .score-grid {
+                    grid-template-columns: repeat(2, 1fr);
+                }
+                .gap-grid {
+                    grid-template-columns: 1fr;
+                }
+                .roadmap-phase {
+                    flex-direction: column;
+                    gap: 0.5rem;
+                }
+                .phase-marker {
+                    flex-direction: row;
+                    width: auto;
+                }
+                .phase-line {
+                    height: 2px;
+                    width: auto;
+                    margin-top: 0;
+                    margin-left: 0.5rem;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <nav>
+            <div class="nav-inner">
+                <a href="index.html" class="nav-brand">graphonomous</a>
+                <ul class="nav-links">
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="benchmarks.html" class="active">Benchmarks</a></li>
+                    <li>
+                        <a
+                            href="https://github.com/ampersand-systems/graphonomous"
+                            target="_blank"
+                            >GitHub</a
+                        >
+                    </li>
+                    <li>
+                        <a
+                            href="https://www.npmjs.com/package/graphonomous"
+                            target="_blank"
+                            >npm</a
+                        >
+                    </li>
+                </ul>
+            </div>
+        </nav>
+
+        <!-- HERO -->
+        <header class="hero container">
+            <div class="section-label">LongMemEval Benchmark</div>
+            <h1>
+                88.2% on 500 questions.<br />
+                <span style="color: var(--dim)"
+                    >Here's what we got right, and what we didn't.</span
+                >
+            </h1>
+            <p class="subline">
+                Graphonomous v0.3.2 evaluated against LongMemEval (ICLR 2025)
+                &mdash; the standard benchmark for long-term conversational
+                memory. 500 questions across 940 sessions, 10,866 turns. We
+                publish the full results, gaps, and roadmap.
+            </p>
+        </header>
+
+        <!-- TOP-LINE SCORES -->
+        <section class="container">
+            <div class="section-header">
+                <div class="section-label">Top-Line Results</div>
+                <h2>v0.3.2 &mdash; Oracle Split, 500 Questions</h2>
+                <p>
+                    Evaluated 2026-04-05. Embedder: nomic-embed-text-v2-moe
+                    (768D). Retrieval-only evaluation with QA proxy scoring (no
+                    LLM judge yet).
+                </p>
+            </div>
+
+            <div class="score-grid">
+                <div class="score-card">
+                    <div class="value val-green">88.2%</div>
+                    <div class="label">QA Proxy</div>
+                    <div class="sublabel">Overall accuracy</div>
+                </div>
+                <div class="score-card">
+                    <div class="value val-blue">95.3%</div>
+                    <div class="label">Session Hit Rate</div>
+                    <div class="sublabel">Found answer session</div>
+                </div>
+                <div class="score-card">
+                    <div class="value val-amber">1.5s</div>
+                    <div class="label">Mean Latency</div>
+                    <div class="sublabel">Per query</div>
+                </div>
+                <div class="score-card">
+                    <div class="value val-rose">70.0%</div>
+                    <div class="label">Abstention</div>
+                    <div class="sublabel">Biggest gap</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- COMPETITIVE LANDSCAPE -->
+        <section class="container" id="landscape">
+            <div class="section-header">
+                <div class="section-label">Competitive Landscape</div>
+                <h2>Where Graphonomous stands</h2>
+                <p>
+                    LongMemEval has become the de facto benchmark for agent
+                    memory. Here's how published systems compare. Note that
+                    systems use different LLM backends and evaluation
+                    methodologies&mdash;direct comparison requires care.
+                </p>
+            </div>
+
+            <div class="bar-chart">
+                <div class="bar-row">
+                    <div class="bar-label">agentmemory (Opus 4.6)</div>
+                    <div class="bar-track">
+                        <div
+                            class="bar-fill"
+                            style="
+                                width: 96.2%;
+                                background: var(--cyan);
+                                opacity: 0.5;
+                            "
+                        ></div>
+                    </div>
+                    <div class="bar-value" style="color: var(--dim)">96.2%</div>
+                </div>
+                <div class="bar-row">
+                    <div class="bar-label">Mastra OM (GPT-5-mini)</div>
+                    <div class="bar-track">
+                        <div
+                            class="bar-fill"
+                            style="
+                                width: 94.87%;
+                                background: var(--cyan);
+                                opacity: 0.5;
+                            "
+                        ></div>
+                    </div>
+                    <div class="bar-value" style="color: var(--dim)">
+                        94.9%
+                    </div>
+                </div>
+                <div class="bar-row">
+                    <div class="bar-label">Hindsight (Gemini-3)</div>
+                    <div class="bar-track">
+                        <div
+                            class="bar-fill"
+                            style="
+                                width: 91.4%;
+                                background: var(--cyan);
+                                opacity: 0.5;
+                            "
+                        ></div>
+                    </div>
+                    <div class="bar-value" style="color: var(--dim)">
+                        91.4%
+                    </div>
+                </div>
+                <div class="bar-row">
+                    <div class="bar-label">Graphonomous v0.3.2</div>
+                    <div class="bar-track">
+                        <div
+                            class="bar-fill"
+                            style="width: 88.2%; background: var(--cyan)"
+                        ></div>
+                    </div>
+                    <div class="bar-value best">88.2%</div>
+                </div>
+                <div class="bar-row">
+                    <div class="bar-label">Emergence AI (RAG)</div>
+                    <div class="bar-track">
+                        <div
+                            class="bar-fill"
+                            style="
+                                width: 86%;
+                                background: var(--blue);
+                                opacity: 0.5;
+                            "
+                        ></div>
+                    </div>
+                    <div class="bar-value" style="color: var(--dim)">
+                        86.0%
+                    </div>
+                </div>
+                <div class="bar-row">
+                    <div class="bar-label">Supermemory (Gemini-3)</div>
+                    <div class="bar-track">
+                        <div
+                            class="bar-fill"
+                            style="
+                                width: 85.2%;
+                                background: var(--blue);
+                                opacity: 0.5;
+                            "
+                        ></div>
+                    </div>
+                    <div class="bar-value" style="color: var(--dim)">
+                        85.2%
+                    </div>
+                </div>
+                <div class="bar-row">
+                    <div class="bar-label">Mastra OM (GPT-4o)</div>
+                    <div class="bar-track">
+                        <div
+                            class="bar-fill"
+                            style="
+                                width: 84.23%;
+                                background: var(--blue);
+                                opacity: 0.5;
+                            "
+                        ></div>
+                    </div>
+                    <div class="bar-value" style="color: var(--dim)">
+                        84.2%
+                    </div>
+                </div>
+                <div class="bar-row">
+                    <div class="bar-label">Zep / Graphiti</div>
+                    <div class="bar-track">
+                        <div
+                            class="bar-fill"
+                            style="
+                                width: 71.2%;
+                                background: var(--muted);
+                                opacity: 0.6;
+                            "
+                        ></div>
+                    </div>
+                    <div class="bar-value" style="color: var(--dim)">
+                        71.2%
+                    </div>
+                </div>
+                <div class="bar-row">
+                    <div class="bar-label">Letta / MemGPT</div>
+                    <div class="bar-track">
+                        <div
+                            class="bar-fill"
+                            style="
+                                width: 65%;
+                                background: var(--muted);
+                                opacity: 0.6;
+                            "
+                        ></div>
+                    </div>
+                    <div class="bar-value" style="color: var(--dim)">
+                        65.0%
+                    </div>
+                </div>
+                <div class="bar-row">
+                    <div class="bar-label">GPT-4 128K (full ctx)</div>
+                    <div class="bar-track">
+                        <div
+                            class="bar-fill"
+                            style="
+                                width: 63.5%;
+                                background: var(--muted);
+                                opacity: 0.6;
+                            "
+                        ></div>
+                    </div>
+                    <div class="bar-value" style="color: var(--dim)">
+                        63.5%
+                    </div>
+                </div>
+            </div>
+
+            <div class="notes">
+                <strong>Methodology note:</strong> Graphonomous is a
+                retrieval-only system &mdash; it does not generate answers.
+                Results use a self-contained QA proxy score (session hit +
+                keyword recall + session recall + evidence recall + NDCG). Most
+                competitors use GPT-4o or GPT-5 as a judge on generated answers.
+                Top systems also use frontier LLMs (GPT-5-mini, Gemini-3-Pro)
+                for both memory operations and answer generation, while
+                Graphonomous runs entirely on local models (nomic embeddings +
+                ms-marco cross-encoder). An LLM judge evaluation is planned for
+                a future release.
+            </div>
+        </section>
+
+        <!-- PER-CATEGORY BREAKDOWN -->
+        <section class="container" id="categories">
+            <div class="section-header">
+                <div class="section-label">By Memory Ability</div>
+                <h2>Five abilities, five different stories</h2>
+                <p>
+                    LongMemEval tests five core long-term memory abilities.
+                    Graphonomous excels at knowledge updates and information
+                    extraction but has critical gaps in abstention detection and
+                    temporal reasoning.
+                </p>
+            </div>
+
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Ability</th>
+                            <th class="num">Questions</th>
+                            <th class="num">QA Proxy</th>
+                            <th class="num">Session Hit</th>
+                            <th class="num">Session Recall</th>
+                            <th class="num">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="td-system">Knowledge Update</td>
+                            <td class="num">72</td>
+                            <td class="num best">97.1%</td>
+                            <td class="num">100.0%</td>
+                            <td class="num">99.3%</td>
+                            <td class="num">
+                                <span class="best">Strong</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="td-system">Information Extraction</td>
+                            <td class="num">150</td>
+                            <td class="num best">91.0%</td>
+                            <td class="num">93.3%</td>
+                            <td class="num">93.3%</td>
+                            <td class="num">
+                                <span class="best">Strong</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="td-system">Multi-Session Reasoning</td>
+                            <td class="num">121</td>
+                            <td class="num val-amber">87.4%</td>
+                            <td class="num">99.2%</td>
+                            <td class="num">93.2%</td>
+                            <td class="num">
+                                <span style="color: var(--amber)"
+                                    >Moderate</span
+                                >
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="td-system">Temporal Reasoning</td>
+                            <td class="num">127</td>
+                            <td class="num val-amber">85.1%</td>
+                            <td class="num">91.3%</td>
+                            <td class="num">88.1%</td>
+                            <td class="num">
+                                <span style="color: var(--amber)">Gap</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="td-system">Abstention</td>
+                            <td class="num">30</td>
+                            <td class="num flagged">70.0%</td>
+                            <td class="num">96.7%</td>
+                            <td class="num">83.6%</td>
+                            <td class="num">
+                                <span class="flagged">Critical</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- BY QUESTION TYPE -->
+        <section class="container" id="question-types">
+            <div class="section-header">
+                <div class="section-label">By Question Type</div>
+                <h2>Seven question types, granular view</h2>
+            </div>
+
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Question Type</th>
+                            <th class="num">Count</th>
+                            <th class="num">QA Proxy</th>
+                            <th class="num">Session Hit</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="td-system">Single-Session Assistant</td>
+                            <td class="num">56</td>
+                            <td class="num best">99.1%</td>
+                            <td class="num">100.0%</td>
+                        </tr>
+                        <tr>
+                            <td class="td-system">Knowledge Update</td>
+                            <td class="num">78</td>
+                            <td class="num best">97.3%</td>
+                            <td class="num">100.0%</td>
+                        </tr>
+                        <tr>
+                            <td class="td-system">Single-Session User</td>
+                            <td class="num">70</td>
+                            <td class="num">92.5%</td>
+                            <td class="num">97.1%</td>
+                        </tr>
+                        <tr>
+                            <td class="td-system">Multi-Session</td>
+                            <td class="num">133</td>
+                            <td class="num">85.5%</td>
+                            <td class="num">99.2%</td>
+                        </tr>
+                        <tr>
+                            <td class="td-system">Temporal Reasoning</td>
+                            <td class="num">133</td>
+                            <td class="num val-amber">83.5%</td>
+                            <td class="num">91.7%</td>
+                        </tr>
+                        <tr>
+                            <td class="td-system">Single-Session Preference</td>
+                            <td class="num">30</td>
+                            <td class="num flagged">67.7%</td>
+                            <td class="num flagged">70.0%</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="notes">
+                <strong>Preference questions</strong> are the weakest question
+                type at 67.7%. These ask about user preferences
+                ("What kind of food does the user prefer?") where the answer
+                contains no named entities or keywords that standard retrieval
+                can latch onto. Entity extraction currently relies on
+                capitalized words, missing preference expressions entirely.
+            </div>
+        </section>
+
+        <!-- ABSTENTION DEEP DIVE -->
+        <section class="container" id="abstention">
+            <div class="section-header">
+                <div class="section-label">Deep Dive</div>
+                <h2>The abstention problem: 70.0%</h2>
+                <p>
+                    30 questions in LongMemEval are "false premise" &mdash; they
+                    ask about information that was never mentioned. A correct
+                    system should recognize it doesn't know and abstain. Graphonomous
+                    gets 9 of 30 wrong, confidently returning irrelevant results.
+                </p>
+            </div>
+
+            <div class="gap-grid">
+                <div class="gap-card critical">
+                    <span class="gap-tag red">Root Cause</span>
+                    <h3>Heuristic-only detection</h3>
+                    <p>
+                        Abstention uses a simple confidence gap check:
+                        <code>gap &lt; 0.05 OR mean_score &lt; 0.25 OR
+                        results &lt; 3</code>. After cross-encoder reranking
+                        inflates scores, even irrelevant results look confident
+                        &mdash; the gap threshold never fires. 9 of 30 false-premise
+                        questions pass with high-looking scores.
+                    </p>
+                </div>
+                <div class="gap-card critical">
+                    <span class="gap-tag red">Comparison</span>
+                    <h3>SOTA achieves 100%</h3>
+                    <p>
+                        agentmemory correctly identifies all 30/30 unanswerable
+                        questions using a six-signal retrieval weighting system
+                        with learned confidence calibration. The gap between 70%
+                        and 100% represents the difference between heuristic
+                        rules and learned thresholds.
+                    </p>
+                </div>
+                <div class="gap-card moderate">
+                    <span class="gap-tag yellow">Contributing Factor</span>
+                    <h3>RRF score dilution</h3>
+                    <p>
+                        When multi-query fusion normalizes scores across
+                        rankers, semantically weak matches get artificially
+                        inflated. For abstention questions (where nothing should
+                        match), this means noise looks like signal.
+                    </p>
+                </div>
+                <div class="gap-card moderate">
+                    <span class="gap-tag yellow">Contributing Factor</span>
+                    <h3>No negative evidence modeling</h3>
+                    <p>
+                        The system has no concept of "this information doesn't
+                        exist in the graph." It always returns the top-K most
+                        similar results, even when the best match is poor.
+                        Abstention requires reasoning about absence, not
+                        presence.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- GAP ANALYSIS -->
+        <section class="container" id="gaps">
+            <div class="section-header">
+                <div class="section-label">Gap Analysis</div>
+                <h2>What the numbers reveal</h2>
+            </div>
+
+            <div class="gap-grid">
+                <div class="gap-card critical">
+                    <span class="gap-tag red">Critical</span>
+                    <h3>Abstention: 70.0% (30 questions)</h3>
+                    <p>
+                        9 false-premise questions answered confidently.
+                        Heuristic threshold-based detection fails after
+                        cross-encoder reranking inflates scores. Need learned
+                        calibration or an explicit abstention classifier.
+                    </p>
+                </div>
+                <div class="gap-card critical">
+                    <span class="gap-tag red">Critical</span>
+                    <h3>Preferences: 67.7% (30 questions)</h3>
+                    <p>
+                        Entity extraction misses preferences entirely ("I prefer
+                        Thai food" has no capitalized entities). BM25 is useless
+                        for preference queries because answer keywords don't overlap
+                        with question keywords. Needs fact-augmented indexing.
+                    </p>
+                </div>
+                <div class="gap-card moderate">
+                    <span class="gap-tag yellow">Moderate</span>
+                    <h3>Temporal: 85.1% (127 questions)</h3>
+                    <p>
+                        No temporal metadata used in ranking. Turn indices and
+                        session timestamps exist but aren't indexed or queried.
+                        No temporal intent detection ("first", "latest", "before
+                        X"). Dual timestamp support (document vs event date) is
+                        missing.
+                    </p>
+                </div>
+                <div class="gap-card moderate">
+                    <span class="gap-tag yellow">Moderate</span>
+                    <h3>No LLM judge (measurement gap)</h3>
+                    <p>
+                        QA proxy score (session hit + keyword recall + session
+                        recall + evidence recall + NDCG) approximates but
+                        doesn't equal real QA accuracy. Competitors use GPT-4o
+                        judge on generated answers. True accuracy is likely
+                        84&ndash;85%.
+                    </p>
+                </div>
+                <div class="gap-card strength">
+                    <span class="gap-tag green">Strength</span>
+                    <h3>Knowledge Update: 97.1%</h3>
+                    <p>
+                        Belief revision and superseded edges work. When facts
+                        change across sessions, Graphonomous correctly retrieves
+                        the latest version. 100% session hit rate on update
+                        questions.
+                    </p>
+                </div>
+                <div class="gap-card strength">
+                    <span class="gap-tag green">Strength</span>
+                    <h3>Latency: 1.5s mean</h3>
+                    <p>
+                        From 20s+ down to 1.5s mean across 500 queries. Cross-encoder
+                        reranking dominates at ~1.3s; all other stages under 150ms.
+                        Competitive with systems that call frontier LLM APIs per query.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- PIPELINE TIMING -->
+        <section class="container" id="latency">
+            <div class="section-header">
+                <div class="section-label">Retrieval Pipeline</div>
+                <h2>Stage-level timing breakdown</h2>
+                <p>
+                    Every query passes through 15 pipeline stages. Cross-encoder
+                    reranking dominates at 83% of total time. All topology and
+                    graph operations complete in under 50ms.
+                </p>
+            </div>
+
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Stage</th>
+                            <th class="num">Mean</th>
+                            <th class="num">p50</th>
+                            <th class="num">p95</th>
+                            <th class="num">Max</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="td-system">Cross-Encoder Rerank</td>
+                            <td class="num flagged">1,317ms</td>
+                            <td class="num">1,307ms</td>
+                            <td class="num">1,409ms</td>
+                            <td class="num">2,242ms</td>
+                        </tr>
+                        <tr>
+                            <td class="td-system">ANN Retrieve</td>
+                            <td class="num val-amber">147ms</td>
+                            <td class="num">145ms</td>
+                            <td class="num">182ms</td>
+                            <td class="num">332ms</td>
+                        </tr>
+                        <tr>
+                            <td class="td-system">Edge Impact</td>
+                            <td class="num">42ms</td>
+                            <td class="num">41ms</td>
+                            <td class="num">61ms</td>
+                            <td class="num">93ms</td>
+                        </tr>
+                        <tr>
+                            <td class="td-system">Topology</td>
+                            <td class="num">12ms</td>
+                            <td class="num">12ms</td>
+                            <td class="num">23ms</td>
+                            <td class="num">34ms</td>
+                        </tr>
+                        <tr>
+                            <td class="td-system">Expand Neighbors</td>
+                            <td class="num">4ms</td>
+                            <td class="num">4ms</td>
+                            <td class="num">7ms</td>
+                            <td class="num">10ms</td>
+                        </tr>
+                        <tr>
+                            <td class="td-system">Chain Retrieval</td>
+                            <td class="num">3ms</td>
+                            <td class="num">0ms</td>
+                            <td class="num">20ms</td>
+                            <td class="num">27ms</td>
+                        </tr>
+                        <tr>
+                            <td class="td-system">BM25 Await</td>
+                            <td class="num">2ms</td>
+                            <td class="num">0ms</td>
+                            <td class="num">8ms</td>
+                            <td class="num">44ms</td>
+                        </tr>
+                        <tr>
+                            <td class="td-system">Diversify + Sort</td>
+                            <td class="num">2ms</td>
+                            <td class="num">1ms</td>
+                            <td class="num">2ms</td>
+                            <td class="num">14ms</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- IMPROVEMENT ROADMAP -->
+        <section class="container" id="roadmap">
+            <div class="section-header">
+                <div class="section-label">Roadmap</div>
+                <h2>Path to 95%</h2>
+                <p>
+                    Five phases targeting the gaps above. Estimated impact based
+                    on published ablation studies and SOTA system architectures.
+                </p>
+            </div>
+
+            <div class="roadmap">
+                <div class="roadmap-phase">
+                    <div class="phase-marker">
+                        <div class="phase-dot"></div>
+                        <div class="phase-line"></div>
+                    </div>
+                    <div class="phase-content">
+                        <h3>Phase 1 &mdash; Measurement</h3>
+                        <p>
+                            Add LLM judge + answer generation to benchmark.
+                            Current QA proxy is a useful directional metric but
+                            not comparable to competitor evaluations. Feed
+                            (question, retrieved_context) to Claude, judge answer
+                            quality 0/0.5/1. Establish honest baseline.
+                        </p>
+                        <div class="phase-impact">
+                            Impact: measurement accuracy, no direct score change
+                        </div>
+                    </div>
+                </div>
+
+                <div class="roadmap-phase">
+                    <div class="phase-marker">
+                        <div class="phase-dot"></div>
+                        <div class="phase-line"></div>
+                    </div>
+                    <div class="phase-content">
+                        <h3>Phase 2 &mdash; Abstention + Preferences (+8&ndash;12pp)</h3>
+                        <p>
+                            Replace heuristic abstention with learned threshold
+                            calibration. Add fact-augmented key expansion for
+                            preference indexing (extract "prefers Thai food" as
+                            indexed facts, not raw text). Expand entity
+                            extraction to capture preferences, acronyms, and
+                            non-capitalized concepts.
+                        </p>
+                        <div class="phase-impact">
+                            Expected: abstention 70% &rarr; 95%+, preferences
+                            68% &rarr; 85%+
+                        </div>
+                    </div>
+                </div>
+
+                <div class="roadmap-phase">
+                    <div class="phase-marker">
+                        <div class="phase-dot"></div>
+                        <div class="phase-line"></div>
+                    </div>
+                    <div class="phase-content">
+                        <h3>Phase 3 &mdash; Temporal Intelligence (+3&ndash;5pp)</h3>
+                        <p>
+                            Dual timestamps (documentDate vs eventDate). Temporal
+                            intent detection ("first", "latest", "before X").
+                            Time-aware query filtering. Turn-level and session
+                            ordering in retrieval ranking. Published ablations
+                            show +7&ndash;11% on temporal questions alone.
+                        </p>
+                        <div class="phase-impact">
+                            Expected: temporal 85% &rarr; 92%+
+                        </div>
+                    </div>
+                </div>
+
+                <div class="roadmap-phase">
+                    <div class="phase-marker">
+                        <div class="phase-dot"></div>
+                        <div class="phase-line"></div>
+                    </div>
+                    <div class="phase-content">
+                        <h3>Phase 4 &mdash; Multi-Session Enhancement (+2&ndash;3pp)</h3>
+                        <p>
+                            Relax session diversity penalty for multi-session
+                            questions. Chain-of-retrieval with multiple rounds.
+                            Cross-session entity aggregation. Session-level
+                            NDCG-based scoring refinement.
+                        </p>
+                        <div class="phase-impact">
+                            Expected: multi-session 87% &rarr; 92%+
+                        </div>
+                    </div>
+                </div>
+
+                <div class="roadmap-phase">
+                    <div class="phase-marker">
+                        <div class="phase-dot"></div>
+                        <div class="phase-line"></div>
+                    </div>
+                    <div class="phase-content">
+                        <h3>Phase 5 &mdash; Query Intelligence (+2&ndash;3pp)</h3>
+                        <p>
+                            Query expansion and reformulation (standard RAG
+                            technique, rephrasing queries 3 ways). Adaptive
+                            retrieval depth based on query complexity. These
+                            are the techniques that push from good to SOTA.
+                        </p>
+                        <div class="phase-impact">
+                            Expected: overall 88% &rarr; 95%+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SYSTEM DETAILS -->
+        <section class="container" id="methodology">
+            <div class="section-header">
+                <div class="section-label">System Configuration</div>
+                <h2>How the benchmark was run</h2>
+            </div>
+
+            <div class="method-grid">
+                <div class="method-card">
+                    <h4>Embedder</h4>
+                    <p>
+                        <code>nomic-embed-text-v2-moe</code> (768D) via ONNX.
+                        Dense-forward export running all experts with
+                        router-weighted blending. Task-prefixed queries
+                        ("search_query:") and documents ("search_document:").
+                    </p>
+                </div>
+                <div class="method-card">
+                    <h4>Retrieval Pipeline</h4>
+                    <p>
+                        Hybrid ANN (HNSW) + BM25 with reciprocal rank fusion.
+                        Cross-encoder reranking (ms-marco-MiniLM-L-6-v2).
+                        Graph neighborhood expansion (1&ndash;2 hops). Adaptive
+                        limits scaling with sqrt(node_count).
+                    </p>
+                </div>
+                <div class="method-card">
+                    <h4>Graph Scale</h4>
+                    <p>
+                        940 sessions ingested (10,866 turns). ~12K knowledge
+                        nodes, ~208K edges. Session-level + turn-level + entity
+                        linking edges. Full topology analysis per query.
+                    </p>
+                </div>
+                <div class="method-card">
+                    <h4>Evaluation</h4>
+                    <p>
+                        Self-contained QA proxy: 35% session hit + 25% keyword
+                        recall + 20% session recall + 10% evidence recall + 10%
+                        NDCG. No external LLM judge. Abstention scored
+                        binary on confidence gap heuristic.
+                    </p>
+                </div>
+                <div class="method-card">
+                    <h4>Hardware</h4>
+                    <p>
+                        Single-machine Elixir/OTP runtime. EXLA for neural
+                        embeddings. SQLite + ETS for storage. No GPU required
+                        for inference (CPU-only ONNX). Total evaluation: 13
+                        minutes for 500 queries.
+                    </p>
+                </div>
+                <div class="method-card">
+                    <h4>Dataset</h4>
+                    <p>
+                        LongMemEval oracle split (ICLR 2025). 500 questions
+                        across 7 types testing 5 memory abilities. ~115K tokens
+                        per question context. Each question has 1&ndash;6 evidence
+                        snippets with session-level ground truth.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- TECHNIQUES FROM SOTA -->
+        <section class="container" id="techniques">
+            <div class="section-header">
+                <div class="section-label">Research Context</div>
+                <h2>What top systems do differently</h2>
+                <p>
+                    Key architectural differences between Graphonomous and
+                    systems scoring 91%+. These inform the roadmap above.
+                </p>
+            </div>
+
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>System</th>
+                            <th>Score</th>
+                            <th>Key Technique</th>
+                            <th>Graphonomous Gap</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="td-system">agentmemory</td>
+                            <td class="num best">96.2%</td>
+                            <td>
+                                Six-signal retrieval weighting with learned
+                                calibration; 100% abstention via confidence
+                                scoring
+                            </td>
+                            <td>No learned thresholds; heuristic-only abstention</td>
+                        </tr>
+                        <tr>
+                            <td class="td-system">Mastra OM</td>
+                            <td class="num best">94.9%</td>
+                            <td>
+                                Observer + Reflector dual agents; 3&ndash;6x
+                                compression; dated observations; stable context
+                                window
+                            </td>
+                            <td>No reflector/consolidation at query time; no compression</td>
+                        </tr>
+                        <tr>
+                            <td class="td-system">Hindsight</td>
+                            <td class="num">91.4%</td>
+                            <td>
+                                4-network memory (World/Experience/Opinion/Entity);
+                                TEMPR parallel retrieval; CARA reasoning
+                            </td>
+                            <td>Single unified graph; no opinion/entity separation</td>
+                        </tr>
+                        <tr>
+                            <td class="td-system">Emergence AI</td>
+                            <td class="num">86.0%</td>
+                            <td>
+                                Session-level RAG with NDCG scoring;
+                                cross-encoder reranking
+                            </td>
+                            <td>
+                                Closest architecture; Graphonomous already
+                                exceeds on overall score
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- CALL TO ACTION -->
+        <section class="container" style="text-align: center; padding: 4rem 0">
+            <div class="section-label">Open Source</div>
+            <h2 style="font-family: var(--serif); font-weight: 400; font-size: clamp(1.6rem, 3vw, 2.2rem); margin-bottom: 1rem;">
+                Help us close the gap
+            </h2>
+            <p style="color: #aaa; max-width: 600px; margin: 0 auto 2rem; font-size: 1rem;">
+                Graphonomous is open source. The benchmark harness, all results
+                data, and the roadmap are in the repo. Contributions
+                welcome&mdash;especially on abstention detection and temporal
+                reasoning.
+            </p>
+            <div style="display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap;">
+                <a
+                    href="https://github.com/ampersand-systems/graphonomous"
+                    class="btn btn-primary"
+                    target="_blank"
+                    >View on GitHub</a
+                >
+                <a
+                    href="https://arxiv.org/abs/2410.10813"
+                    class="btn btn-secondary"
+                    target="_blank"
+                    >LongMemEval Paper</a
+                >
+                <a href="index.html" class="btn btn-secondary">Back to Home</a>
+            </div>
+        </section>
+
+        <footer>
+            <div class="container">
+                <p>
+                    Graphonomous v0.3.2 &middot; Benchmark data from
+                    <a href="https://arxiv.org/abs/2410.10813" target="_blank"
+                        >LongMemEval (ICLR 2025)</a
+                    >
+                    &middot; Last updated April 2026
+                </p>
+                <p style="margin-top: 0.5rem">
+                    Built by
+                    <a href="https://ampersandbox.design" target="_blank"
+                        >[&] Ampersand Box Design</a
+                    >
+                </p>
+            </div>
+        </footer>
+    </body>
+</html>

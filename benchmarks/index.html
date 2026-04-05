@@ -1,0 +1,398 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Graphonomous — Benchmarks</title>
+        <meta
+            name="description"
+            content="Graphonomous benchmark suite: LongMemEval (92.6% QA across 500 questions) and GraphMemBench v2 (κ-sensitive synthetic benchmark with 6 tiers)."
+        />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;0,6..72,600;0,6..72,700;1,6..72,300;1,6..72,400&family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+            rel="stylesheet"
+        />
+        <style>
+            :root {
+                --bg: #08090c;
+                --surface: #0e1017;
+                --surface-2: #14161e;
+                --border: rgba(255, 255, 255, 0.06);
+                --text: #e2e0db;
+                --dim: #6b6980;
+                --muted: #3d3b4a;
+                --cyan: #4af5c6;
+                --blue: #7b8cff;
+                --rose: #ff6b8a;
+                --amber: #ffc46b;
+                --serif: "Newsreader", Georgia, serif;
+                --mono: "JetBrains Mono", monospace;
+                --max-w: 1100px;
+                --gutter: clamp(1.5rem, 4vw, 3rem);
+            }
+
+            *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+            html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
+            body {
+                background: var(--bg);
+                color: var(--text);
+                font-family: var(--serif);
+                font-size: 18px;
+                line-height: 1.7;
+            }
+            a { color: var(--cyan); text-decoration: none; transition: color 0.2s; }
+            a:hover { color: var(--text); }
+            .container { max-width: var(--max-w); margin: 0 auto; padding: 0 var(--gutter); }
+            section { padding: 4rem 0; }
+
+            /* NAV */
+            nav {
+                position: fixed;
+                top: 0; left: 0; right: 0;
+                z-index: 100;
+                background: rgba(8, 9, 12, 0.85);
+                backdrop-filter: blur(12px);
+                border-bottom: 1px solid var(--border);
+                padding: 0.75rem 0;
+            }
+            .nav-inner {
+                max-width: var(--max-w);
+                margin: 0 auto;
+                padding: 0 var(--gutter);
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+            }
+            .nav-brand {
+                font-family: var(--mono);
+                font-size: 0.85rem;
+                font-weight: 600;
+                color: var(--text);
+                letter-spacing: 0.02em;
+            }
+            .nav-links { display: flex; gap: 1.5rem; list-style: none; }
+            .nav-links a {
+                font-family: var(--mono);
+                font-size: 0.7rem;
+                letter-spacing: 0.08em;
+                text-transform: uppercase;
+                color: var(--dim);
+            }
+            .nav-links a:hover, .nav-links a.active { color: var(--cyan); }
+
+            /* HERO */
+            .hero { padding-top: 8rem; padding-bottom: 2rem; text-align: center; }
+            .hero h1 {
+                font-family: var(--serif);
+                font-weight: 400;
+                font-size: clamp(2rem, 4.5vw, 3.2rem);
+                line-height: 1.15;
+                letter-spacing: -0.02em;
+                margin-bottom: 1rem;
+            }
+            .hero .subline {
+                font-size: 1.15rem;
+                color: #aaa;
+                max-width: 700px;
+                margin: 0 auto 1.5rem;
+                line-height: 1.8;
+            }
+            .section-label {
+                font-family: var(--mono);
+                font-size: 0.65rem;
+                letter-spacing: 0.12em;
+                text-transform: uppercase;
+                color: var(--cyan);
+                margin-bottom: 0.5rem;
+            }
+
+            /* BENCHMARK CARDS */
+            .bench-grid {
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+                gap: 1.5rem;
+                margin: 2rem 0;
+            }
+            .bench-card {
+                background: var(--surface);
+                border: 1px solid var(--border);
+                border-radius: 8px;
+                padding: 2rem;
+                transition: border-color 0.2s, transform 0.2s;
+                display: block;
+            }
+            .bench-card:hover {
+                border-color: rgba(74, 245, 198, 0.3);
+                transform: translateY(-2px);
+                color: var(--text);
+            }
+            .bench-card .tag {
+                display: inline-block;
+                font-family: var(--mono);
+                font-size: 0.6rem;
+                letter-spacing: 0.08em;
+                text-transform: uppercase;
+                padding: 0.2rem 0.6rem;
+                border-radius: 3px;
+                margin-bottom: 0.75rem;
+                background: rgba(74, 245, 198, 0.1);
+                color: var(--cyan);
+            }
+            .bench-card .tag.synthetic { background: rgba(123, 140, 255, 0.1); color: var(--blue); }
+            .bench-card h2 {
+                font-family: var(--serif);
+                font-weight: 400;
+                font-size: 1.8rem;
+                margin-bottom: 0.5rem;
+                color: var(--text);
+            }
+            .bench-card .desc {
+                font-size: 0.95rem;
+                color: #aaa;
+                line-height: 1.7;
+                margin-bottom: 1.25rem;
+            }
+            .bench-card .stats {
+                display: flex;
+                gap: 1.5rem;
+                flex-wrap: wrap;
+                margin-bottom: 1rem;
+                padding-top: 1rem;
+                border-top: 1px solid var(--border);
+            }
+            .bench-card .stat { flex-shrink: 0; }
+            .bench-card .stat .value {
+                font-family: var(--mono);
+                font-size: 1.3rem;
+                font-weight: 700;
+                line-height: 1.1;
+            }
+            .bench-card .stat .value.cyan { color: var(--cyan); }
+            .bench-card .stat .value.blue { color: var(--blue); }
+            .bench-card .stat .label {
+                font-family: var(--mono);
+                font-size: 0.6rem;
+                letter-spacing: 0.08em;
+                text-transform: uppercase;
+                color: var(--dim);
+                margin-top: 0.2rem;
+            }
+            .bench-card .arrow {
+                font-family: var(--mono);
+                font-size: 0.75rem;
+                color: var(--cyan);
+                letter-spacing: 0.05em;
+                text-transform: uppercase;
+                display: inline-block;
+                margin-top: 0.5rem;
+            }
+
+            /* SECTION HEADERS */
+            .section-header { margin-bottom: 2rem; }
+            .section-header h2 {
+                font-family: var(--serif);
+                font-weight: 400;
+                font-size: clamp(1.6rem, 3vw, 2.2rem);
+                letter-spacing: -0.01em;
+                margin-bottom: 0.5rem;
+            }
+            .section-header p { color: var(--dim); font-size: 1rem; max-width: 700px; }
+
+            /* TABLE */
+            .table-wrap {
+                overflow-x: auto;
+                margin: 1.5rem 0;
+                border: 1px solid var(--border);
+                border-radius: 8px;
+                background: var(--surface);
+            }
+            table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+            thead { background: var(--surface-2); }
+            th {
+                font-family: var(--mono);
+                font-size: 0.65rem;
+                font-weight: 600;
+                letter-spacing: 0.08em;
+                text-transform: uppercase;
+                color: var(--dim);
+                padding: 0.75rem 1rem;
+                text-align: left;
+                white-space: nowrap;
+                border-bottom: 1px solid var(--border);
+            }
+            td { padding: 0.65rem 1rem; border-bottom: 1px solid var(--border); }
+            tr:last-child td { border-bottom: none; }
+
+            /* FOOTER */
+            footer {
+                padding: 3rem 0;
+                border-top: 1px solid var(--border);
+                text-align: center;
+            }
+            footer p {
+                font-family: var(--mono);
+                font-size: 0.7rem;
+                color: var(--muted);
+            }
+            footer a { color: var(--dim); }
+        </style>
+    </head>
+    <body>
+        <nav>
+            <div class="nav-inner">
+                <a href="../index.html" class="nav-brand">graphonomous</a>
+                <ul class="nav-links">
+                    <li><a href="../index.html">Home</a></li>
+                    <li><a href="index.html" class="active">Benchmarks</a></li>
+                    <li><a href="https://github.com/ampersand-systems/graphonomous" target="_blank">GitHub</a></li>
+                    <li><a href="https://www.npmjs.com/package/graphonomous" target="_blank">npm</a></li>
+                </ul>
+            </div>
+        </nav>
+
+        <!-- HERO -->
+        <header class="hero container">
+            <div class="section-label">Benchmark Suite</div>
+            <h1>Two benchmarks. Two sides of the same question.</h1>
+            <p class="subline">
+                LongMemEval measures how Graphonomous performs against a realistic,
+                diverse agent-memory workload. GraphMemBench v2 measures what
+                κ-aware topology actually contributes — under controlled conditions
+                where cycles are the difference between right and wrong.
+            </p>
+        </header>
+
+        <!-- BENCHMARK CARDS -->
+        <section class="container" style="padding-top: 1rem">
+            <div class="bench-grid">
+                <a href="longmemeval.html" class="bench-card">
+                    <span class="tag">Public benchmark</span>
+                    <h2>LongMemEval</h2>
+                    <p class="desc">
+                        ICLR 2025 long-term memory benchmark: 500 questions across
+                        knowledge-update, temporal reasoning, abstention, single-session,
+                        and multi-session tracks. Graphonomous runs it fully local with a
+                        500M-param embedder.
+                    </p>
+                    <div class="stats">
+                        <div class="stat">
+                            <div class="value cyan">92.6%</div>
+                            <div class="label">QA Accuracy</div>
+                        </div>
+                        <div class="stat">
+                            <div class="value">500</div>
+                            <div class="label">Questions</div>
+                        </div>
+                        <div class="stat">
+                            <div class="value">5</div>
+                            <div class="label">Tracks</div>
+                        </div>
+                    </div>
+                    <span class="arrow">View results &rarr;</span>
+                </a>
+
+                <a href="graphmembench.html" class="bench-card">
+                    <span class="tag synthetic">Synthetic · κ-sensitive</span>
+                    <h2>GraphMemBench v2</h2>
+                    <p class="desc">
+                        Purpose-built synthetic benchmark for measuring κ-topology's
+                        contribution to retrieval. Six tiers span κ=0 controls,
+                        simple cycles, dense multi-SCCs, contradiction resolution,
+                        and mixed-κ discrimination.
+                    </p>
+                    <div class="stats">
+                        <div class="stat">
+                            <div class="value blue">6</div>
+                            <div class="label">Tiers</div>
+                        </div>
+                        <div class="stat">
+                            <div class="value blue">5</div>
+                            <div class="label">Difficulty Knobs</div>
+                        </div>
+                        <div class="stat">
+                            <div class="value">+100pp</div>
+                            <div class="label">κ-delta gate</div>
+                        </div>
+                    </div>
+                    <span class="arrow">View tiers &rarr;</span>
+                </a>
+            </div>
+        </section>
+
+        <!-- WHY TWO -->
+        <section class="container">
+            <div class="section-header">
+                <div class="section-label">Why both</div>
+                <h2>External realism + internal causality</h2>
+                <p>
+                    LongMemEval tells us whether Graphonomous is competitive with
+                    GPT-4o-powered memory systems on a task users actually care
+                    about. GraphMemBench v2 tells us whether the κ-topology
+                    machinery is doing real work, and under what conditions it
+                    starts to break.
+                </p>
+            </div>
+
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Property</th>
+                            <th>LongMemEval</th>
+                            <th>GraphMemBench v2</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Source</td>
+                            <td>ICLR 2025 public dataset</td>
+                            <td>Deterministic synthetic</td>
+                        </tr>
+                        <tr>
+                            <td>Reproducible from seed</td>
+                            <td>No (fixed corpus)</td>
+                            <td>Yes (<code>--seed N</code>)</td>
+                        </tr>
+                        <tr>
+                            <td>Question count</td>
+                            <td>500 fixed</td>
+                            <td>50–500 per tier (configurable)</td>
+                        </tr>
+                        <tr>
+                            <td>Measures κ-topology isolation</td>
+                            <td>No</td>
+                            <td>Yes (topology on/off A/B)</td>
+                        </tr>
+                        <tr>
+                            <td>Domain content</td>
+                            <td>Realistic dialogue</td>
+                            <td>Synthetic cycles with distractors</td>
+                        </tr>
+                        <tr>
+                            <td>Validation gate</td>
+                            <td>92.6% overall QA</td>
+                            <td>≥3pp κ-metric delta</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <footer>
+            <div class="container">
+                <p>
+                    Graphonomous benchmark suite &middot;
+                    <a href="https://github.com/ampersand-systems/graphonomous" target="_blank">
+                        View on GitHub
+                    </a>
+                </p>
+                <p style="margin-top: 0.5rem">
+                    Built by
+                    <a href="https://ampersandbox.design" target="_blank">[&] Ampersand Box Design</a>
+                </p>
+            </div>
+        </footer>
+    </body>
+</html>

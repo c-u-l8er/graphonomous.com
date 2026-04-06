@@ -6,7 +6,7 @@
         <title>Graphonomous — Benchmarks</title>
         <meta
             name="description"
-            content="Graphonomous benchmark suite: LongMemEval (92.6% QA across 500 questions) and GraphMemBench v2 (κ-sensitive synthetic benchmark with 6 tiers)."
+            content="Graphonomous benchmark suite: LongMemEval (92.6% QA across 500 questions) and GraphMemBench v2 (κ-sensitive synthetic benchmark with 8 tiers)."
         />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -298,13 +298,14 @@
                     <h2>GraphMemBench v2</h2>
                     <p class="desc">
                         Purpose-built synthetic benchmark for measuring κ-topology's
-                        contribution to retrieval. Six tiers span κ=0 controls,
+                        contribution to retrieval. Eight tiers span κ=0 controls,
                         simple cycles, dense multi-SCCs, contradiction resolution,
-                        and mixed-κ discrimination.
+                        mixed-κ discrimination, evidence path tracing, and causal
+                        DAG ordering.
                     </p>
                     <div class="stats">
                         <div class="stat">
-                            <div class="value blue">6</div>
+                            <div class="value blue">8</div>
                             <div class="label">Tiers</div>
                         </div>
                         <div class="stat">
@@ -329,9 +330,9 @@
                 <p>
                     LongMemEval tells us whether Graphonomous is competitive with
                     GPT-4o-powered memory systems on a task users actually care
-                    about. GraphMemBench v2 tells us whether the κ-topology
-                    machinery is doing real work, and under what conditions it
-                    starts to break.
+                    about. GraphMemBench T1–T6 tell us whether the κ-topology
+                    machinery is doing real work. T7–T8 establish baselines for
+                    graph algorithm quality (Dijkstra paths, toposort ordering).
                 </p>
             </div>
 
@@ -368,12 +369,12 @@
                         <tr>
                             <td>Domain content</td>
                             <td>Realistic dialogue</td>
-                            <td>Synthetic cycles with distractors</td>
+                            <td>Synthetic cycles + DAGs with distractors</td>
                         </tr>
                         <tr>
                             <td>Validation gate</td>
                             <td>92.6% overall QA</td>
-                            <td>≥3pp κ-metric delta</td>
+                            <td>T1–T6: ≥3pp κ-delta; T7–T8: algorithm baselines</td>
                         </tr>
                     </tbody>
                 </table>

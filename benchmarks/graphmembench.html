@@ -6,7 +6,7 @@
         <title>Graphonomous — GraphMemBench v2</title>
         <meta
             name="description"
-            content="GraphMemBench v2: κ-sensitive synthetic benchmark for Graphonomous. Six tiers, five difficulty knobs, and a strict ≥3pp topology-delta gate."
+            content="GraphMemBench v2: κ-sensitive synthetic benchmark for Graphonomous. Eight tiers, five difficulty knobs, and a strict ≥3pp topology-delta gate."
         />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -249,22 +249,22 @@
             <div class="section-label">GraphMemBench v2</div>
             <h1>A κ-sensitive benchmark for cyclic memory</h1>
             <p class="subline">
-                Six deterministic synthetic tiers designed to isolate what κ-topology
-                actually contributes to retrieval. Each tier runs topology ON vs OFF
-                side by side; a ≥3pp delta on any κ metric is the validation gate.
+                Eight deterministic synthetic tiers designed to isolate what κ-topology
+                actually contributes to retrieval. T1–T6 test κ-sensitive cycle detection;
+                T7–T8 benchmark graph algorithm quality (evidence paths, causal ordering).
+                Each tier runs topology ON vs OFF side by side.
             </p>
         </header>
 
         <!-- TIER CARDS -->
         <section class="container" style="padding-top: 1rem">
             <div class="section-header">
-                <div class="section-label">Six Tiers</div>
-                <h2>From κ=0 controls to mixed-κ discrimination</h2>
+                <div class="section-label">Eight Tiers</div>
+                <h2>From κ=0 controls to graph algorithm benchmarks</h2>
                 <p>
-                    Tiers T1 and T2 are acyclic controls — topology ON and OFF should
-                    produce identical results. T3–T6 increase in κ complexity and
-                    retrieval difficulty, and each tier targets a distinct failure
-                    mode.
+                    T1–T2 are acyclic controls. T3–T6 increase in κ complexity and
+                    retrieval difficulty. T7–T8 benchmark graph algorithms: weighted
+                    shortest paths (Dijkstra) and causal DAG ordering (toposort).
                 </p>
             </div>
 
@@ -375,18 +375,54 @@
                         max κ observed: 2 / 0
                     </div>
                 </div>
+
+                <div class="tier-card mid">
+                    <div class="tier-head">
+                        <h3>T7</h3>
+                        <span class="kappa-badge mid">algorithm</span>
+                    </div>
+                    <div class="tier-name">Evidence path tracing</div>
+                    <p class="tier-desc">
+                        Weighted DAGs with known shortest paths (Dijkstra). Tests
+                        whether retrieval preserves evidence chain ordering and hop
+                        counts. Alternate paths probe multi-path awareness.
+                    </p>
+                    <div class="tier-metrics">
+                        path_node_recall: <strong class="delta-good">1.00</strong><br>
+                        path_order_accuracy: <strong>0.60</strong><br>
+                        hop_count_mae: <strong>4.00</strong> (baseline)
+                    </div>
+                </div>
+
+                <div class="tier-card mid">
+                    <div class="tier-head">
+                        <h3>T8</h3>
+                        <span class="kappa-badge mid">algorithm</span>
+                    </div>
+                    <div class="tier-name">Causal DAG ordering</div>
+                    <p class="tier-desc">
+                        Layered DAGs with known topological order and critical path
+                        depth. Tests causal sequencing (toposort), longest-path
+                        detection, and source/sink identification.
+                    </p>
+                    <div class="tier-metrics">
+                        ordering_accuracy: <strong>0.46</strong> (baseline)<br>
+                        critical_depth_mae: <strong>2.67</strong><br>
+                        source_sink_recall: <strong class="delta-good">1.00</strong>
+                    </div>
+                </div>
             </div>
         </section>
 
-        <!-- RESULTS TABLE -->
+        <!-- RESULTS: κ-TOPOLOGY TABLE (T1–T6) -->
         <section class="container">
             <div class="section-header">
-                <div class="section-label">Sanity Results</div>
-                <h2>Topology on vs off, across all six tiers</h2>
+                <div class="section-label">κ-Topology Results</div>
+                <h2>T1–T6: topology on vs off</h2>
                 <p>
                     Every tier passes the ≥3pp κ-metric gate (or — for the κ=0
-                    controls — correctly produces <em>zero</em> delta). These are
-                    the sanity-mode numbers, deterministic from <code>--seed 42</code>.
+                    controls — correctly produces <em>zero</em> delta). Sanity mode,
+                    deterministic from <code>--seed 42</code>.
                 </p>
             </div>
 
@@ -400,6 +436,7 @@
                             <th class="num">kappa_recall off</th>
                             <th class="num">Δ</th>
                             <th class="num">max κ on / off</th>
+                            <th class="num">p50 on / off</th>
                             <th>Gate</th>
                         </tr>
                     </thead>
@@ -411,6 +448,7 @@
                             <td class="num">0.00</td>
                             <td class="num muted">0</td>
                             <td class="num">0 / 0</td>
+                            <td class="num">30ms / 32ms</td>
                             <td>✓ correct</td>
                         </tr>
                         <tr>
@@ -420,6 +458,7 @@
                             <td class="num">0.00</td>
                             <td class="num muted">0</td>
                             <td class="num">0 / 0</td>
+                            <td class="num">30ms / 29ms</td>
                             <td>✓ correct</td>
                         </tr>
                         <tr>
@@ -429,6 +468,7 @@
                             <td class="num">0.00</td>
                             <td class="num best">+100pp</td>
                             <td class="num">1 / 0</td>
+                            <td class="num">10.2s / 32ms</td>
                             <td>✓ pass</td>
                         </tr>
                         <tr>
@@ -438,6 +478,7 @@
                             <td class="num">0.00</td>
                             <td class="num best">+100pp</td>
                             <td class="num">2 / 0</td>
+                            <td class="num">43ms / 32ms</td>
                             <td>✓ pass</td>
                         </tr>
                         <tr>
@@ -447,6 +488,7 @@
                             <td class="num">0.00</td>
                             <td class="num best">+100pp</td>
                             <td class="num">1 / 0</td>
+                            <td class="num">41ms / 39ms</td>
                             <td>✓ pass</td>
                         </tr>
                         <tr>
@@ -456,13 +498,152 @@
                             <td class="num">0.00</td>
                             <td class="num best">+100pp</td>
                             <td class="num">2 / 0</td>
+                            <td class="num">46ms / 38ms</td>
                             <td>✓ pass</td>
                         </tr>
                     </tbody>
                 </table>
             </div>
-            <p class="muted" style="font-family: var(--mono); font-size: 0.7rem; margin-top: 0.5rem">
-                Sanity mode; reproducible via <code>--seed 42 --sanity</code>. Full-size runs scale linearly.
+        </section>
+
+        <!-- RESULTS: ALGORITHM TABLE (T7–T8) -->
+        <section class="container" style="padding-top: 1rem">
+            <div class="section-header">
+                <div class="section-label">Algorithm Results</div>
+                <h2>T7–T8: graph algorithm quality</h2>
+                <p>
+                    These tiers are κ-independent — they benchmark whether the
+                    retriever preserves structural properties of the ingested graph.
+                    Topology on/off should not affect these metrics (and doesn't).
+                </p>
+            </div>
+
+            <!-- T7 detail -->
+            <div class="tier-grid" style="grid-template-columns: 1fr 1fr; margin-bottom: 2rem;">
+                <div style="grid-column: 1 / -1;">
+                    <h3 style="font-family: var(--mono); font-size: 0.85rem; color: var(--amber); margin-bottom: 0.75rem;">
+                        T7 · Evidence Path Tracing (Dijkstra)
+                    </h3>
+                </div>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Metric</th>
+                                <th class="num">Topology ON</th>
+                                <th class="num">Topology OFF</th>
+                                <th class="num">Δ</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="mono">path_node_recall</td>
+                                <td class="num best">1.00</td>
+                                <td class="num best">1.00</td>
+                                <td class="num muted">0</td>
+                            </tr>
+                            <tr>
+                                <td class="mono">path_order_accuracy</td>
+                                <td class="num">0.60</td>
+                                <td class="num">0.60</td>
+                                <td class="num muted">0</td>
+                            </tr>
+                            <tr>
+                                <td class="mono">hop_count_mae</td>
+                                <td class="num">4.00</td>
+                                <td class="num">4.00</td>
+                                <td class="num muted">0</td>
+                            </tr>
+                            <tr>
+                                <td class="mono">alt_path_detected</td>
+                                <td class="num best">1.00</td>
+                                <td class="num best">1.00</td>
+                                <td class="num muted">0</td>
+                            </tr>
+                            <tr>
+                                <td class="mono">latency p50 / p95</td>
+                                <td class="num">32ms / 200ms</td>
+                                <td class="num">35ms / 275ms</td>
+                                <td class="num muted">~0</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="notes" style="margin: 0; display: flex; flex-direction: column; justify-content: center;">
+                    <strong>Interpretation.</strong> All gold shortest-path nodes are
+                    retrieved (recall = 1.0) and alternate paths are detected. Ordering
+                    accuracy is 0.60 — the retriever returns the right nodes but doesn't
+                    perfectly preserve Dijkstra ordering, as expected (similarity ranking
+                    ≠ shortest-path ranking). Hop count MAE of 4.0 reflects the same
+                    ordering gap: retrieved node count is correct, but inferred hops
+                    differ from the gold chain length.<br><br>
+                    <strong>Baseline established.</strong> These numbers set the floor
+                    for the <code>trace_evidence_path</code> MCP tool, which uses
+                    Dijkstra directly and should achieve MAE ≈ 0.
+                </div>
+            </div>
+
+            <!-- T8 detail -->
+            <div class="tier-grid" style="grid-template-columns: 1fr 1fr;">
+                <div style="grid-column: 1 / -1;">
+                    <h3 style="font-family: var(--mono); font-size: 0.85rem; color: var(--amber); margin-bottom: 0.75rem;">
+                        T8 · Causal DAG Ordering (Toposort)
+                    </h3>
+                </div>
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Metric</th>
+                                <th class="num">Topology ON</th>
+                                <th class="num">Topology OFF</th>
+                                <th class="num">Δ</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="mono">ordering_accuracy</td>
+                                <td class="num">0.46</td>
+                                <td class="num">0.46</td>
+                                <td class="num muted">0</td>
+                            </tr>
+                            <tr>
+                                <td class="mono">critical_depth_mae</td>
+                                <td class="num">2.67</td>
+                                <td class="num">2.67</td>
+                                <td class="num muted">0</td>
+                            </tr>
+                            <tr>
+                                <td class="mono">source_sink_recall</td>
+                                <td class="num best">1.00</td>
+                                <td class="num best">1.00</td>
+                                <td class="num muted">0</td>
+                            </tr>
+                            <tr>
+                                <td class="mono">latency p50 / p95</td>
+                                <td class="num">34ms / 205ms</td>
+                                <td class="num">33ms / 201ms</td>
+                                <td class="num muted">~0</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="notes" style="margin: 0; display: flex; flex-direction: column; justify-content: center;">
+                    <strong>Interpretation.</strong> Source and sink nodes are perfectly
+                    retrieved (recall = 1.0). Ordering accuracy is 0.46 — roughly
+                    coin-flip — because similarity-based retrieval doesn't respect
+                    causal layer ordering. Critical depth MAE of 2.67 confirms the
+                    retriever sees nodes from some but not all layers.<br><br>
+                    <strong>Baseline established.</strong> These results quantify the
+                    gap that the DAG algorithms (<code>Graphonomous.Algorithms.DAG</code>)
+                    close: Kahn's toposort + longest-path DP should push ordering
+                    accuracy toward 1.0 and depth MAE toward 0.
+                </div>
+            </div>
+
+            <p class="muted" style="font-family: var(--mono); font-size: 0.7rem; margin-top: 1.5rem">
+                All results: sanity mode, <code>--seed 42</code>, fallback embedder.
+                T7/T8 are κ-independent — topology on/off produces identical algorithm metrics by design.
             </p>
         </section>
 
@@ -545,7 +726,7 @@
                 <p>
                     All tiers are deterministic and reproduce bit-for-bit from the
                     same seed. Fixtures live in
-                    <code>priv/graphmembench/fixtures/T{1..6}/</code>.
+                    <code>priv/graphmembench/fixtures/T{1..8}/</code>.
                 </p>
             </div>
 
@@ -562,7 +743,13 @@
 <br>
 <span class="comment"># Homogenized content — similarity can't shortcut</span><br>
 <span class="prompt">$</span> mix benchmark.graphmembench <span class="flag">--tier 6 --homogenize true \<br>
-&nbsp;&nbsp;&nbsp;&nbsp;--distractors 100</span>
+&nbsp;&nbsp;&nbsp;&nbsp;--distractors 100</span><br>
+<br>
+<span class="comment"># T7: Evidence path tracing (Dijkstra shortest paths)</span><br>
+<span class="prompt">$</span> mix benchmark.graphmembench <span class="flag">--tier 7 --sanity --topology on</span><br>
+<br>
+<span class="comment"># T8: Causal DAG ordering (toposort + longest path)</span><br>
+<span class="prompt">$</span> mix benchmark.graphmembench <span class="flag">--tier 8 --sanity --topology on</span>
             </div>
 
             <div class="notes">

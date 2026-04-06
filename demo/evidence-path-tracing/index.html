@@ -1,0 +1,666 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Evidence Path Tracing — Weighted Dijkstra Provenance Demo</title>
+        <style>
+            :root {
+                --bg: #0a0b0f;
+                --surface: #11141c;
+                --surface-2: #171b26;
+                --surface-3: #0d1018;
+                --line: #252b3b;
+                --text: #e9ecf4;
+                --dim: #8a92a7;
+                --good: #38d39f;
+                --accent: #7b8cff;
+                --accent-2: #4af5c6;
+                --warn: #ffc46b;
+                --bubble-user: #1c2435;
+                --bubble-assistant: #141b2c;
+                --shadow: 0 14px 34px rgba(0, 0, 0, 0.35);
+                --terminal-bg: #080a10;
+                --terminal-line: #1a1f2e;
+            }
+
+            * { box-sizing: border-box; }
+
+            html, body {
+                margin: 0; padding: 0; min-height: 100%;
+                background:
+                    radial-gradient(1200px 800px at 85% -20%, rgba(123,140,255,0.11), transparent 60%),
+                    radial-gradient(1000px 700px at -10% 120%, rgba(74,245,198,0.08), transparent 55%),
+                    var(--bg);
+                color: var(--text);
+                font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+            }
+
+            a { color: inherit; }
+            .wrap { max-width: 1220px; margin: 0 auto; padding: 22px; }
+
+            .hero {
+                border: 1px solid var(--line); border-radius: 18px;
+                background: linear-gradient(160deg, rgba(123,140,255,0.08), rgba(17,20,28,0.95) 28%);
+                padding: 18px; box-shadow: var(--shadow);
+            }
+
+            .badge {
+                display: inline-flex; align-items: center; gap: 8px;
+                border-radius: 999px; border: 1px solid rgba(74,245,198,0.35);
+                color: var(--accent-2); background: rgba(74,245,198,0.08);
+                font-size: 12px; padding: 6px 10px;
+            }
+
+            .dot {
+                width: 8px; height: 8px; border-radius: 50%;
+                background: var(--accent-2); box-shadow: 0 0 12px rgba(74,245,198,0.8);
+                animation: pulse 1.7s infinite;
+            }
+
+            @keyframes pulse {
+                0%,100% { transform: scale(1); opacity: 0.85; }
+                50% { transform: scale(1.3); opacity: 1; }
+            }
+
+            h1 { margin: 14px 0 6px; font-size: clamp(26px,4vw,42px); line-height: 1.06; letter-spacing: -0.02em; }
+            .lead { color: var(--dim); max-width: 90ch; line-height: 1.55; margin: 0; }
+
+            .top-controls { margin-top: 14px; display: flex; flex-wrap: wrap; gap: 8px; }
+
+            button {
+                border: 1px solid var(--line); background: var(--surface-2);
+                color: var(--text); border-radius: 10px; padding: 8px 10px;
+                font-size: 12px; cursor: pointer; font-family: inherit;
+            }
+            button:hover { border-color: #3a4256; transform: translateY(-1px); }
+
+            .btn-primary { border-color: rgba(74,245,198,0.35); color: var(--accent-2); background: rgba(74,245,198,0.08); }
+            .btn-active { border-color: rgba(123,140,255,0.45); color: var(--accent); background: rgba(123,140,255,0.12); }
+
+            .kpis { margin-top: 12px; display: grid; gap: 10px; grid-template-columns: repeat(5, minmax(0,1fr)); }
+
+            .kpi {
+                border: 1px solid var(--line); border-radius: 12px;
+                background: rgba(18,21,30,0.88); padding: 10px 11px;
+            }
+            .kpi-label { color: var(--dim); font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; }
+            .kpi-value { color: var(--accent-2); font-size: 20px; font-weight: 700; }
+            .kpi-note { color: var(--dim); font-size: 11px; margin-top: 2px; line-height: 1.35; }
+
+            .layout { margin-top: 14px; display: grid; gap: 16px; grid-template-columns: 1.08fr 0.92fr; }
+
+            .panel {
+                border: 1px solid var(--line); border-radius: 16px;
+                background: var(--surface); overflow: hidden; box-shadow: var(--shadow);
+            }
+
+            .panel-head {
+                border-bottom: 1px solid var(--line); padding: 11px 13px;
+                display: flex; justify-content: space-between; gap: 10px;
+                align-items: center; background: rgba(255,255,255,0.01);
+            }
+
+            .panel-title { color: #c9d2e8; font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; }
+
+            .chat {
+                padding: 13px; overflow: auto;
+                background: linear-gradient(transparent 0%, rgba(255,255,255,0.01) 100%), var(--surface);
+            }
+
+            .bubble {
+                border: 1px solid var(--line); border-radius: 14px;
+                padding: 10px 11px; margin-bottom: 10px; max-width: 94%;
+                box-shadow: 0 8px 20px rgba(0,0,0,0.2); animation: rise 0.24s ease;
+            }
+
+            .bubble.user { margin-left: auto; background: var(--bubble-user); }
+            .bubble.assistant { margin-right: auto; background: var(--bubble-assistant); }
+
+            @keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+            .meta {
+                display: flex; justify-content: space-between; gap: 10px;
+                font-size: 10px; color: var(--dim); margin-bottom: 7px;
+                text-transform: uppercase; letter-spacing: 0.08em;
+            }
+            .text { font-size: 13px; line-height: 1.52; white-space: pre-wrap; }
+
+            .code { margin-top: 8px; border: 1px solid #222a3f; border-radius: 10px; overflow: hidden; background: var(--surface-3); }
+            .code-head {
+                border-bottom: 1px solid #222a3f; padding: 7px 9px;
+                display: flex; justify-content: space-between; align-items: center;
+                color: var(--dim); font-size: 11px;
+            }
+            .code pre { margin: 0; padding: 10px 11px; font-size: 12px; line-height: 1.45; color: #d6ddf0; overflow: auto; max-height: 220px; }
+
+            .right { display: grid; gap: 16px; grid-template-rows: auto 1fr; }
+
+            /* Path visualizer */
+            .path-viz { padding: 14px; }
+            .path-card {
+                border: 1px solid var(--line); border-radius: 12px;
+                background: rgba(255,255,255,0.01); padding: 10px 12px; margin-bottom: 10px;
+            }
+            .path-header {
+                display: flex; justify-content: space-between; align-items: baseline;
+                margin-bottom: 8px;
+            }
+            .path-label { font-size: 12px; color: #cfd8ee; }
+            .path-cost { font-size: 12px; }
+            .cost-low { color: var(--good); }
+            .cost-mid { color: var(--warn); }
+
+            .path-chain {
+                display: flex; align-items: center; flex-wrap: wrap; gap: 3px;
+                font-size: 11px; line-height: 1.8;
+            }
+            .path-node {
+                background: rgba(123,140,255,0.12); border: 1px solid rgba(123,140,255,0.3);
+                border-radius: 6px; padding: 2px 7px; color: var(--accent);
+                white-space: nowrap;
+            }
+            .path-edge {
+                color: var(--dim); font-size: 10px; white-space: nowrap;
+            }
+            .path-edge .etype { color: var(--accent-2); }
+
+            /* Trace + payload */
+            .trace-wrap { display: grid; grid-template-rows: auto 1fr; min-height: 0; }
+            .trace-list { padding: 11px; max-height: 190px; overflow: auto; border-bottom: 1px solid var(--line); }
+            .trace-item { border: 1px solid var(--line); border-radius: 11px; padding: 8px; margin-bottom: 7px; background: rgba(255,255,255,0.01); }
+            .trace-head { display: flex; justify-content: space-between; align-items: baseline; gap: 7px; }
+            .trace-name { font-size: 12px; color: #d2daee; }
+            .trace-latency { font-size: 11px; color: var(--dim); }
+
+            .pill {
+                margin-top: 4px; display: inline-block; padding: 2px 8px;
+                border-radius: 999px; font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em;
+            }
+            .pill.ok { color: var(--good); border: 1px solid rgba(56,211,159,0.45); background: rgba(56,211,159,0.08); }
+            .pill.warn { color: var(--warn); border: 1px solid rgba(255,196,107,0.45); background: rgba(255,196,107,0.08); }
+
+            .tabs { display: flex; overflow: auto; border-bottom: 1px solid var(--line); }
+            .tab {
+                border: none; border-right: 1px solid var(--line); border-radius: 0;
+                background: #0f131d; color: var(--dim); font-size: 11px; padding: 9px 11px;
+                white-space: nowrap; font-family: inherit;
+            }
+            .tab.active { color: var(--accent); background: #131a2a; }
+            .pane { display: none; height: 255px; overflow: auto; }
+            .pane.active { display: block; }
+            .pane pre { margin: 0; padding: 10px 11px; font-size: 12px; line-height: 1.42; color: #d6ddf0; overflow: auto; }
+
+            .terminal-strip {
+                margin-top: 14px; border: 1px solid var(--line); border-radius: 14px;
+                background: var(--terminal-bg); overflow: hidden;
+            }
+            .terminal-head {
+                border-bottom: 1px solid var(--terminal-line); padding: 8px 11px;
+                display: flex; justify-content: space-between; align-items: center;
+                font-size: 11px; color: var(--dim); text-transform: uppercase; letter-spacing: 0.08em;
+            }
+            .terminal-title { color: #8a92a7; }
+            .terminal-status { color: var(--good); }
+            .terminal-body { padding: 8px 11px; max-height: 120px; overflow: auto; font-size: 12px; color: #7a8599; line-height: 1.5; }
+            .terminal-body .tool { color: var(--accent); }
+            .terminal-body .ok { color: var(--good); }
+            .terminal-body .cost { color: var(--warn); }
+
+            .footer { margin-top: 12px; text-align: center; color: var(--dim); font-size: 12px; }
+
+            @media (max-width: 1024px) {
+                .kpis { grid-template-columns: repeat(2, minmax(0,1fr)); }
+                .layout { grid-template-columns: 1fr; }
+                .right { grid-template-rows: auto auto; }
+                .chat { height: 450px; }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="wrap">
+            <section class="hero">
+                <span class="badge"><span class="dot"></span>Live MCP session — payloads captured 2026-04-06 from Graphonomous v0.3.2</span>
+                <h1>Evidence Path Tracing — Weighted Dijkstra Provenance</h1>
+                <p class="lead">
+                    <code>trace_evidence_path</code> finds the lowest-cost chain between
+                    any two knowledge nodes using weighted Dijkstra. Cost =
+                    <code>-log(confidence) + recency_decay + type_cost</code>.
+                    <b>A</b> traces a single shortest path from the ROI roadmap to the
+                    batch implementation summary (3 hops, cost 0.59).
+                    <b>B</b> uses Yen's K-shortest to find 2 diverse alternate paths
+                    through different intermediate nodes. All payloads below are from a
+                    real Graphonomous MCP session.
+                </p>
+
+                <div class="top-controls">
+                    <button class="btn-active" id="scenarioA">A · Shortest path (k=1)</button>
+                    <button id="scenarioB">B · Alternate paths (k=3)</button>
+                    <button class="btn-primary" id="playBtn">&#9654; Play demo</button>
+                    <button id="nextBtn">Next bubble</button>
+                    <button id="resetBtn">Reset</button>
+                    <a href="../index.html"><button>&larr; Back to all demos</button></a>
+                    <a href="../../index.html"><button>&larr; Back to landing page</button></a>
+                </div>
+
+                <div class="kpis" id="kpis"></div>
+            </section>
+
+            <section class="layout">
+                <article class="panel">
+                    <div class="panel-head"><div class="panel-title">Chat + tool-call storytelling</div></div>
+                    <div class="chat" id="chat"></div>
+                </article>
+
+                <aside class="right">
+                    <section class="panel">
+                        <div class="panel-head"><div class="panel-title">Path visualizer</div></div>
+                        <div class="path-viz" id="pathViz"></div>
+                    </section>
+
+                    <section class="panel trace-wrap">
+                        <div class="panel-head"><div class="panel-title">Execution trace + payload explorer</div></div>
+                        <div class="trace-list" id="trace"></div>
+                        <div class="tabs" id="tabs"></div>
+                        <div id="panes"></div>
+                    </section>
+                </aside>
+            </section>
+
+            <section class="terminal-strip">
+                <div class="terminal-head">
+                    <div class="terminal-title">Live tool-call log</div>
+                    <div class="terminal-status" id="terminalStatus">idle</div>
+                </div>
+                <div class="terminal-body" id="terminalBody"></div>
+            </section>
+
+            <p class="footer">
+                Payloads captured 2026-04-06 from a live Graphonomous v0.3.2 MCP session.
+                Node IDs, edge types, weights, and costs are authentic.
+                Dijkstra cost = -log(confidence) + recency_decay(age/168h) + type_cost.
+            </p>
+        </div>
+
+        <script>
+const data = {
+  A: {
+    label: "A \u00b7 Shortest path (k=1)",
+    kpis: [
+      { label: "Algorithm", value: "Dijkstra", note: "O((V+E) log V) binary heap" },
+      { label: "Hops", value: "3", note: "ROI \u2192 design \u2192 impl \u2192 summary" },
+      { label: "Total cost", value: "0.591", note: "causal + causal + supports" },
+      { label: "Paths found", value: "1", note: "single shortest (k=1)" },
+      { label: "Subgraph", value: "10 nodes", note: "12 edges in BFS expansion" }
+    ],
+    timeline: [
+      {
+        role: "user", actor: "Developer",
+        text: "How did the ROI roadmap lead to the batch implementation? Trace the evidence chain.",
+        snippetName: "user_query.txt",
+        snippet: { question: "Trace provenance: ROI roadmap \u2192 batch implementation summary", from: "node_28f17...(ROI ranking)", to: "node_a0496...(batch summary)" }
+      },
+      {
+        role: "assistant", actor: "Graphonomous",
+        text: "I'll use trace_evidence_path to find the lowest-cost evidence chain between the ROI roadmap node and the batch implementation summary...",
+        snippetName: "trace_evidence_path call",
+        snippet: {
+          tool: "trace_evidence_path",
+          arguments: {
+            from: "node_28f17ccef3921982e18bb344f1822a4f",
+            to: "node_a04968816a7a5beae1cbfbd5d56a18c3",
+            k: 1,
+            bidirectional: true
+          }
+        }
+      },
+      {
+        role: "assistant", actor: "Graphonomous",
+        text: "Found 1 path, 3 hops, total cost 0.591:\n\n  ROI Roadmap \u2500[causal, w=0.9]\u2192 Toposort Design\n  Toposort Design \u2500[causal, w=0.85]\u2192 DAG Implementation\n  DAG Implementation \u2500[supports, w=0.8]\u2192 Batch Summary\n\nThe chain is strong: 2 causal edges (free cost) and 1 supports edge (0.1 type cost). The 0.591 total cost comes mainly from confidence decay and the supports edge type penalty.",
+        snippetName: "trace_evidence_path result",
+        snippet: {
+          status: "ok",
+          from: "node_28f17ccef3921982e18bb344f1822a4f",
+          to: "node_a04968816a7a5beae1cbfbd5d56a18c3",
+          path_count: 1,
+          paths: [{
+            nodes: [
+              "node_28f17ccef3921982e18bb344f1822a4f",
+              "node_c1a11fb13520e3fd96f4972064685e6d",
+              "node_1d3cbb4967c87a6e25a848cae4e199f1",
+              "node_a04968816a7a5beae1cbfbd5d56a18c3"
+            ],
+            edges: [
+              { id: "edge_868cc6...", edge_type: "causal", weight: 0.9 },
+              { id: "edge_5999ad...", edge_type: "causal", weight: 0.85 },
+              { id: "edge_87c184...", edge_type: "supports", weight: 0.8 }
+            ],
+            hop_count: 3,
+            total_cost: 0.5912
+          }],
+          reverse_paths: []
+        }
+      }
+    ],
+    trace: [
+      { name: "trace_evidence_path", latency: "", status: "ok", note: "k=1, 1 path found, cost 0.591, 3 hops" }
+    ],
+    paths: [
+      {
+        label: "Shortest path (cost 0.591)",
+        cost: 0.5912, costClass: "cost-low",
+        chain: [
+          { type: "node", text: "ROI Roadmap", id: "28f17..." },
+          { type: "edge", text: "causal w=0.9" },
+          { type: "node", text: "Toposort Design", id: "c1a11..." },
+          { type: "edge", text: "causal w=0.85" },
+          { type: "node", text: "DAG Impl", id: "1d3cb..." },
+          { type: "edge", text: "supports w=0.8" },
+          { type: "node", text: "Batch Summary", id: "a0496..." }
+        ]
+      }
+    ]
+  },
+
+  B: {
+    label: "B \u00b7 Alternate paths (k=3)",
+    kpis: [
+      { label: "Algorithm", value: "Yen's", note: "K-shortest via Dijkstra + spur" },
+      { label: "Hops", value: "3 + 3", note: "both paths have 3 hops" },
+      { label: "Costs", value: "0.591", note: "both paths tied at equal cost" },
+      { label: "Paths found", value: "2 of 3", note: "only 2 distinct paths exist" },
+      { label: "Diversity", value: "100%", note: "paths share 0 intermediate nodes" }
+    ],
+    timeline: [
+      {
+        role: "user", actor: "Developer",
+        text: "Find all alternate evidence paths from the ROI roadmap to the batch implementation. I want to see if there are diverse reasoning chains.",
+        snippetName: "user_query.txt",
+        snippet: { question: "K-shortest paths: ROI roadmap \u2192 batch summary", from: "node_28f17...(ROI ranking)", to: "node_a0496...(batch summary)", k: 3 }
+      },
+      {
+        role: "assistant", actor: "Graphonomous",
+        text: "Running trace_evidence_path with k=3 to find up to 3 alternate evidence chains...",
+        snippetName: "trace_evidence_path call",
+        snippet: {
+          tool: "trace_evidence_path",
+          arguments: {
+            from: "node_28f17ccef3921982e18bb344f1822a4f",
+            to: "node_a04968816a7a5beae1cbfbd5d56a18c3",
+            k: 3,
+            bidirectional: true
+          }
+        }
+      },
+      {
+        role: "assistant", actor: "Graphonomous",
+        text: "Found 2 distinct paths (only 2 exist, even though k=3 was requested):\n\nPath 1 (cost 0.591):\n  ROI \u2500[causal]\u2192 Toposort Design \u2500[causal]\u2192 DAG Impl \u2500[supports]\u2192 Batch Summary\n\nPath 2 (cost 0.591):\n  ROI \u2500[causal]\u2192 Dijkstra Design \u2500[causal]\u2192 Dijkstra Impl \u2500[supports]\u2192 Batch Summary\n\nBoth paths have identical cost (0.591) but share ZERO intermediate nodes \u2014 the conclusion has fully diverse provenance through two independent algorithm implementation chains. This is strong evidence: the batch summary is supported by two independent causal chains.",
+        snippetName: "trace_evidence_path result",
+        snippet: {
+          status: "ok",
+          from: "node_28f17ccef3921982e18bb344f1822a4f",
+          to: "node_a04968816a7a5beae1cbfbd5d56a18c3",
+          path_count: 2,
+          paths: [
+            {
+              nodes: [
+                "node_28f17ccef3921982e18bb344f1822a4f",
+                "node_c1a11fb13520e3fd96f4972064685e6d",
+                "node_1d3cbb4967c87a6e25a848cae4e199f1",
+                "node_a04968816a7a5beae1cbfbd5d56a18c3"
+              ],
+              edges: [
+                { id: "edge_868cc6...", edge_type: "causal", weight: 0.9 },
+                { id: "edge_5999ad...", edge_type: "causal", weight: 0.85 },
+                { id: "edge_87c184...", edge_type: "supports", weight: 0.8 }
+              ],
+              hop_count: 3, total_cost: 0.5912
+            },
+            {
+              nodes: [
+                "node_28f17ccef3921982e18bb344f1822a4f",
+                "node_01a5d83455169bbb47abcbaa2611fab8",
+                "node_15bb660d902400c8028de033866d4c72",
+                "node_a04968816a7a5beae1cbfbd5d56a18c3"
+              ],
+              edges: [
+                { id: "edge_0c1a3d...", edge_type: "causal", weight: 0.9 },
+                { id: "edge_20e9d9...", edge_type: "causal", weight: 0.85 },
+                { id: "edge_d9cf01...", edge_type: "supports", weight: 0.8 }
+              ],
+              hop_count: 3, total_cost: 0.5912
+            }
+          ],
+          reverse_paths: []
+        }
+      },
+      {
+        role: "assistant", actor: "Graphonomous",
+        text: "The two paths diverge at the roadmap: one flows through the Toposort design spec (Kahn's algorithm) and the other through the Dijkstra design spec (weighted shortest path). Both converge at the batch implementation summary via supports edges. Zero shared intermediates = maximum provenance diversity.",
+        snippetName: "diversity_analysis.txt",
+        snippet: {
+          path_1_intermediates: ["Toposort Design (node_c1a11...)", "DAG Implementation (node_1d3cb...)"],
+          path_2_intermediates: ["Dijkstra Design (node_01a5d...)", "Dijkstra Implementation (node_15bb6...)"],
+          shared_intermediates: [],
+          diversity_score: 1.0,
+          interpretation: "Fully diverse provenance \u2014 the conclusion is independently supported by two causal chains"
+        }
+      }
+    ],
+    trace: [
+      { name: "trace_evidence_path", latency: "", status: "ok", note: "k=3, 2 paths found, both cost 0.591" }
+    ],
+    paths: [
+      {
+        label: "Path 1: via Toposort (cost 0.591)",
+        cost: 0.5912, costClass: "cost-low",
+        chain: [
+          { type: "node", text: "ROI Roadmap", id: "28f17..." },
+          { type: "edge", text: "causal w=0.9" },
+          { type: "node", text: "Toposort Design", id: "c1a11..." },
+          { type: "edge", text: "causal w=0.85" },
+          { type: "node", text: "DAG Impl", id: "1d3cb..." },
+          { type: "edge", text: "supports w=0.8" },
+          { type: "node", text: "Batch Summary", id: "a0496..." }
+        ]
+      },
+      {
+        label: "Path 2: via Dijkstra (cost 0.591)",
+        cost: 0.5912, costClass: "cost-low",
+        chain: [
+          { type: "node", text: "ROI Roadmap", id: "28f17..." },
+          { type: "edge", text: "causal w=0.9" },
+          { type: "node", text: "Dijkstra Design", id: "01a5d..." },
+          { type: "edge", text: "causal w=0.85" },
+          { type: "node", text: "Dijkstra Impl", id: "15bb6..." },
+          { type: "edge", text: "supports w=0.8" },
+          { type: "node", text: "Batch Summary", id: "a0496..." }
+        ]
+      }
+    ]
+  }
+};
+
+let current = "A", step = -1, playing = false, playTimer = null;
+
+const $chat = document.getElementById("chat");
+const $kpis = document.getElementById("kpis");
+const $pathViz = document.getElementById("pathViz");
+const $trace = document.getElementById("trace");
+const $tabs = document.getElementById("tabs");
+const $panes = document.getElementById("panes");
+const $termBody = document.getElementById("terminalBody");
+const $termStatus = document.getElementById("terminalStatus");
+const $scenA = document.getElementById("scenarioA");
+const $scenB = document.getElementById("scenarioB");
+const $play = document.getElementById("playBtn");
+const $next = document.getElementById("nextBtn");
+const $reset = document.getElementById("resetBtn");
+
+function renderKPIs(kpis) {
+  $kpis.innerHTML = kpis.map(k => `
+    <div class="kpi">
+      <div class="kpi-label">${k.label}</div>
+      <div class="kpi-value">${k.value}</div>
+      <div class="kpi-note">${k.note}</div>
+    </div>`).join("");
+}
+
+function renderPaths(paths) {
+  if (!paths || !paths.length) { $pathViz.innerHTML = '<div style="color:var(--dim);font-size:12px;padding:8px">Run trace to see paths...</div>'; return; }
+  $pathViz.innerHTML = paths.map(p => {
+    const chain = p.chain.map(c => {
+      if (c.type === "node") return `<span class="path-node" title="${c.id}">${c.text}</span>`;
+      return `<span class="path-edge">\u2500[<span class="etype">${c.text}</span>]\u2192</span>`;
+    }).join("");
+    return `
+      <div class="path-card">
+        <div class="path-header">
+          <span class="path-label">${p.label}</span>
+          <span class="path-cost ${p.costClass}">\u03a3 ${p.cost.toFixed(4)}</span>
+        </div>
+        <div class="path-chain">${chain}</div>
+      </div>`;
+  }).join("");
+}
+
+function renderTrace(traces) {
+  $trace.innerHTML = traces.map(t => `
+    <div class="trace-item">
+      <div class="trace-head">
+        <span class="trace-name">${t.name}</span>
+        <span class="trace-latency">${t.latency}</span>
+      </div>
+      <span class="pill ${t.status === 'ok' ? 'ok' : 'warn'}">${t.status}</span>
+      <div style="color:var(--dim);font-size:11px;margin-top:3px">${t.note}</div>
+    </div>`).join("");
+}
+
+function renderBubble(item) {
+  const bubble = document.createElement("div");
+  bubble.className = `bubble ${item.role}`;
+  let html = `<div class="meta"><span>${item.actor}</span><span>${item.role}</span></div>`;
+  html += `<div class="text">${item.text}</div>`;
+  if (item.snippet) {
+    html += `<div class="code"><div class="code-head"><span>${item.snippetName}</span><span>JSON</span></div>`;
+    html += `<pre>${JSON.stringify(item.snippet, null, 2)}</pre></div>`;
+  }
+  bubble.innerHTML = html;
+  $chat.appendChild(bubble);
+  $chat.scrollTop = $chat.scrollHeight;
+
+  // terminal log
+  if (item.snippet && item.snippet.tool) {
+    const line = document.createElement("div");
+    line.innerHTML = `<span class="tool">\u25b6 ${item.snippet.tool}</span>(${Object.keys(item.snippet.arguments || {}).join(", ")})`;
+    $termBody.appendChild(line);
+    $termStatus.textContent = "calling...";
+  } else if (item.snippet && item.snippet.status) {
+    const line = document.createElement("div");
+    const costStr = item.snippet.paths ? ` <span class="cost">cost=${item.snippet.paths[0].total_cost}</span>` : "";
+    line.innerHTML = `  <span class="ok">\u2713 ${item.snippet.status}</span> ${item.snippet.path_count || 0} path(s)${costStr}`;
+    $termBody.appendChild(line);
+    $termStatus.textContent = "complete";
+  }
+  $termBody.scrollTop = $termBody.scrollHeight;
+}
+
+function showStep() {
+  const d = data[current];
+  if (step < 0) return;
+  const item = d.timeline[step];
+  if (!item) return;
+  renderBubble(item);
+
+  // Show paths after the result bubble
+  if (item.snippet && item.snippet.paths) {
+    renderPaths(d.paths);
+    renderTrace(d.trace);
+  }
+
+  // Payload tabs
+  if (item.snippet) {
+    const tabId = `tab_${step}`;
+    const tab = document.createElement("button");
+    tab.className = "tab";
+    tab.textContent = item.snippetName;
+    tab.onclick = () => {
+      document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+      document.querySelectorAll(".pane").forEach(p => p.classList.remove("active"));
+      tab.classList.add("active");
+      document.getElementById(tabId).classList.add("active");
+    };
+    $tabs.appendChild(tab);
+
+    const pane = document.createElement("div");
+    pane.className = "pane";
+    pane.id = tabId;
+    pane.innerHTML = `<pre>${JSON.stringify(item.snippet, null, 2)}</pre>`;
+    $panes.appendChild(pane);
+
+    // activate latest
+    document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+    document.querySelectorAll(".pane").forEach(p => p.classList.remove("active"));
+    tab.classList.add("active");
+    pane.classList.add("active");
+  }
+}
+
+function nextStep() {
+  const d = data[current];
+  if (step >= d.timeline.length - 1) { stopPlay(); return; }
+  step++;
+  showStep();
+}
+
+function resetDemo() {
+  stopPlay();
+  step = -1;
+  $chat.innerHTML = "";
+  $tabs.innerHTML = "";
+  $panes.innerHTML = "";
+  $termBody.innerHTML = "";
+  $termStatus.textContent = "idle";
+  const d = data[current];
+  renderKPIs(d.kpis);
+  $pathViz.innerHTML = '<div style="color:var(--dim);font-size:12px;padding:8px">Run trace to see paths...</div>';
+  $trace.innerHTML = "";
+}
+
+function switchScenario(key) {
+  current = key;
+  $scenA.className = key === "A" ? "btn-active" : "";
+  $scenB.className = key === "B" ? "btn-active" : "";
+  resetDemo();
+}
+
+function startPlay() {
+  if (playing) return;
+  playing = true;
+  $play.textContent = "\u23f8 Pause";
+  function tick() {
+    const d = data[current];
+    if (step >= d.timeline.length - 1) { stopPlay(); return; }
+    nextStep();
+    playTimer = setTimeout(tick, 1800);
+  }
+  tick();
+}
+
+function stopPlay() {
+  playing = false;
+  $play.textContent = "\u25b6 Play demo";
+  clearTimeout(playTimer);
+}
+
+$scenA.onclick = () => switchScenario("A");
+$scenB.onclick = () => switchScenario("B");
+$play.onclick = () => playing ? stopPlay() : startPlay();
+$next.onclick = nextStep;
+$reset.onclick = resetDemo;
+
+// Init
+switchScenario("A");
+        </script>
+    </body>
+</html>

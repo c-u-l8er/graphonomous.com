@@ -531,6 +531,26 @@
                     grid-template-columns: 1fr;
                 }
             }
+            @media (max-width: 700px) {
+                #types .reveal[style*="grid-template-columns"] {
+                    grid-template-columns: 1fr !important;
+                }
+                #tg-filters { flex-direction: column; align-items: flex-start !important; }
+            }
+            .tg-filter-btn {
+                font-family: var(--mono);
+                font-size: 0.62rem;
+                letter-spacing: 0.05em;
+                padding: 0.3rem 0.7rem;
+                border: 1px solid var(--border);
+                border-radius: 100px;
+                background: transparent;
+                color: var(--dim);
+                cursor: pointer;
+                transition: all 0.2s;
+            }
+            .tg-filter-btn:hover { border-color: rgba(74,245,198,0.3); color: var(--text); }
+            .tg-filter-btn.active { background: rgba(74,245,198,0.1); border-color: rgba(74,245,198,0.4); color: var(--cyan); }
             .tech-list li {
                 font-family: var(--mono);
                 font-size: 0.8rem;
@@ -699,6 +719,7 @@
                     <li><a href="benchmarks/index.html">Benchmarks</a></li>
                     <li><a href="#capabilities">Capabilities</a></li>
                     <li><a href="#how">How It Works</a></li>
+                    <li><a href="#types">Type System</a></li>
                     <li><a href="#tools">MCP Tools</a></li>
                     <li>
                         <a href="https://docs.graphonomous.com">Docs</a>
@@ -1021,6 +1042,59 @@
 
         <hr class="sep" />
 
+        <!-- TYPE SYSTEM GRAPH -->
+        <section id="types">
+            <div class="container">
+                <div class="section-label reveal">Knowledge Graph</div>
+                <h2 class="reveal">See what Graphonomous <em>actually stores</em></h2>
+                <p class="lead reveal">
+                    This is a real knowledge graph &mdash; 6 node types, 17 edge types, and the workflows that connect them.
+                    Filter by scenario to follow the learning loop, watch &kappa;-routing detect circular reasoning,
+                    or see belief revision propagate corrections through the graph. Hover any node for details. Drag to rearrange.
+                </p>
+
+                <!-- Filter controls -->
+                <div class="reveal" id="tg-filters" style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-bottom:1.25rem;align-items:center;">
+                    <span style="font-family:var(--mono);font-size:0.65rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--dim);margin-right:0.25rem;">Scenario:</span>
+                    <button class="tg-filter-btn active" data-scenario="all">All</button>
+                    <button class="tg-filter-btn" data-scenario="learning">Learning Loop</button>
+                    <button class="tg-filter-btn" data-scenario="kappa">&kappa;-Routing</button>
+                    <button class="tg-filter-btn" data-scenario="belief">Belief Revision</button>
+                    <button class="tg-filter-btn" data-scenario="attention">Attention &amp; Goals</button>
+                    <button class="tg-filter-btn" data-scenario="forgetting">Forgetting</button>
+                    <span style="flex:1"></span>
+                    <span style="font-family:var(--mono);font-size:0.65rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--dim);margin-right:0.25rem;">Edges:</span>
+                    <button class="tg-filter-btn tg-edge-btn active" data-edgegroup="all">All</button>
+                    <button class="tg-filter-btn tg-edge-btn" data-edgegroup="causal">Causal</button>
+                    <button class="tg-filter-btn tg-edge-btn" data-edgegroup="structural">Structural</button>
+                    <button class="tg-filter-btn tg-edge-btn" data-edgegroup="epistemic">Epistemic</button>
+                    <button class="tg-filter-btn tg-edge-btn" data-edgegroup="temporal">Temporal</button>
+                </div>
+
+                <!-- Status bar -->
+                <div id="tg-status" style="font-family:var(--mono);font-size:0.65rem;color:var(--dim);margin-bottom:0.75rem;letter-spacing:0.03em;"></div>
+
+                <div class="reveal" style="position:relative; width:100%; aspect-ratio:16/10; min-height:520px; background:var(--surface); border:1px solid var(--border); border-radius:10px; overflow:hidden; margin-bottom:2rem;">
+                    <canvas id="type-graph-canvas" style="position:absolute;top:0;left:0;width:100%;height:100%;"></canvas>
+                    <div id="type-graph-tooltip" style="position:absolute;display:none;pointer-events:none;background:rgba(14,16,23,0.95);border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:0.65rem 0.85rem;font-family:var(--mono);font-size:0.68rem;color:var(--text);z-index:10;max-width:320px;line-height:1.6;box-shadow:0 4px 20px rgba(0,0,0,0.4);"></div>
+                </div>
+
+                <!-- Legend -->
+                <div class="reveal" style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;">
+                    <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1.5rem;">
+                        <h3 style="font-family:var(--mono);font-size:0.7rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--cyan);margin-bottom:1rem;">Node Types (6)</h3>
+                        <div id="node-type-legend" style="display:grid;grid-template-columns:1fr;gap:0.5rem;font-family:var(--mono);font-size:0.72rem;"></div>
+                    </div>
+                    <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1.5rem;">
+                        <h3 style="font-family:var(--mono);font-size:0.7rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--rose);margin-bottom:1rem;">Edge Types (17)</h3>
+                        <div id="edge-type-legend" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.4rem;font-family:var(--mono);font-size:0.72rem;"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <hr class="sep" />
+
         <!-- MCP TOOLS -->
         <section id="tools">
             <div class="container">
@@ -1045,7 +1119,7 @@
                         <tr>
                             <td>store_edge</td>
                             <td>
-                                Create directed relationships between nodes (16
+                                Create directed relationships between nodes (17
                                 edge types, default weight 0.3)
                             </td>
                         </tr>
@@ -1867,6 +1941,602 @@
             window.addEventListener("resize", init);
             init();
             animate();
+
+            // ─── Type System Interactive Graph ───
+            (function () {
+                // ── Type definitions ──
+                const NODE_TYPES = [
+                    { name: "semantic",   color: "#7b8cff", desc: "Facts, concepts, architecture" },
+                    { name: "procedural", color: "#ff6b8a", desc: "How-to knowledge, workflows" },
+                    { name: "episodic",   color: "#4af5c6", desc: "Observed events, interactions" },
+                    { name: "temporal",   color: "#ffc46b", desc: "Time-indexed patterns" },
+                    { name: "outcome",    color: "#f97316", desc: "Empirical results of actions" },
+                    { name: "goal",       color: "#a78bfa", desc: "Durable intent over long horizons" },
+                ];
+
+                const EDGE_TYPES = [
+                    { name: "causes",          color: "#ff6b8a", dash: false, group: "causal" },
+                    { name: "causal",          color: "#ff6b8a", dash: true,  group: "causal" },
+                    { name: "supports",        color: "#4af5c6", dash: false, group: "epistemic" },
+                    { name: "contradicts",     color: "#ef4444", dash: false, group: "epistemic" },
+                    { name: "derived_from",    color: "#7b8cff", dash: false, group: "causal" },
+                    { name: "related_to",      color: "#6b6980", dash: false, group: "structural" },
+                    { name: "related",         color: "#6b6980", dash: true,  group: "structural" },
+                    { name: "part_of",         color: "#a78bfa", dash: false, group: "structural" },
+                    { name: "follows",         color: "#ffc46b", dash: false, group: "structural" },
+                    { name: "supersedes",      color: "#f97316", dash: false, group: "epistemic" },
+                    { name: "superseded_by",   color: "#f97316", dash: true,  group: "epistemic" },
+                    { name: "depends_on",      color: "#60a5fa", dash: false, group: "structural" },
+                    { name: "similar_to",      color: "#818cf8", dash: true,  group: "epistemic" },
+                    { name: "resolves",        color: "#34d399", dash: false, group: "causal" },
+                    { name: "temporal_before",  color: "#fbbf24", dash: false, group: "temporal" },
+                    { name: "temporal_after",   color: "#fbbf24", dash: true,  group: "temporal" },
+                    { name: "co_occurs",       color: "#94a3b8", dash: true,  group: "temporal" },
+                ];
+
+                // ── Graph data: ~45 nodes telling 5 interconnected stories ──
+                // type indices: 0=semantic 1=procedural 2=episodic 3=temporal 4=outcome 5=goal
+                // scenarios: learning, kappa, belief, attention, forgetting
+                const N = [
+                    // ── Learning Loop (store → retrieve → learn → consolidate) ──
+                    { id:"store-node",     label:"store_node",              type:1, scenarios:["learning"],    conf:0.95, desc:"Persist atomic knowledge with type + confidence" },
+                    { id:"store-edge",     label:"store_edge",              type:1, scenarios:["learning"],    conf:0.95, desc:"Create typed directed relationships (17 types)" },
+                    { id:"retrieve",       label:"retrieve_context",        type:1, scenarios:["learning"],    conf:0.95, desc:"Hybrid semantic + BM25 + graph expansion retrieval" },
+                    { id:"agent-reasons",  label:"Agent reasons",           type:2, scenarios:["learning"],    conf:0.80, desc:"Agent uses retrieved context to inform decisions" },
+                    { id:"action-taken",   label:"Action taken",            type:2, scenarios:["learning"],    conf:0.75, desc:"Agent executes a decision grounded in retrieved knowledge" },
+                    { id:"learn-outcome",  label:"learn_from_outcome",      type:1, scenarios:["learning"],    conf:0.95, desc:"Report success/failure → update confidence on causal nodes" },
+                    { id:"outcome-success",label:"Outcome: success",        type:4, scenarios:["learning"],    conf:0.90, desc:"Action succeeded → confidence increases on causal chain" },
+                    { id:"outcome-fail",   label:"Outcome: failure",        type:4, scenarios:["learning"],    conf:0.85, desc:"Action failed → confidence decreases on causal chain" },
+                    { id:"consolidate",    label:"run_consolidation",       type:1, scenarios:["learning"],    conf:0.95, desc:"7-stage pipeline: decay → prune → strengthen → merge → promote → abstract" },
+                    { id:"decay-conf",     label:"1. Decay confidence",     type:1, scenarios:["learning"],    conf:0.90, desc:"Time-based decay: unused knowledge loses confidence" },
+                    { id:"prune-weak",     label:"2. Prune weak",           type:1, scenarios:["learning"],    conf:0.90, desc:"Remove nodes below confidence threshold" },
+                    { id:"strengthen",     label:"4. Strengthen co-active", type:1, scenarios:["learning"],    conf:0.90, desc:"Boost edges between frequently co-retrieved nodes" },
+                    { id:"merge-similar",  label:"5. Merge similar",        type:1, scenarios:["learning"],    conf:0.90, desc:"Merge >95% embedding-similar nodes (deduplicate)" },
+                    { id:"gen-abstract",   label:"7. Generate abstractions",type:1, scenarios:["learning"],    conf:0.90, desc:"Create semantic nodes from episodic clusters (pattern extraction)" },
+
+                    // ── κ-Routing (topology → SCC → deliberation) ──
+                    { id:"topology",       label:"topology_analyze",        type:1, scenarios:["kappa"],       conf:0.95, desc:"Compute SCCs via Tarjan's algorithm + κ invariant" },
+                    { id:"dag-region",     label:"DAG region (κ=0)",        type:0, scenarios:["kappa"],       conf:0.95, desc:"Acyclic knowledge → single-pass retrieval is sufficient" },
+                    { id:"scc-region",     label:"SCC region (κ>0)",        type:0, scenarios:["kappa"],       conf:0.95, desc:"Circular dependencies detected → deliberation required" },
+                    { id:"fast-route",     label:"Route: fast",             type:4, scenarios:["kappa"],       conf:0.95, desc:"κ=0: skip deliberation, return retrieved context directly" },
+                    { id:"delib-route",    label:"Route: deliberate",       type:4, scenarios:["kappa"],       conf:0.95, desc:"κ>0: activate deliberation with κ-scaled budget" },
+                    { id:"deliberate",     label:"deliberate",              type:1, scenarios:["kappa"],       conf:0.95, desc:"κ-driven reasoning over cyclic regions with fault-line focus" },
+                    { id:"fault-line",     label:"Fault-line edge",         type:0, scenarios:["kappa"],       conf:0.90, desc:"Weakest assumption in the cycle — where to focus reasoning" },
+                    { id:"delib-budget",   label:"Deliberation budget",     type:0, scenarios:["kappa"],       conf:0.90, desc:"max_iterations, agent_count, confidence_threshold scaled by κ" },
+                    // Business cycle SCC example
+                    { id:"market-share",   label:"Market share",            type:0, scenarios:["kappa"],       conf:0.70, desc:"Example: market share drives product investment (part of business cycle SCC)" },
+                    { id:"revenue",        label:"Revenue",                 type:0, scenarios:["kappa"],       conf:0.70, desc:"Revenue funds R&D → circular dependency with market share" },
+                    { id:"rd-invest",      label:"R&D investment",          type:0, scenarios:["kappa"],       conf:0.70, desc:"R&D improves product quality → feeds back to market share" },
+                    { id:"prod-quality",   label:"Product quality",         type:0, scenarios:["kappa"],       conf:0.70, desc:"Quality drives market share — closes the business cycle loop" },
+
+                    // ── Belief Revision (expand → contradict → revise → propagate) ──
+                    { id:"belief-revise",  label:"belief_revise",           type:1, scenarios:["belief"],      conf:0.95, desc:"AGM-style expand/revise/contract with confidence propagation" },
+                    { id:"old-belief",     label:"\"Cache TTL is 5m\"",     type:0, scenarios:["belief"],      conf:0.40, desc:"Old belief — confidence reduced after revision (was 0.85)" },
+                    { id:"new-belief",     label:"\"Cache TTL is 15m\"",    type:0, scenarios:["belief"],      conf:0.90, desc:"New belief from production measurement — supersedes old" },
+                    { id:"contradiction",  label:"belief_contradictions",   type:1, scenarios:["belief"],      conf:0.95, desc:"Detect conflicts via semantic similarity ≥0.75 + negation markers" },
+                    { id:"conf-propagate", label:"Confidence propagation",  type:2, scenarios:["belief"],      conf:0.85, desc:"Revision cascades: dependents of revised node lose 0.6× confidence" },
+                    { id:"dependent-a",    label:"Auth token expiry",       type:0, scenarios:["belief"],      conf:0.55, desc:"Depended on old cache TTL — confidence reduced by cascade (was 0.80)" },
+                    { id:"dependent-b",    label:"Rate limiter config",     type:0, scenarios:["belief"],      conf:0.50, desc:"Also depended on old cache TTL — confidence reduced by cascade (was 0.75)" },
+                    { id:"evidence-path",  label:"trace_evidence_path",     type:1, scenarios:["belief"],      conf:0.95, desc:"Dijkstra / Yen's K-shortest paths for provenance tracing" },
+
+                    // ── Attention & Goals (survey → triage → dispatch) ──
+                    { id:"goal-ship",      label:"Ship v0.4",              type:5, scenarios:["attention"],    conf:0.85, desc:"Goal: active, progress 60%, horizon medium, deadline Q2" },
+                    { id:"goal-bench",     label:"Hit 95% LongMemEval",   type:5, scenarios:["attention"],    conf:0.75, desc:"Goal: active, progress 40%, depends on embedding improvements" },
+                    { id:"goal-gdpr",      label:"GDPR compliance",       type:5, scenarios:["attention"],    conf:0.90, desc:"Goal: active, progress 80%, blocks production deployment" },
+                    { id:"attn-survey",    label:"attention_survey",        type:1, scenarios:["attention"],    conf:0.95, desc:"Rank goals by urgency + coverage gaps + topology signals" },
+                    { id:"attn-dispatch",  label:"attention_run_cycle",     type:1, scenarios:["attention"],    conf:0.95, desc:"Survey → triage → dispatch with autonomy controls (observe/advise/act)" },
+                    { id:"coverage-q",     label:"coverage_query",          type:1, scenarios:["attention"],    conf:0.95, desc:"Returns coverage_score, confidence_mean, gaps → act/learn/escalate" },
+                    { id:"route-act",      label:"Route: act",             type:4, scenarios:["attention"],    conf:0.85, desc:"Adequate knowledge + clean topology → proceed with action" },
+                    { id:"route-learn",    label:"Route: learn",           type:4, scenarios:["attention"],    conf:0.70, desc:"Gaps identified but recoverable → gather more context first" },
+                    { id:"route-escalate", label:"Route: escalate",        type:4, scenarios:["attention"],    conf:0.60, desc:"Insufficient knowledge or complex topology → human/multi-agent review" },
+                    { id:"epistemic-f",    label:"epistemic_frontier",      type:1, scenarios:["attention"],    conf:0.95, desc:"Wilson score intervals → where one more data point reduces uncertainty most" },
+                    { id:"review-goal",    label:"review_goal",             type:1, scenarios:["attention"],    conf:0.95, desc:"Coverage-driven decision gate: should we proceed or gather more?" },
+
+                    // ── Forgetting (soft → hard → cascade → policy → GDPR) ──
+                    { id:"forget-soft",    label:"Soft forget (hide)",      type:1, scenarios:["forgetting"],  conf:0.95, desc:"Hide from retrieval, preserve graph structure (reversible)" },
+                    { id:"forget-hard",    label:"Hard forget (delete)",    type:1, scenarios:["forgetting"],  conf:0.95, desc:"Permanent delete with constant-time unlink (no recovery)" },
+                    { id:"forget-cascade", label:"Cascade forget",          type:1, scenarios:["forgetting"],  conf:0.95, desc:"Delete node + orphaned dependents (remove clusters)" },
+                    { id:"forget-policy",  label:"forget_by_policy",        type:1, scenarios:["forgetting"],  conf:0.95, desc:"Hybrid LRU + priority-decay automatic pruning with dry-run preview" },
+                    { id:"gdpr-erase",     label:"gdpr_erase",              type:1, scenarios:["forgetting"],  conf:0.95, desc:"GDPR Article 17 permanent deletion with audit trail" },
+                    { id:"stale-node",     label:"Stale API endpoint",      type:0, scenarios:["forgetting"],  conf:0.15, desc:"Low confidence, low access — candidate for policy pruning" },
+                    { id:"orphan-node",    label:"Orphaned fact",           type:0, scenarios:["forgetting"],  conf:0.20, desc:"No edges remaining after parent deleted — cascade target" },
+                    { id:"user-pii",       label:"User PII record",         type:2, scenarios:["forgetting"],  conf:0.95, desc:"Personal data requiring GDPR-compliant erasure with audit" },
+                ];
+
+                // Edge definitions — all 17 edge types used, semantically meaningful
+                // Edge type indices match EDGE_TYPES array
+                const E = [
+                    // ── Learning Loop ──
+                    { s:"store-node",  d:"retrieve",       t:8,  sc:["learning"] },        // follows
+                    { s:"store-edge",  d:"retrieve",       t:8,  sc:["learning"] },        // follows
+                    { s:"retrieve",    d:"agent-reasons",  t:0,  sc:["learning"] },        // causes
+                    { s:"agent-reasons",d:"action-taken",  t:0,  sc:["learning"] },        // causes
+                    { s:"action-taken",d:"learn-outcome",  t:8,  sc:["learning"] },        // follows
+                    { s:"learn-outcome",d:"outcome-success",t:0, sc:["learning"] },        // causes
+                    { s:"learn-outcome",d:"outcome-fail",  t:0,  sc:["learning"] },        // causes
+                    { s:"outcome-success",d:"retrieve",    t:2,  sc:["learning"] },        // supports (feedback loop)
+                    { s:"outcome-fail",d:"retrieve",       t:2,  sc:["learning"] },        // supports (feedback loop)
+                    { s:"consolidate", d:"decay-conf",     t:7,  sc:["learning"] },        // part_of
+                    { s:"consolidate", d:"prune-weak",     t:7,  sc:["learning"] },        // part_of
+                    { s:"consolidate", d:"strengthen",     t:7,  sc:["learning"] },        // part_of
+                    { s:"consolidate", d:"merge-similar",  t:7,  sc:["learning"] },        // part_of
+                    { s:"consolidate", d:"gen-abstract",   t:7,  sc:["learning"] },        // part_of
+                    { s:"decay-conf",  d:"prune-weak",     t:8,  sc:["learning"] },        // follows
+                    { s:"prune-weak",  d:"strengthen",     t:8,  sc:["learning"] },        // follows
+                    { s:"strengthen",  d:"merge-similar",  t:8,  sc:["learning"] },        // follows
+                    { s:"merge-similar",d:"gen-abstract",  t:8,  sc:["learning"] },        // follows
+                    { s:"outcome-success",d:"consolidate", t:14, sc:["learning"] },        // temporal_before
+
+                    // ── κ-Routing ──
+                    { s:"retrieve",    d:"topology",       t:0,  sc:["kappa","learning"] },// causes
+                    { s:"topology",    d:"dag-region",     t:4,  sc:["kappa"] },           // derived_from
+                    { s:"topology",    d:"scc-region",     t:4,  sc:["kappa"] },           // derived_from
+                    { s:"dag-region",  d:"fast-route",     t:0,  sc:["kappa"] },           // causes
+                    { s:"scc-region",  d:"delib-route",    t:0,  sc:["kappa"] },           // causes
+                    { s:"delib-route", d:"deliberate",     t:0,  sc:["kappa"] },           // causes
+                    { s:"deliberate",  d:"fault-line",     t:11, sc:["kappa"] },           // depends_on
+                    { s:"deliberate",  d:"delib-budget",   t:11, sc:["kappa"] },           // depends_on
+                    // Business cycle SCC (κ=1)
+                    { s:"market-share",d:"revenue",        t:0,  sc:["kappa"] },           // causes
+                    { s:"revenue",     d:"rd-invest",      t:0,  sc:["kappa"] },           // causes
+                    { s:"rd-invest",   d:"prod-quality",   t:0,  sc:["kappa"] },           // causes
+                    { s:"prod-quality",d:"market-share",   t:1,  sc:["kappa"] },           // causal (closes loop)
+                    { s:"scc-region",  d:"market-share",   t:5,  sc:["kappa"] },           // related_to
+                    { s:"fault-line",  d:"prod-quality",   t:5,  sc:["kappa"] },           // related_to (weakest edge)
+
+                    // ── Belief Revision ──
+                    { s:"contradiction",d:"old-belief",    t:3,  sc:["belief"] },          // contradicts
+                    { s:"contradiction",d:"new-belief",    t:3,  sc:["belief"] },          // contradicts
+                    { s:"new-belief",  d:"old-belief",     t:9,  sc:["belief"] },          // supersedes
+                    { s:"old-belief",  d:"new-belief",     t:10, sc:["belief"] },          // superseded_by
+                    { s:"belief-revise",d:"new-belief",    t:0,  sc:["belief"] },          // causes
+                    { s:"belief-revise",d:"conf-propagate",t:0,  sc:["belief"] },          // causes
+                    { s:"conf-propagate",d:"dependent-a",  t:0,  sc:["belief"] },          // causes
+                    { s:"conf-propagate",d:"dependent-b",  t:0,  sc:["belief"] },          // causes
+                    { s:"dependent-a", d:"old-belief",     t:11, sc:["belief"] },          // depends_on
+                    { s:"dependent-b", d:"old-belief",     t:11, sc:["belief"] },          // depends_on
+                    { s:"old-belief",  d:"new-belief",     t:12, sc:["belief"] },          // similar_to
+                    { s:"evidence-path",d:"old-belief",    t:4,  sc:["belief"] },          // derived_from (traces provenance)
+                    { s:"evidence-path",d:"new-belief",    t:4,  sc:["belief"] },          // derived_from
+
+                    // ── Attention & Goals ──
+                    { s:"attn-survey", d:"goal-ship",      t:5,  sc:["attention"] },       // related_to
+                    { s:"attn-survey", d:"goal-bench",     t:5,  sc:["attention"] },       // related_to
+                    { s:"attn-survey", d:"goal-gdpr",      t:5,  sc:["attention"] },       // related_to
+                    { s:"attn-survey", d:"attn-dispatch",  t:8,  sc:["attention"] },       // follows
+                    { s:"coverage-q",  d:"route-act",      t:0,  sc:["attention"] },       // causes
+                    { s:"coverage-q",  d:"route-learn",    t:0,  sc:["attention"] },       // causes
+                    { s:"coverage-q",  d:"route-escalate", t:0,  sc:["attention"] },       // causes
+                    { s:"goal-ship",   d:"goal-bench",     t:11, sc:["attention"] },       // depends_on
+                    { s:"goal-gdpr",   d:"goal-ship",      t:14, sc:["attention"] },       // temporal_before
+                    { s:"review-goal", d:"coverage-q",     t:0,  sc:["attention"] },       // causes
+                    { s:"epistemic-f", d:"route-learn",    t:2,  sc:["attention"] },       // supports
+                    { s:"attn-dispatch",d:"review-goal",   t:8,  sc:["attention"] },       // follows
+                    { s:"goal-bench",  d:"retrieve",       t:6,  sc:["attention","learning"] }, // related
+
+                    // ── Forgetting ──
+                    { s:"forget-policy",d:"stale-node",    t:0,  sc:["forgetting"] },      // causes (prunes it)
+                    { s:"forget-cascade",d:"orphan-node",  t:0,  sc:["forgetting"] },      // causes
+                    { s:"gdpr-erase",  d:"user-pii",       t:0,  sc:["forgetting"] },      // causes
+                    { s:"forget-soft", d:"forget-hard",    t:8,  sc:["forgetting"] },      // follows (escalation path)
+                    { s:"forget-hard", d:"forget-cascade",  t:8,  sc:["forgetting"] },     // follows
+                    { s:"stale-node",  d:"orphan-node",    t:6,  sc:["forgetting"] },      // related (both prunable)
+                    { s:"stale-node",  d:"prune-weak",     t:16, sc:["forgetting","learning"] }, // co_occurs
+                    { s:"consolidate", d:"forget-policy",  t:13, sc:["forgetting","learning"] }, // resolves
+                    { s:"user-pii",    d:"dependent-a",    t:15, sc:["forgetting","belief"] },   // temporal_after
+                ];
+
+                // Build index maps
+                const nodeMap = {};
+                N.forEach((n, i) => { n._i = i; n.x = 0; n.y = 0; nodeMap[n.id] = i; });
+                E.forEach(e => { e._si = nodeMap[e.s]; e._di = nodeMap[e.d]; });
+
+                // ── Filter state ──
+                let activeScenario = "all";
+                let activeEdgeGroup = "all";
+
+                function isNodeVisible(n) {
+                    if (activeScenario === "all") return true;
+                    return n.scenarios.includes(activeScenario);
+                }
+                function isEdgeVisible(e) {
+                    const et = EDGE_TYPES[e.t];
+                    if (activeEdgeGroup !== "all" && et.group !== activeEdgeGroup) return false;
+                    if (activeScenario === "all") return true;
+                    return e.sc.includes(activeScenario);
+                }
+
+                function getVisibleNodes() { return N.filter(isNodeVisible); }
+                function getVisibleEdges() {
+                    const visNodeIds = new Set(getVisibleNodes().map(n => n._i));
+                    return E.filter(e => isEdgeVisible(e) && visNodeIds.has(e._si) && visNodeIds.has(e._di));
+                }
+
+                // ── Canvas setup ──
+                const tgCanvas = document.getElementById("type-graph-canvas");
+                const tgCtx = tgCanvas.getContext("2d");
+                const tooltip = document.getElementById("type-graph-tooltip");
+                const statusBar = document.getElementById("tg-status");
+                let tgW, tgH, logW, logH;
+                let hoveredNode = null;
+                let dragging = null;
+                let dragOffX = 0, dragOffY = 0;
+
+                function tgResize() {
+                    const rect = tgCanvas.parentElement.getBoundingClientRect();
+                    const dpr = devicePixelRatio || 1;
+                    tgW = tgCanvas.width = rect.width * dpr;
+                    tgH = tgCanvas.height = rect.height * dpr;
+                    logW = rect.width;
+                    logH = rect.height;
+                    tgCanvas.style.width = rect.width + "px";
+                    tgCanvas.style.height = rect.height + "px";
+                    tgCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+                    layoutNodes();
+                }
+
+                function layoutNodes() {
+                    const vis = getVisibleNodes();
+                    if (!vis.length) return;
+                    const pad = 50;
+                    const w = logW - pad * 2, h = logH - pad * 2;
+                    const cx = logW / 2, cy = logH / 2;
+
+                    if (activeScenario === "all") {
+                        // Force-directed initial positions by scenario cluster
+                        const clusters = { learning: {cx: 0.25, cy: 0.3}, kappa: {cx: 0.75, cy: 0.3}, belief: {cx: 0.25, cy: 0.75}, attention: {cx: 0.75, cy: 0.75}, forgetting: {cx: 0.5, cy: 0.55} };
+                        vis.forEach(n => {
+                            if (dragging !== null && N[dragging]?.id === n.id) return;
+                            const cl = clusters[n.scenarios[0]] || {cx:0.5, cy:0.5};
+                            const angle = Math.random() * Math.PI * 2;
+                            const spread = 0.12 + Math.random() * 0.08;
+                            n.x = pad + w * (cl.cx + Math.cos(angle) * spread);
+                            n.y = pad + h * (cl.cy + Math.sin(angle) * spread);
+                        });
+                    } else {
+                        // Arc layout for filtered view
+                        const r = Math.min(w, h) * 0.38;
+                        vis.forEach((n, i) => {
+                            if (dragging !== null && N[dragging]?.id === n.id) return;
+                            const angle = (i / vis.length) * Math.PI * 2 - Math.PI / 2;
+                            n.x = cx + Math.cos(angle) * r;
+                            n.y = cy + Math.sin(angle) * r;
+                        });
+                    }
+
+                    // Simple force-directed relaxation (30 iterations)
+                    const visEdges = getVisibleEdges();
+                    for (let iter = 0; iter < 40; iter++) {
+                        // Repulsion between visible nodes
+                        for (let i = 0; i < vis.length; i++) {
+                            for (let j = i + 1; j < vis.length; j++) {
+                                const a = vis[i], b = vis[j];
+                                let dx = b.x - a.x, dy = b.y - a.y;
+                                let dist = Math.sqrt(dx * dx + dy * dy) || 1;
+                                if (dist < 120) {
+                                    const force = (120 - dist) * 0.15;
+                                    const fx = (dx / dist) * force, fy = (dy / dist) * force;
+                                    if (!(dragging !== null && N[dragging]?.id === a.id)) { a.x -= fx; a.y -= fy; }
+                                    if (!(dragging !== null && N[dragging]?.id === b.id)) { b.x += fx; b.y += fy; }
+                                }
+                            }
+                        }
+                        // Attraction along edges
+                        visEdges.forEach(e => {
+                            const a = N[e._si], b = N[e._di];
+                            let dx = b.x - a.x, dy = b.y - a.y;
+                            let dist = Math.sqrt(dx * dx + dy * dy) || 1;
+                            const idealDist = activeScenario === "all" ? 90 : 110;
+                            if (dist > idealDist) {
+                                const force = (dist - idealDist) * 0.02;
+                                const fx = (dx / dist) * force, fy = (dy / dist) * force;
+                                if (!(dragging !== null && N[dragging]?.id === a.id)) { a.x += fx; a.y += fy; }
+                                if (!(dragging !== null && N[dragging]?.id === b.id)) { b.x -= fx; b.y -= fy; }
+                            }
+                        });
+                        // Boundary constraint
+                        vis.forEach(n => {
+                            n.x = Math.max(pad, Math.min(logW - pad, n.x));
+                            n.y = Math.max(pad, Math.min(logH - pad, n.y));
+                        });
+                    }
+                }
+
+                function drawArrow(x1, y1, x2, y2, color, dashed, highlight, dimmed) {
+                    const dx = x2 - x1, dy = y2 - y1;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    if (dist < 1) return;
+                    const ux = dx / dist, uy = dy / dist;
+                    const r = 16;
+                    const ax = x2 - ux * r, ay = y2 - uy * r;
+                    const sx = x1 + ux * r, sy = y1 + uy * r;
+                    const alpha = dimmed ? 0.08 : highlight ? 0.9 : 0.3;
+
+                    tgCtx.save();
+                    tgCtx.strokeStyle = color;
+                    tgCtx.globalAlpha = alpha;
+                    tgCtx.lineWidth = highlight ? 2.5 : 1;
+                    if (dashed) tgCtx.setLineDash([5, 4]);
+                    tgCtx.beginPath();
+                    tgCtx.moveTo(sx, sy);
+                    tgCtx.lineTo(ax, ay);
+                    tgCtx.stroke();
+                    tgCtx.setLineDash([]);
+
+                    const aSize = highlight ? 8 : 5;
+                    tgCtx.fillStyle = color;
+                    tgCtx.beginPath();
+                    tgCtx.moveTo(ax, ay);
+                    tgCtx.lineTo(ax - ux * aSize - uy * aSize * 0.5, ay - uy * aSize + ux * aSize * 0.5);
+                    tgCtx.lineTo(ax - ux * aSize + uy * aSize * 0.5, ay - uy * aSize - ux * aSize * 0.5);
+                    tgCtx.closePath();
+                    tgCtx.fill();
+                    tgCtx.restore();
+                }
+
+                function drawTypeGraph() {
+                    tgCtx.clearRect(0, 0, logW, logH);
+                    tgCtx.fillStyle = "#0e1017";
+                    tgCtx.fillRect(0, 0, logW, logH);
+
+                    const vis = getVisibleNodes();
+                    const visSet = new Set(vis.map(n => n._i));
+                    const visEdges = getVisibleEdges();
+
+                    // Hover highlighting
+                    const hlEdges = new Set();
+                    const hlNodes = new Set();
+                    if (hoveredNode !== null && visSet.has(hoveredNode)) {
+                        hlNodes.add(hoveredNode);
+                        visEdges.forEach((e, i) => {
+                            if (e._si === hoveredNode || e._di === hoveredNode) {
+                                hlEdges.add(i);
+                                hlNodes.add(e._si);
+                                hlNodes.add(e._di);
+                            }
+                        });
+                    }
+                    const hasHover = hoveredNode !== null && visSet.has(hoveredNode);
+
+                    // Scenario cluster labels (all view only)
+                    if (activeScenario === "all") {
+                        const labels = [
+                            { text: "LEARNING LOOP", x: 0.25, y: 0.12, color: "#4af5c680" },
+                            { text: "κ-ROUTING", x: 0.75, y: 0.12, color: "#ff6b8a80" },
+                            { text: "BELIEF REVISION", x: 0.25, y: 0.92, color: "#7b8cff80" },
+                            { text: "ATTENTION & GOALS", x: 0.75, y: 0.92, color: "#a78bfa80" },
+                            { text: "FORGETTING", x: 0.5, y: 0.42, color: "#f9731680" },
+                        ];
+                        tgCtx.save();
+                        tgCtx.font = "600 9px 'JetBrains Mono', monospace";
+                        tgCtx.textAlign = "center";
+                        labels.forEach(l => {
+                            tgCtx.fillStyle = l.color;
+                            tgCtx.fillText(l.text, logW * l.x, logH * l.y);
+                        });
+                        tgCtx.restore();
+                    }
+
+                    // Draw edges
+                    visEdges.forEach((e, i) => {
+                        const src = N[e._si], dst = N[e._di];
+                        const et = EDGE_TYPES[e.t];
+                        const hl = hlEdges.has(i);
+                        const dim = hasHover && !hl;
+                        drawArrow(src.x, src.y, dst.x, dst.y, et.color, et.dash, hl, dim);
+
+                        if (hl) {
+                            const mx = (src.x + dst.x) / 2;
+                            const my = (src.y + dst.y) / 2;
+                            tgCtx.save();
+                            tgCtx.font = "600 8px 'JetBrains Mono', monospace";
+                            tgCtx.fillStyle = "#0e1017";
+                            tgCtx.globalAlpha = 0.7;
+                            const tw = tgCtx.measureText(et.name).width;
+                            tgCtx.fillRect(mx - tw/2 - 3, my - 12, tw + 6, 14);
+                            tgCtx.globalAlpha = 1;
+                            tgCtx.fillStyle = et.color;
+                            tgCtx.textAlign = "center";
+                            tgCtx.fillText(et.name, mx, my - 2);
+                            tgCtx.restore();
+                        }
+                    });
+
+                    // Draw nodes
+                    vis.forEach(n => {
+                        const nt = NODE_TYPES[n.type];
+                        const hl = !hasHover || hlNodes.has(n._i);
+                        const isHovered = hoveredNode === n._i;
+                        const r = isHovered ? 18 : hl ? 14 : 11;
+                        const alpha = hl ? 1 : 0.15;
+
+                        // Glow
+                        tgCtx.save();
+                        tgCtx.globalAlpha = alpha * 0.12;
+                        const grad = tgCtx.createRadialGradient(n.x, n.y, 0, n.x, n.y, r * 3.5);
+                        grad.addColorStop(0, nt.color);
+                        grad.addColorStop(1, "transparent");
+                        tgCtx.fillStyle = grad;
+                        tgCtx.beginPath();
+                        tgCtx.arc(n.x, n.y, r * 3.5, 0, Math.PI * 2);
+                        tgCtx.fill();
+                        tgCtx.restore();
+
+                        // Confidence ring (partial arc)
+                        tgCtx.save();
+                        tgCtx.globalAlpha = alpha * 0.5;
+                        tgCtx.strokeStyle = nt.color;
+                        tgCtx.lineWidth = 2;
+                        tgCtx.beginPath();
+                        tgCtx.arc(n.x, n.y, r + 3, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * n.conf);
+                        tgCtx.stroke();
+                        tgCtx.restore();
+
+                        // Node circle
+                        tgCtx.save();
+                        tgCtx.globalAlpha = alpha;
+                        tgCtx.fillStyle = "#0e1017";
+                        tgCtx.strokeStyle = nt.color;
+                        tgCtx.lineWidth = isHovered ? 2.5 : 1.5;
+                        tgCtx.beginPath();
+                        tgCtx.arc(n.x, n.y, r, 0, Math.PI * 2);
+                        tgCtx.fill();
+                        tgCtx.stroke();
+
+                        // Colored center dot
+                        tgCtx.fillStyle = nt.color;
+                        tgCtx.beginPath();
+                        tgCtx.arc(n.x, n.y, isHovered ? 5 : 3.5, 0, Math.PI * 2);
+                        tgCtx.fill();
+                        tgCtx.restore();
+
+                        // Label
+                        if (hl || activeScenario !== "all") {
+                            tgCtx.save();
+                            tgCtx.globalAlpha = alpha * 0.9;
+                            tgCtx.font = (isHovered ? "600 " : "500 ") + "9px 'JetBrains Mono', monospace";
+                            tgCtx.fillStyle = nt.color;
+                            tgCtx.textAlign = "center";
+                            const label = n.label.length > 22 ? n.label.slice(0, 20) + "…" : n.label;
+                            // Background for readability
+                            const tw = tgCtx.measureText(label).width;
+                            tgCtx.fillStyle = "rgba(14,16,23,0.75)";
+                            tgCtx.fillRect(n.x - tw/2 - 2, n.y + r + 5, tw + 4, 13);
+                            tgCtx.fillStyle = nt.color;
+                            tgCtx.fillText(label, n.x, n.y + r + 15);
+                            tgCtx.restore();
+                        }
+                    });
+
+                    // Update status
+                    const vn = vis.length, ve = visEdges.length;
+                    const etUsed = new Set(visEdges.map(e => EDGE_TYPES[e.t].name));
+                    const ntUsed = new Set(vis.map(n => NODE_TYPES[n.type].name));
+                    statusBar.textContent = `${vn} nodes (${ntUsed.size} types) · ${ve} edges (${etUsed.size} types)` +
+                        (activeScenario !== "all" ? ` · Scenario: ${activeScenario}` : "") +
+                        (activeEdgeGroup !== "all" ? ` · Edge filter: ${activeEdgeGroup}` : "");
+                }
+
+                // ── Hit detection ──
+                function nodeAt(mx, my) {
+                    const vis = getVisibleNodes();
+                    for (let i = vis.length - 1; i >= 0; i--) {
+                        const n = vis[i];
+                        const dx = mx - n.x, dy = my - n.y;
+                        if (dx * dx + dy * dy < 22 * 22) return n._i;
+                    }
+                    return null;
+                }
+
+                // ── Mouse interaction ──
+                tgCanvas.addEventListener("mousemove", (e) => {
+                    const rect = tgCanvas.getBoundingClientRect();
+                    const mx = e.clientX - rect.left;
+                    const my = e.clientY - rect.top;
+
+                    if (dragging !== null) {
+                        N[dragging].x = Math.max(30, Math.min(logW - 30, mx + dragOffX));
+                        N[dragging].y = Math.max(30, Math.min(logH - 30, my + dragOffY));
+                        drawTypeGraph();
+                        return;
+                    }
+
+                    const hit = nodeAt(mx, my);
+                    if (hit !== hoveredNode) {
+                        hoveredNode = hit;
+                        drawTypeGraph();
+                    }
+                    if (hit !== null) {
+                        const n = N[hit];
+                        const nt = NODE_TYPES[n.type];
+                        const visEdges = getVisibleEdges();
+                        const connEdges = visEdges.filter(e => e._si === hit || e._di === hit);
+                        const edgeLabels = connEdges.slice(0, 8).map(e => {
+                            const et = EDGE_TYPES[e.t];
+                            const other = e._si === hit ? N[e._di] : N[e._si];
+                            const dir = e._si === hit ? "\u2192" : "\u2190";
+                            return `<span style="color:${et.color}">${et.name}</span> ${dir} ${other.label}`;
+                        }).join("<br>");
+                        const more = connEdges.length > 8 ? `<br><span style="color:var(--dim)">+${connEdges.length - 8} more</span>` : "";
+                        tooltip.innerHTML =
+                            `<strong style="color:${nt.color};font-size:0.75rem">${n.label}</strong><br>` +
+                            `<span style="color:var(--dim)">type:</span> <span style="color:${nt.color}">${nt.name}</span> ` +
+                            `<span style="color:var(--dim)">conf:</span> <span style="color:${n.conf >= 0.7 ? nt.color : '#f97316'}">${n.conf.toFixed(2)}</span><br>` +
+                            `<span style="color:var(--dim);font-size:0.63rem">${n.desc}</span><br>` +
+                            (edgeLabels ? `<div style="margin-top:4px;border-top:1px solid rgba(255,255,255,0.06);padding-top:4px">${edgeLabels}${more}</div>` : "");
+                        tooltip.style.display = "block";
+                        const ttLeft = mx + 20 + 320 > logW ? mx - 340 : mx + 20;
+                        tooltip.style.left = Math.max(4, ttLeft) + "px";
+                        tooltip.style.top = Math.max(4, Math.min(my + 16, logH - 200)) + "px";
+                        tgCanvas.style.cursor = "grab";
+                    } else {
+                        tooltip.style.display = "none";
+                        tgCanvas.style.cursor = "default";
+                    }
+                });
+
+                tgCanvas.addEventListener("mousedown", (e) => {
+                    const rect = tgCanvas.getBoundingClientRect();
+                    const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+                    const hit = nodeAt(mx, my);
+                    if (hit !== null) {
+                        dragging = hit;
+                        dragOffX = N[hit].x - mx;
+                        dragOffY = N[hit].y - my;
+                        tgCanvas.style.cursor = "grabbing";
+                        e.preventDefault();
+                    }
+                });
+
+                tgCanvas.addEventListener("mouseup", () => { dragging = null; });
+                tgCanvas.addEventListener("mouseleave", () => {
+                    dragging = null;
+                    hoveredNode = null;
+                    tooltip.style.display = "none";
+                    drawTypeGraph();
+                });
+
+                // ── Filter controls ──
+                document.querySelectorAll("#tg-filters .tg-filter-btn:not(.tg-edge-btn)").forEach(btn => {
+                    btn.addEventListener("click", () => {
+                        document.querySelectorAll("#tg-filters .tg-filter-btn:not(.tg-edge-btn)").forEach(b => b.classList.remove("active"));
+                        btn.classList.add("active");
+                        activeScenario = btn.dataset.scenario;
+                        hoveredNode = null;
+                        tooltip.style.display = "none";
+                        tgResize();
+                        drawTypeGraph();
+                    });
+                });
+                document.querySelectorAll("#tg-filters .tg-edge-btn").forEach(btn => {
+                    btn.addEventListener("click", () => {
+                        document.querySelectorAll("#tg-filters .tg-edge-btn").forEach(b => b.classList.remove("active"));
+                        btn.classList.add("active");
+                        activeEdgeGroup = btn.dataset.edgegroup;
+                        drawTypeGraph();
+                    });
+                });
+
+                // ── Legends ──
+                const nlDiv = document.getElementById("node-type-legend");
+                NODE_TYPES.forEach(t => {
+                    nlDiv.innerHTML += `<div style="color:var(--dim)"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${t.color};margin-right:6px;vertical-align:middle;"></span><strong style="color:${t.color};font-weight:500">${t.name}</strong> — ${t.desc}</div>`;
+                });
+                const elDiv = document.getElementById("edge-type-legend");
+                EDGE_TYPES.forEach(t => {
+                    const style = t.dash ? "border-top:2px dashed " + t.color : "border-top:2px solid " + t.color;
+                    elDiv.innerHTML += `<div style="color:var(--dim)"><span style="display:inline-block;width:14px;${style};margin-right:6px;vertical-align:middle;"></span>${t.name}<span style="color:var(--muted);margin-left:4px">(${t.group})</span></div>`;
+                });
+
+                // ── Init ──
+                window.addEventListener("resize", () => { tgResize(); drawTypeGraph(); });
+                setTimeout(() => { tgResize(); drawTypeGraph(); }, 150);
+
+                const tgObs = new IntersectionObserver((entries) => {
+                    if (entries[0].isIntersecting) { tgResize(); drawTypeGraph(); }
+                }, { threshold: 0.1 });
+                tgObs.observe(tgCanvas.parentElement);
+            })();
         </script>
     </body>
 </html>

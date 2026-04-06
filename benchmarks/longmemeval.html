@@ -196,10 +196,18 @@
                 color: var(--muted);
                 margin-top: 0.25rem;
             }
-            .val-green { color: var(--cyan); }
-            .val-blue { color: var(--blue); }
-            .val-amber { color: var(--amber); }
-            .val-rose { color: var(--rose); }
+            .val-green {
+                color: var(--cyan);
+            }
+            .val-blue {
+                color: var(--blue);
+            }
+            .val-amber {
+                color: var(--amber);
+            }
+            .val-rose {
+                color: var(--rose);
+            }
 
             /* SECTION HEADERS */
             .section-header {
@@ -360,9 +368,15 @@
                 font-weight: 600;
                 margin-bottom: 0.5rem;
             }
-            .gap-card.critical h3 { color: var(--rose); }
-            .gap-card.moderate h3 { color: var(--amber); }
-            .gap-card.strength h3 { color: var(--cyan); }
+            .gap-card.critical h3 {
+                color: var(--rose);
+            }
+            .gap-card.moderate h3 {
+                color: var(--amber);
+            }
+            .gap-card.strength h3 {
+                color: var(--cyan);
+            }
             .gap-card p {
                 font-size: 0.9rem;
                 color: #aaa;
@@ -378,9 +392,18 @@
                 border-radius: 3px;
                 margin-bottom: 0.5rem;
             }
-            .gap-tag.red { background: rgba(255, 107, 138, 0.15); color: var(--rose); }
-            .gap-tag.yellow { background: rgba(255, 196, 107, 0.15); color: var(--amber); }
-            .gap-tag.green { background: rgba(74, 245, 198, 0.1); color: var(--cyan); }
+            .gap-tag.red {
+                background: rgba(255, 107, 138, 0.15);
+                color: var(--rose);
+            }
+            .gap-tag.yellow {
+                background: rgba(255, 196, 107, 0.15);
+                color: var(--amber);
+            }
+            .gap-tag.green {
+                background: rgba(74, 245, 198, 0.1);
+                color: var(--cyan);
+            }
 
             /* ROADMAP */
             .roadmap {
@@ -537,7 +560,7 @@
                     <li><a href="index.html" class="active">Benchmarks</a></li>
                     <li>
                         <a
-                            href="https://github.com/ampersand-systems/graphonomous"
+                            href="https://github.com/c-u-l8er/graphonomous"
                             target="_blank"
                             >GitHub</a
                         >
@@ -559,16 +582,17 @@
             <h1>
                 92.6% on 500 questions.<br />
                 <span style="color: var(--dim)"
-                    >Competitive with frontier-LLM systems &mdash; using only local models.</span
+                    >Competitive with frontier-LLM systems &mdash; using only
+                    local models.</span
                 >
             </h1>
             <p class="subline">
                 Graphonomous v0.3.3 evaluated against LongMemEval (ICLR 2025)
                 &mdash; the standard benchmark for long-term conversational
-                memory. 500 questions across 940 sessions, 10,866 turns.
-                No cloud LLM calls: a 500M-param local embedding model +
-                cross-encoder reranker + κ-topology retrieval. We publish
-                the full results, gaps, and roadmap.
+                memory. 500 questions across 940 sessions, 10,866 turns. No
+                cloud LLM calls: a 500M-param local embedding model +
+                cross-encoder reranker + κ-topology retrieval. We publish the
+                full results, gaps, and roadmap.
             </p>
         </header>
 
@@ -663,9 +687,7 @@
                             "
                         ></div>
                     </div>
-                    <div class="bar-value" style="color: var(--dim)">
-                        94.9%
-                    </div>
+                    <div class="bar-value" style="color: var(--dim)">94.9%</div>
                 </div>
                 <div class="bar-row">
                     <div class="bar-label">Hindsight v0.4.19</div>
@@ -679,12 +701,12 @@
                             "
                         ></div>
                     </div>
-                    <div class="bar-value" style="color: var(--dim)">
-                        94.6%
-                    </div>
+                    <div class="bar-value" style="color: var(--dim)">94.6%</div>
                 </div>
                 <div class="bar-row">
-                    <div class="bar-label">Graphonomous v0.3.3 (local 500M)</div>
+                    <div class="bar-label">
+                        Graphonomous v0.3.3 (local 500M)
+                    </div>
                     <div class="bar-track">
                         <div
                             class="bar-fill"
@@ -705,9 +727,7 @@
                             "
                         ></div>
                     </div>
-                    <div class="bar-value" style="color: var(--dim)">
-                        86.0%
-                    </div>
+                    <div class="bar-value" style="color: var(--dim)">86.0%</div>
                 </div>
                 <div class="bar-row">
                     <div class="bar-label">Supermemory (Gemini-3)</div>
@@ -721,9 +741,7 @@
                             "
                         ></div>
                     </div>
-                    <div class="bar-value" style="color: var(--dim)">
-                        85.2%
-                    </div>
+                    <div class="bar-value" style="color: var(--dim)">85.2%</div>
                 </div>
                 <div class="bar-row">
                     <div class="bar-label">Mastra OM (GPT-4o)</div>
@@ -737,9 +755,7 @@
                             "
                         ></div>
                     </div>
-                    <div class="bar-value" style="color: var(--dim)">
-                        84.2%
-                    </div>
+                    <div class="bar-value" style="color: var(--dim)">84.2%</div>
                 </div>
                 <div class="bar-row">
                     <div class="bar-label">Zep / Graphiti</div>
@@ -753,9 +769,7 @@
                             "
                         ></div>
                     </div>
-                    <div class="bar-value" style="color: var(--dim)">
-                        71.2%
-                    </div>
+                    <div class="bar-value" style="color: var(--dim)">71.2%</div>
                 </div>
                 <div class="bar-row">
                     <div class="bar-label">Letta / MemGPT</div>
@@ -769,9 +783,7 @@
                             "
                         ></div>
                     </div>
-                    <div class="bar-value" style="color: var(--dim)">
-                        65.0%
-                    </div>
+                    <div class="bar-value" style="color: var(--dim)">65.0%</div>
                 </div>
                 <div class="bar-row">
                     <div class="bar-label">GPT-4 128K (full ctx)</div>
@@ -785,9 +797,7 @@
                             "
                         ></div>
                     </div>
-                    <div class="bar-value" style="color: var(--dim)">
-                        63.5%
-                    </div>
+                    <div class="bar-value" style="color: var(--dim)">63.5%</div>
                 </div>
             </div>
 
@@ -813,8 +823,8 @@
                 <p>
                     LongMemEval tests five core long-term memory abilities.
                     Graphonomous now delivers strong performance across all
-                    five, with knowledge updates, multi-session reasoning,
-                    and abstention all above 95%. Temporal reasoning is the
+                    five, with knowledge updates, multi-session reasoning, and
+                    abstention all above 95%. Temporal reasoning is the
                     remaining gap and the current optimization focus.
                 </p>
             </div>
@@ -946,12 +956,12 @@
             </div>
 
             <div class="notes">
-                <strong>Temporal reasoning</strong> is now the weakest category at
-                87.6%. Relative-date parsing (&ldquo;two weeks ago&rdquo;,
+                <strong>Temporal reasoning</strong> is now the weakest category
+                at 87.6%. Relative-date parsing (&ldquo;two weeks ago&rdquo;,
                 &ldquo;last Saturday&rdquo;) landed in v0.3.3 and closed 1.7pp
                 of the gap, but queries asking about session chronology (first,
-                last, before/after) still depend on session_rank heuristics
-                that miss some fine-grained ordering. <strong>Preferences</strong>
+                last, before/after) still depend on session_rank heuristics that
+                miss some fine-grained ordering. <strong>Preferences</strong>
                 jumped from 67.7% &rarr; 84.8% across v0.3.2 and v0.3.3 via
                 adaptive candidate expansion; the remaining gap is vocabulary
                 mismatch on narrative answers (e.g., "recommend a show" &rarr;
@@ -967,9 +977,10 @@
                 <p>
                     30 questions in LongMemEval are "false premise" &mdash; they
                     ask about information that was never mentioned. A correct
-                    system should recognize it doesn't know and abstain. In v0.3.2
-                    we missed 9 of 30. v0.3.3 misses just one &mdash; via learned
-                    ANN score statistics rather than hand-tuned heuristics.
+                    system should recognize it doesn't know and abstain. In
+                    v0.3.2 we missed 9 of 30. v0.3.3 misses just one &mdash; via
+                    learned ANN score statistics rather than hand-tuned
+                    heuristics.
                 </p>
             </div>
 
@@ -978,7 +989,8 @@
                     <span class="gap-tag green">Fix</span>
                     <h3>Learned ANN-statistics threshold</h3>
                     <p>
-                        We replaced the <code>gap &lt; 0.05 OR mean &lt; 0.25</code>
+                        We replaced the
+                        <code>gap &lt; 0.05 OR mean &lt; 0.25</code>
                         heuristic with an abstention signal derived from
                         pre-rerank ANN score distributions: the top-k cosine
                         similarity mean, standard deviation, and decay rate.
@@ -991,10 +1003,10 @@
                     <h3>29 of 30 correct</h3>
                     <p>
                         v0.3.3 abstains correctly on 29 of 30 false-premise
-                        questions &mdash; closing most of the gap to agentmemory's
-                        30/30. The remaining miss is a close call where a
-                        near-synonym session scored highly on both ANN and
-                        cross-encoder.
+                        questions &mdash; closing most of the gap to
+                        agentmemory's 30/30. The remaining miss is a close call
+                        where a near-synonym session scored highly on both ANN
+                        and cross-encoder.
                     </p>
                 </div>
                 <div class="gap-card moderate">
@@ -1101,9 +1113,10 @@
                     <span class="gap-tag green">Strength</span>
                     <h3>Latency: 1.5s mean</h3>
                     <p>
-                        From 20s+ down to 1.5s mean across 500 queries. Cross-encoder
-                        reranking dominates at ~1.3s; all other stages under 150ms.
-                        Competitive with systems that call frontier LLM APIs per query.
+                        From 20s+ down to 1.5s mean across 500 queries.
+                        Cross-encoder reranking dominates at ~1.3s; all other
+                        stages under 150ms. Competitive with systems that call
+                        frontier LLM APIs per query.
                     </p>
                 </div>
             </div>
@@ -1115,11 +1128,12 @@
                 <div class="section-label">Ablation &mdash; κ-Topology</div>
                 <h2>Does topology help on LongMemEval?</h2>
                 <p>
-                    We ran the same 500-question oracle split twice: once with κ-topology
-                    signals enabled (SCC detection, fault-line boost, κ-routing in ranking)
-                    and once with topology disabled. LongMemEval is dominated by single-hop
-                    recall, so cyclic reasoning doesn&rsquo;t activate often &mdash; but it
-                    still contributes measurable lift on session ranking.
+                    We ran the same 500-question oracle split twice: once with
+                    κ-topology signals enabled (SCC detection, fault-line boost,
+                    κ-routing in ranking) and once with topology disabled.
+                    LongMemEval is dominated by single-hop recall, so cyclic
+                    reasoning doesn&rsquo;t activate often &mdash; but it still
+                    contributes measurable lift on session ranking.
                 </p>
             </div>
 
@@ -1161,13 +1175,20 @@
                     </tbody>
                 </table>
             </div>
-            <p style="margin-top: 1.5rem; color: var(--dim); font-style: italic">
-                Interpretation: topology wins +0.3pp qa and +0.8pp session_hit at
-                effectively zero latency cost (topology stage is 12ms mean). This is
-                a conservative floor &mdash; LongMemEval is single-hop by construction.
-                Expected topology lift on multi-hop benchmarks (MuSiQue, 2WikiMultihopQA,
-                StrategyQA) is considerably higher because κ-routing and SCC propagation
-                are designed for cyclic/compositional reasoning.
+            <p
+                style="
+                    margin-top: 1.5rem;
+                    color: var(--dim);
+                    font-style: italic;
+                "
+            >
+                Interpretation: topology wins +0.3pp qa and +0.8pp session_hit
+                at effectively zero latency cost (topology stage is 12ms mean).
+                This is a conservative floor &mdash; LongMemEval is single-hop
+                by construction. Expected topology lift on multi-hop benchmarks
+                (MuSiQue, 2WikiMultihopQA, StrategyQA) is considerably higher
+                because κ-routing and SCC propagation are designed for
+                cyclic/compositional reasoning.
             </p>
         </section>
 
@@ -1279,8 +1300,8 @@
                             Add LLM judge + answer generation to benchmark.
                             Current QA proxy is a useful directional metric but
                             not comparable to competitor evaluations. Feed
-                            (question, retrieved_context) to Claude, judge answer
-                            quality 0/0.5/1. Establish honest baseline.
+                            (question, retrieved_context) to Claude, judge
+                            answer quality 0/0.5/1. Establish honest baseline.
                         </p>
                         <div class="phase-impact">
                             Impact: measurement accuracy, no direct score change
@@ -1294,7 +1315,10 @@
                         <div class="phase-line"></div>
                     </div>
                     <div class="phase-content">
-                        <h3>Phase 2 &mdash; Abstention + Preferences <span class="best">(shipped v0.3.3)</span></h3>
+                        <h3>
+                            Phase 2 &mdash; Abstention + Preferences
+                            <span class="best">(shipped v0.3.3)</span>
+                        </h3>
                         <p>
                             Replaced heuristic abstention with a learned
                             ANN-statistics threshold. Added fact-augmented key
@@ -1303,8 +1327,8 @@
                             boost rewards sessions with multiple strong hits.
                         </p>
                         <div class="phase-impact">
-                            Delivered: abstention 70.0% &rarr; 96.7%, preferences
-                            67.7% &rarr; 84.8%
+                            Delivered: abstention 70.0% &rarr; 96.7%,
+                            preferences 67.7% &rarr; 84.8%
                         </div>
                     </div>
                 </div>
@@ -1315,7 +1339,10 @@
                         <div class="phase-line"></div>
                     </div>
                     <div class="phase-content">
-                        <h3>Phase 3 &mdash; Temporal Intelligence (partial, +1&ndash;3pp remaining)</h3>
+                        <h3>
+                            Phase 3 &mdash; Temporal Intelligence (partial,
+                            +1&ndash;3pp remaining)
+                        </h3>
                         <p>
                             Dual timestamps (documentDate vs eventDate) and the
                             relative-date parser ("two weeks ago", "last
@@ -1336,7 +1363,10 @@
                         <div class="phase-line"></div>
                     </div>
                     <div class="phase-content">
-                        <h3>Phase 4 &mdash; Multi-Session Enhancement (partial, +2pp remaining)</h3>
+                        <h3>
+                            Phase 4 &mdash; Multi-Session Enhancement (partial,
+                            +2pp remaining)
+                        </h3>
                         <p>
                             Session-aggregate ranking (v0.3.3) lifted
                             multi-session to 89.7%. Next up: cross-session
@@ -1344,7 +1374,8 @@
                             chain-of-retrieval rounds for 3+ session stitching.
                         </p>
                         <div class="phase-impact">
-                            Delivered: multi-session 87% &rarr; 89.7%; target 92%+
+                            Delivered: multi-session 87% &rarr; 89.7%; target
+                            92%+
                         </div>
                     </div>
                 </div>
@@ -1355,12 +1386,14 @@
                         <div class="phase-line"></div>
                     </div>
                     <div class="phase-content">
-                        <h3>Phase 5 &mdash; Query Intelligence (+2&ndash;3pp)</h3>
+                        <h3>
+                            Phase 5 &mdash; Query Intelligence (+2&ndash;3pp)
+                        </h3>
                         <p>
                             Query expansion and reformulation (standard RAG
                             technique, rephrasing queries 3 ways). Adaptive
-                            retrieval depth based on query complexity. These
-                            are the techniques that push from good to SOTA.
+                            retrieval depth based on query complexity. These are
+                            the techniques that push from good to SOTA.
                         </p>
                         <div class="phase-impact">
                             Expected: overall 92.6% &rarr; 95%+
@@ -1391,9 +1424,9 @@
                     <h4>Retrieval Pipeline</h4>
                     <p>
                         Hybrid ANN (HNSW) + BM25 with reciprocal rank fusion.
-                        Cross-encoder reranking (ms-marco-MiniLM-L-6-v2).
-                        Graph neighborhood expansion (1&ndash;2 hops). Adaptive
-                        limits scaling with sqrt(node_count).
+                        Cross-encoder reranking (ms-marco-MiniLM-L-6-v2). Graph
+                        neighborhood expansion (1&ndash;2 hops). Adaptive limits
+                        scaling with sqrt(node_count).
                     </p>
                 </div>
                 <div class="method-card">
@@ -1409,8 +1442,8 @@
                     <p>
                         Self-contained QA proxy: 35% session hit + 25% keyword
                         recall + 20% session recall + 10% evidence recall + 10%
-                        NDCG. No external LLM judge. Abstention scored
-                        binary on confidence gap heuristic.
+                        NDCG. No external LLM judge. Abstention scored binary on
+                        confidence gap heuristic.
                     </p>
                 </div>
                 <div class="method-card">
@@ -1427,8 +1460,8 @@
                     <p>
                         LongMemEval oracle split (ICLR 2025). 500 questions
                         across 7 types testing 5 memory abilities. ~115K tokens
-                        per question context. Each question has 1&ndash;6 evidence
-                        snippets with session-level ground truth.
+                        per question context. Each question has 1&ndash;6
+                        evidence snippets with session-level ground truth.
                     </p>
                 </div>
             </div>
@@ -1464,17 +1497,23 @@
                                 calibration; 100% abstention via confidence
                                 scoring
                             </td>
-                            <td>Closed in v0.3.3: ANN-statistics threshold &mdash; 96.7% abstention</td>
+                            <td>
+                                Closed in v0.3.3: ANN-statistics threshold
+                                &mdash; 96.7% abstention
+                            </td>
                         </tr>
                         <tr>
                             <td class="td-system">OMEGA</td>
                             <td class="num best">95.4%</td>
                             <td>
-                                Local SQLite + ONNX; six-stage pipeline;
-                                five forgetting mechanisms; conflict detection;
-                                50ms retrieval
+                                Local SQLite + ONNX; six-stage pipeline; five
+                                forgetting mechanisms; conflict detection; 50ms
+                                retrieval
                             </td>
-                            <td>No forgetting policy; no conflict detection at write time</td>
+                            <td>
+                                No forgetting policy; no conflict detection at
+                                write time
+                            </td>
                         </tr>
                         <tr>
                             <td class="td-system">Mastra OM</td>
@@ -1484,17 +1523,24 @@
                                 compression; dated observations; stable context
                                 window
                             </td>
-                            <td>No reflector/consolidation at query time; no compression</td>
+                            <td>
+                                No reflector/consolidation at query time; no
+                                compression
+                            </td>
                         </tr>
                         <tr>
                             <td class="td-system">Hindsight v0.4.19</td>
                             <td class="num best">94.6%</td>
                             <td>
                                 World/Experience/Mental-Model memory banks;
-                                4-strategy parallel retrieval (semantic, keyword,
-                                graph, temporal) + RRF; auto-observations
+                                4-strategy parallel retrieval (semantic,
+                                keyword, graph, temporal) + RRF;
+                                auto-observations
                             </td>
-                            <td>Single unified graph; no opinion/entity separation</td>
+                            <td>
+                                Single unified graph; no opinion/entity
+                                separation
+                            </td>
                         </tr>
                         <tr>
                             <td class="td-system">Emergence AI</td>
@@ -1516,18 +1562,39 @@
         <!-- CALL TO ACTION -->
         <section class="container" style="text-align: center; padding: 4rem 0">
             <div class="section-label">Open Source</div>
-            <h2 style="font-family: var(--serif); font-weight: 400; font-size: clamp(1.6rem, 3vw, 2.2rem); margin-bottom: 1rem;">
+            <h2
+                style="
+                    font-family: var(--serif);
+                    font-weight: 400;
+                    font-size: clamp(1.6rem, 3vw, 2.2rem);
+                    margin-bottom: 1rem;
+                "
+            >
                 Help us close the gap
             </h2>
-            <p style="color: #aaa; max-width: 600px; margin: 0 auto 2rem; font-size: 1rem;">
+            <p
+                style="
+                    color: #aaa;
+                    max-width: 600px;
+                    margin: 0 auto 2rem;
+                    font-size: 1rem;
+                "
+            >
                 Graphonomous is open source. The benchmark harness, all results
                 data, and the roadmap are in the repo. Contributions
                 welcome&mdash;especially on abstention detection and temporal
                 reasoning.
             </p>
-            <div style="display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap;">
+            <div
+                style="
+                    display: flex;
+                    gap: 0.75rem;
+                    justify-content: center;
+                    flex-wrap: wrap;
+                "
+            >
                 <a
-                    href="https://github.com/ampersand-systems/graphonomous"
+                    href="https://github.com/c-u-l8er/graphonomous"
                     class="btn btn-primary"
                     target="_blank"
                     >View on GitHub</a
@@ -1538,7 +1605,9 @@
                     target="_blank"
                     >LongMemEval Paper</a
                 >
-                <a href="../index.html" class="btn btn-secondary">Back to Home</a>
+                <a href="../index.html" class="btn btn-secondary"
+                    >Back to Home</a
+                >
             </div>
         </section>
 

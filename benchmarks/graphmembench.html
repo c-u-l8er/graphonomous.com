@@ -33,8 +33,17 @@
                 --gutter: clamp(1.5rem, 4vw, 3rem);
             }
 
-            *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-            html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
+            *,
+            *::before,
+            *::after {
+                box-sizing: border-box;
+                margin: 0;
+                padding: 0;
+            }
+            html {
+                scroll-behavior: smooth;
+                -webkit-font-smoothing: antialiased;
+            }
             body {
                 background: var(--bg);
                 color: var(--text);
@@ -42,10 +51,22 @@
                 font-size: 18px;
                 line-height: 1.7;
             }
-            a { color: var(--cyan); text-decoration: none; transition: color 0.2s; }
-            a:hover { color: var(--text); }
-            .container { max-width: var(--max-w); margin: 0 auto; padding: 0 var(--gutter); }
-            section { padding: 4rem 0; }
+            a {
+                color: var(--cyan);
+                text-decoration: none;
+                transition: color 0.2s;
+            }
+            a:hover {
+                color: var(--text);
+            }
+            .container {
+                max-width: var(--max-w);
+                margin: 0 auto;
+                padding: 0 var(--gutter);
+            }
+            section {
+                padding: 4rem 0;
+            }
             code {
                 font-family: var(--mono);
                 font-size: 0.85em;
@@ -57,52 +78,94 @@
 
             /* NAV */
             nav {
-                position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                z-index: 100;
                 background: rgba(8, 9, 12, 0.85);
                 backdrop-filter: blur(12px);
                 border-bottom: 1px solid var(--border);
                 padding: 0.75rem 0;
             }
             .nav-inner {
-                max-width: var(--max-w); margin: 0 auto; padding: 0 var(--gutter);
-                display: flex; align-items: center; justify-content: space-between;
+                max-width: var(--max-w);
+                margin: 0 auto;
+                padding: 0 var(--gutter);
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
             }
             .nav-brand {
-                font-family: var(--mono); font-size: 0.85rem; font-weight: 600;
-                color: var(--text); letter-spacing: 0.02em;
+                font-family: var(--mono);
+                font-size: 0.85rem;
+                font-weight: 600;
+                color: var(--text);
+                letter-spacing: 0.02em;
             }
-            .nav-links { display: flex; gap: 1.5rem; list-style: none; }
+            .nav-links {
+                display: flex;
+                gap: 1.5rem;
+                list-style: none;
+            }
             .nav-links a {
-                font-family: var(--mono); font-size: 0.7rem;
-                letter-spacing: 0.08em; text-transform: uppercase; color: var(--dim);
+                font-family: var(--mono);
+                font-size: 0.7rem;
+                letter-spacing: 0.08em;
+                text-transform: uppercase;
+                color: var(--dim);
             }
-            .nav-links a:hover, .nav-links a.active { color: var(--cyan); }
+            .nav-links a:hover,
+            .nav-links a.active {
+                color: var(--cyan);
+            }
 
             /* HERO */
-            .hero { padding-top: 8rem; padding-bottom: 2rem; text-align: center; }
+            .hero {
+                padding-top: 8rem;
+                padding-bottom: 2rem;
+                text-align: center;
+            }
             .hero h1 {
-                font-family: var(--serif); font-weight: 400;
+                font-family: var(--serif);
+                font-weight: 400;
                 font-size: clamp(2rem, 4.5vw, 3.2rem);
-                line-height: 1.15; letter-spacing: -0.02em; margin-bottom: 1rem;
+                line-height: 1.15;
+                letter-spacing: -0.02em;
+                margin-bottom: 1rem;
             }
             .hero .subline {
-                font-size: 1.15rem; color: #aaa; max-width: 720px;
-                margin: 0 auto 1.5rem; line-height: 1.8;
+                font-size: 1.15rem;
+                color: #aaa;
+                max-width: 720px;
+                margin: 0 auto 1.5rem;
+                line-height: 1.8;
             }
             .section-label {
-                font-family: var(--mono); font-size: 0.65rem;
-                letter-spacing: 0.12em; text-transform: uppercase;
-                color: var(--cyan); margin-bottom: 0.5rem;
+                font-family: var(--mono);
+                font-size: 0.65rem;
+                letter-spacing: 0.12em;
+                text-transform: uppercase;
+                color: var(--cyan);
+                margin-bottom: 0.5rem;
             }
 
             /* SECTION HEADERS */
-            .section-header { margin-bottom: 2rem; }
-            .section-header h2 {
-                font-family: var(--serif); font-weight: 400;
-                font-size: clamp(1.6rem, 3vw, 2.2rem);
-                letter-spacing: -0.01em; margin-bottom: 0.5rem;
+            .section-header {
+                margin-bottom: 2rem;
             }
-            .section-header p { color: var(--dim); font-size: 1rem; max-width: 740px; }
+            .section-header h2 {
+                font-family: var(--serif);
+                font-weight: 400;
+                font-size: clamp(1.6rem, 3vw, 2.2rem);
+                letter-spacing: -0.01em;
+                margin-bottom: 0.5rem;
+            }
+            .section-header p {
+                color: var(--dim);
+                font-size: 1rem;
+                max-width: 740px;
+            }
 
             /* TIER CARDS */
             .tier-grid {
@@ -118,117 +181,221 @@
                 padding: 1.5rem;
                 border-left: 3px solid var(--cyan);
             }
-            .tier-card.control { border-left-color: var(--muted); }
-            .tier-card.hard { border-left-color: var(--rose); }
-            .tier-card.mid { border-left-color: var(--amber); }
+            .tier-card.control {
+                border-left-color: var(--muted);
+            }
+            .tier-card.hard {
+                border-left-color: var(--rose);
+            }
+            .tier-card.mid {
+                border-left-color: var(--amber);
+            }
             .tier-head {
-                display: flex; align-items: baseline;
-                justify-content: space-between; gap: 1rem;
+                display: flex;
+                align-items: baseline;
+                justify-content: space-between;
+                gap: 1rem;
                 margin-bottom: 0.5rem;
             }
             .tier-head h3 {
-                font-family: var(--mono); font-size: 0.85rem;
-                font-weight: 700; color: var(--text); letter-spacing: 0.02em;
+                font-family: var(--mono);
+                font-size: 0.85rem;
+                font-weight: 700;
+                color: var(--text);
+                letter-spacing: 0.02em;
             }
             .kappa-badge {
-                font-family: var(--mono); font-size: 0.65rem;
-                letter-spacing: 0.06em; text-transform: uppercase;
-                padding: 0.15rem 0.5rem; border-radius: 3px;
-                background: rgba(74, 245, 198, 0.1); color: var(--cyan);
+                font-family: var(--mono);
+                font-size: 0.65rem;
+                letter-spacing: 0.06em;
+                text-transform: uppercase;
+                padding: 0.15rem 0.5rem;
+                border-radius: 3px;
+                background: rgba(74, 245, 198, 0.1);
+                color: var(--cyan);
             }
-            .kappa-badge.zero { background: rgba(107, 105, 128, 0.15); color: var(--dim); }
-            .kappa-badge.mid { background: rgba(255, 196, 107, 0.12); color: var(--amber); }
-            .kappa-badge.high { background: rgba(255, 107, 138, 0.12); color: var(--rose); }
+            .kappa-badge.zero {
+                background: rgba(107, 105, 128, 0.15);
+                color: var(--dim);
+            }
+            .kappa-badge.mid {
+                background: rgba(255, 196, 107, 0.12);
+                color: var(--amber);
+            }
+            .kappa-badge.high {
+                background: rgba(255, 107, 138, 0.12);
+                color: var(--rose);
+            }
             .tier-card .tier-name {
-                font-family: var(--serif); font-size: 1.15rem;
-                color: var(--text); margin-bottom: 0.5rem;
+                font-family: var(--serif);
+                font-size: 1.15rem;
+                color: var(--text);
+                margin-bottom: 0.5rem;
             }
             .tier-card .tier-desc {
-                font-size: 0.88rem; color: #aaa;
-                line-height: 1.65; margin-bottom: 0.85rem;
+                font-size: 0.88rem;
+                color: #aaa;
+                line-height: 1.65;
+                margin-bottom: 0.85rem;
             }
             .tier-card .tier-metrics {
-                font-family: var(--mono); font-size: 0.7rem;
-                color: var(--dim); line-height: 1.7;
-                padding-top: 0.75rem; border-top: 1px solid var(--border);
+                font-family: var(--mono);
+                font-size: 0.7rem;
+                color: var(--dim);
+                line-height: 1.7;
+                padding-top: 0.75rem;
+                border-top: 1px solid var(--border);
             }
-            .tier-card .tier-metrics strong { color: var(--text); }
-            .delta-good { color: var(--cyan); }
-            .delta-none { color: var(--dim); }
+            .tier-card .tier-metrics strong {
+                color: var(--text);
+            }
+            .delta-good {
+                color: var(--cyan);
+            }
+            .delta-none {
+                color: var(--dim);
+            }
 
             /* KNOBS */
             .knob-grid {
                 display: grid;
                 grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-                gap: 1rem; margin: 1.5rem 0;
+                gap: 1rem;
+                margin: 1.5rem 0;
             }
             .knob-card {
-                background: var(--surface); border: 1px solid var(--border);
-                border-radius: 8px; padding: 1.25rem;
+                background: var(--surface);
+                border: 1px solid var(--border);
+                border-radius: 8px;
+                padding: 1.25rem;
             }
             .knob-card h4 {
-                font-family: var(--mono); font-size: 0.75rem;
-                font-weight: 600; color: var(--blue); margin-bottom: 0.5rem;
+                font-family: var(--mono);
+                font-size: 0.75rem;
+                font-weight: 600;
+                color: var(--blue);
+                margin-bottom: 0.5rem;
             }
             .knob-card .flag {
-                font-family: var(--mono); font-size: 0.7rem;
-                color: var(--cyan); margin-bottom: 0.5rem; display: block;
+                font-family: var(--mono);
+                font-size: 0.7rem;
+                color: var(--cyan);
+                margin-bottom: 0.5rem;
+                display: block;
             }
             .knob-card p {
-                font-size: 0.85rem; color: #aaa; line-height: 1.6;
+                font-size: 0.85rem;
+                color: #aaa;
+                line-height: 1.6;
             }
 
             /* TABLE */
             .table-wrap {
-                overflow-x: auto; margin: 1.5rem 0;
-                border: 1px solid var(--border); border-radius: 8px;
+                overflow-x: auto;
+                margin: 1.5rem 0;
+                border: 1px solid var(--border);
+                border-radius: 8px;
                 background: var(--surface);
             }
-            table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
-            thead { background: var(--surface-2); }
+            table {
+                width: 100%;
+                border-collapse: collapse;
+                font-size: 0.9rem;
+            }
+            thead {
+                background: var(--surface-2);
+            }
             th {
-                font-family: var(--mono); font-size: 0.65rem; font-weight: 600;
-                letter-spacing: 0.08em; text-transform: uppercase; color: var(--dim);
-                padding: 0.75rem 1rem; text-align: left; white-space: nowrap;
+                font-family: var(--mono);
+                font-size: 0.65rem;
+                font-weight: 600;
+                letter-spacing: 0.08em;
+                text-transform: uppercase;
+                color: var(--dim);
+                padding: 0.75rem 1rem;
+                text-align: left;
+                white-space: nowrap;
                 border-bottom: 1px solid var(--border);
             }
-            th.num { text-align: right; }
-            td { padding: 0.65rem 1rem; border-bottom: 1px solid var(--border); }
-            td.num { text-align: right; font-family: var(--mono); font-size: 0.85rem; }
-            td.mono { font-family: var(--mono); font-size: 0.8rem; }
-            tr:last-child td { border-bottom: none; }
-            .best { color: var(--cyan); }
-            .muted { color: var(--dim); }
+            th.num {
+                text-align: right;
+            }
+            td {
+                padding: 0.65rem 1rem;
+                border-bottom: 1px solid var(--border);
+            }
+            td.num {
+                text-align: right;
+                font-family: var(--mono);
+                font-size: 0.85rem;
+            }
+            td.mono {
+                font-family: var(--mono);
+                font-size: 0.8rem;
+            }
+            tr:last-child td {
+                border-bottom: none;
+            }
+            .best {
+                color: var(--cyan);
+            }
+            .muted {
+                color: var(--dim);
+            }
 
             /* COMMAND BOX */
             .cmd-box {
-                background: var(--surface); border: 1px solid var(--border);
-                border-radius: 8px; padding: 1.25rem 1.5rem;
-                font-family: var(--mono); font-size: 0.8rem;
-                color: var(--text); overflow-x: auto; line-height: 1.8;
+                background: var(--surface);
+                border: 1px solid var(--border);
+                border-radius: 8px;
+                padding: 1.25rem 1.5rem;
+                font-family: var(--mono);
+                font-size: 0.8rem;
+                color: var(--text);
+                overflow-x: auto;
+                line-height: 1.8;
                 margin: 1rem 0;
             }
-            .cmd-box .prompt { color: var(--cyan); user-select: none; }
-            .cmd-box .comment { color: var(--muted); }
-            .cmd-box .flag { color: var(--blue); }
+            .cmd-box .prompt {
+                color: var(--cyan);
+                user-select: none;
+            }
+            .cmd-box .comment {
+                color: var(--muted);
+            }
+            .cmd-box .flag {
+                color: var(--blue);
+            }
 
             /* NOTES */
             .notes {
-                background: var(--surface); border: 1px solid var(--border);
-                border-radius: 8px; padding: 1.25rem 1.5rem; margin: 1.5rem 0;
-                font-size: 0.9rem; color: #aaa; line-height: 1.7;
+                background: var(--surface);
+                border: 1px solid var(--border);
+                border-radius: 8px;
+                padding: 1.25rem 1.5rem;
+                margin: 1.5rem 0;
+                font-size: 0.9rem;
+                color: #aaa;
+                line-height: 1.7;
             }
-            .notes strong { color: var(--text); }
+            .notes strong {
+                color: var(--text);
+            }
 
             /* FOOTER */
             footer {
-                padding: 3rem 0; border-top: 1px solid var(--border);
+                padding: 3rem 0;
+                border-top: 1px solid var(--border);
                 text-align: center;
             }
             footer p {
-                font-family: var(--mono); font-size: 0.7rem; color: var(--muted);
+                font-family: var(--mono);
+                font-size: 0.7rem;
+                color: var(--muted);
             }
-            footer a { color: var(--dim); }
+            footer a {
+                color: var(--dim);
+            }
         </style>
     </head>
     <body>
@@ -238,8 +405,20 @@
                 <ul class="nav-links">
                     <li><a href="../index.html">Home</a></li>
                     <li><a href="index.html" class="active">Benchmarks</a></li>
-                    <li><a href="https://github.com/ampersand-systems/graphonomous" target="_blank">GitHub</a></li>
-                    <li><a href="https://www.npmjs.com/package/graphonomous" target="_blank">npm</a></li>
+                    <li>
+                        <a
+                            href="https://github.com/c-u-l8er/graphonomous"
+                            target="_blank"
+                            >GitHub</a
+                        >
+                    </li>
+                    <li>
+                        <a
+                            href="https://www.npmjs.com/package/graphonomous"
+                            target="_blank"
+                            >npm</a
+                        >
+                    </li>
                 </ul>
             </div>
         </nav>
@@ -249,10 +428,11 @@
             <div class="section-label">GraphMemBench v2</div>
             <h1>A κ-sensitive benchmark for cyclic memory</h1>
             <p class="subline">
-                Eight deterministic synthetic tiers designed to isolate what κ-topology
-                actually contributes to retrieval. T1–T6 test κ-sensitive cycle detection;
-                T7–T8 benchmark graph algorithm quality (evidence paths, causal ordering).
-                Each tier runs topology ON vs OFF side by side.
+                Eight deterministic synthetic tiers designed to isolate what
+                κ-topology actually contributes to retrieval. T1–T6 test
+                κ-sensitive cycle detection; T7–T8 benchmark graph algorithm
+                quality (evidence paths, causal ordering). Each tier runs
+                topology ON vs OFF side by side.
             </p>
         </header>
 
@@ -262,9 +442,10 @@
                 <div class="section-label">Eight Tiers</div>
                 <h2>From κ=0 controls to graph algorithm benchmarks</h2>
                 <p>
-                    T1–T2 are acyclic controls. T3–T6 increase in κ complexity and
-                    retrieval difficulty. T7–T8 benchmark graph algorithms: weighted
-                    shortest paths (Dijkstra) and causal DAG ordering (toposort).
+                    T1–T2 are acyclic controls. T3–T6 increase in κ complexity
+                    and retrieval difficulty. T7–T8 benchmark graph algorithms:
+                    weighted shortest paths (Dijkstra) and causal DAG ordering
+                    (toposort).
                 </p>
             </div>
 
@@ -277,11 +458,12 @@
                     <div class="tier-name">Linear chains</div>
                     <p class="tier-desc">
                         Acyclic control. Direct causal chains A→B→C→D with no
-                        loop-back. Topology should stay inert — no SCCs, no κ, no
-                        deliberate routing.
+                        loop-back. Topology should stay inert — no SCCs, no κ,
+                        no deliberate routing.
                     </p>
                     <div class="tier-metrics">
-                        Δ topology on/off: <strong class="delta-none">0pp</strong><br>
+                        Δ topology on/off:
+                        <strong class="delta-none">0pp</strong><br />
                         max κ observed: 0 / 0 &nbsp;✓ correct
                     </div>
                 </div>
@@ -298,7 +480,8 @@
                         trigger false-positive κ routing.
                     </p>
                     <div class="tier-metrics">
-                        Δ topology on/off: <strong class="delta-none">0pp</strong><br>
+                        Δ topology on/off:
+                        <strong class="delta-none">0pp</strong><br />
                         max κ observed: 0 / 0 &nbsp;✓ correct
                     </div>
                 </div>
@@ -315,9 +498,12 @@
                         membership-in-cycle retrieval.
                     </p>
                     <div class="tier-metrics">
-                        Δ kappa_recall: <strong class="delta-good">+100pp</strong><br>
-                        Δ routing_precision: <strong class="delta-good">+100pp</strong><br>
-                        Δ cycle_root_accuracy: <strong class="delta-good">+100pp</strong>
+                        Δ kappa_recall:
+                        <strong class="delta-good">+100pp</strong><br />
+                        Δ routing_precision:
+                        <strong class="delta-good">+100pp</strong><br />
+                        Δ cycle_root_accuracy:
+                        <strong class="delta-good">+100pp</strong>
                     </div>
                 </div>
 
@@ -329,12 +515,14 @@
                     <div class="tier-name">Multi-SCC fault-line</div>
                     <p class="tier-desc">
                         Dense bidirectional ring + chord edges per SCC. Tests
-                        fault-line detection and high-κ routing. Configurable chord
-                        density scales κ upward.
+                        fault-line detection and high-κ routing. Configurable
+                        chord density scales κ upward.
                     </p>
                     <div class="tier-metrics">
-                        Δ kappa_recall: <strong class="delta-good">+100pp</strong><br>
-                        Δ faultline_mrr: <strong class="delta-good">+signal</strong><br>
+                        Δ kappa_recall:
+                        <strong class="delta-good">+100pp</strong><br />
+                        Δ faultline_mrr:
+                        <strong class="delta-good">+signal</strong><br />
                         max κ observed: 2 / 0
                     </div>
                 </div>
@@ -352,8 +540,9 @@
                         revision under κ pressure.
                     </p>
                     <div class="tier-metrics">
-                        Δ kappa_recall (κ=1 subset): <strong class="delta-good">+100pp</strong><br>
-                        fresh_belief_top1_rate tracked<br>
+                        Δ kappa_recall (κ=1 subset):
+                        <strong class="delta-good">+100pp</strong><br />
+                        fresh_belief_top1_rate tracked<br />
                         belief_revision_rank_mean tracked
                     </div>
                 </div>
@@ -370,8 +559,10 @@
                         exists. New metrics: discrim_accuracy and κ-MAE.
                     </p>
                     <div class="tier-metrics">
-                        Δ kappa_discrim_accuracy: <strong class="delta-good">+100pp</strong><br>
-                        Δ kappa_discrim_mae: <strong class="delta-good">−2.0</strong><br>
+                        Δ kappa_discrim_accuracy:
+                        <strong class="delta-good">+100pp</strong><br />
+                        Δ kappa_discrim_mae:
+                        <strong class="delta-good">−2.0</strong><br />
                         max κ observed: 2 / 0
                     </div>
                 </div>
@@ -383,13 +574,15 @@
                     </div>
                     <div class="tier-name">Evidence path tracing</div>
                     <p class="tier-desc">
-                        Weighted DAGs with known shortest paths (Dijkstra). Tests
-                        whether retrieval preserves evidence chain ordering and hop
-                        counts. Alternate paths probe multi-path awareness.
+                        Weighted DAGs with known shortest paths (Dijkstra).
+                        Tests whether retrieval preserves evidence chain
+                        ordering and hop counts. Alternate paths probe
+                        multi-path awareness.
                     </p>
                     <div class="tier-metrics">
-                        path_node_recall: <strong class="delta-good">1.00</strong><br>
-                        path_order_accuracy: <strong>0.60</strong><br>
+                        path_node_recall:
+                        <strong class="delta-good">1.00</strong><br />
+                        path_order_accuracy: <strong>0.60</strong><br />
                         hop_count_mae: <strong>4.00</strong> (baseline)
                     </div>
                 </div>
@@ -401,14 +594,16 @@
                     </div>
                     <div class="tier-name">Causal DAG ordering</div>
                     <p class="tier-desc">
-                        Layered DAGs with known topological order and critical path
-                        depth. Tests causal sequencing (toposort), longest-path
-                        detection, and source/sink identification.
+                        Layered DAGs with known topological order and critical
+                        path depth. Tests causal sequencing (toposort),
+                        longest-path detection, and source/sink identification.
                     </p>
                     <div class="tier-metrics">
-                        ordering_accuracy: <strong>0.46</strong> (baseline)<br>
-                        critical_depth_mae: <strong>2.67</strong><br>
-                        source_sink_recall: <strong class="delta-good">1.00</strong>
+                        ordering_accuracy:
+                        <strong>0.46</strong> (baseline)<br />
+                        critical_depth_mae: <strong>2.67</strong><br />
+                        source_sink_recall:
+                        <strong class="delta-good">1.00</strong>
                     </div>
                 </div>
             </div>
@@ -421,8 +616,8 @@
                 <h2>T1–T6: topology on vs off</h2>
                 <p>
                     Every tier passes the ≥3pp κ-metric gate (or — for the κ=0
-                    controls — correctly produces <em>zero</em> delta). Sanity mode,
-                    deterministic from <code>--seed 42</code>.
+                    controls — correctly produces <em>zero</em> delta). Sanity
+                    mode, deterministic from <code>--seed 42</code>.
                 </p>
             </div>
 
@@ -513,15 +708,26 @@
                 <h2>T7–T8: graph algorithm quality</h2>
                 <p>
                     These tiers are κ-independent — they benchmark whether the
-                    retriever preserves structural properties of the ingested graph.
-                    Topology on/off should not affect these metrics (and doesn't).
+                    retriever preserves structural properties of the ingested
+                    graph. Topology on/off should not affect these metrics (and
+                    doesn't).
                 </p>
             </div>
 
             <!-- T7 detail -->
-            <div class="tier-grid" style="grid-template-columns: 1fr 1fr; margin-bottom: 2rem;">
-                <div style="grid-column: 1 / -1;">
-                    <h3 style="font-family: var(--mono); font-size: 0.85rem; color: var(--amber); margin-bottom: 0.75rem;">
+            <div
+                class="tier-grid"
+                style="grid-template-columns: 1fr 1fr; margin-bottom: 2rem"
+            >
+                <div style="grid-column: 1 / -1">
+                    <h3
+                        style="
+                            font-family: var(--mono);
+                            font-size: 0.85rem;
+                            color: var(--amber);
+                            margin-bottom: 0.75rem;
+                        "
+                    >
                         T7 · Evidence Path Tracing (Dijkstra)
                     </h3>
                 </div>
@@ -569,24 +775,40 @@
                         </tbody>
                     </table>
                 </div>
-                <div class="notes" style="margin: 0; display: flex; flex-direction: column; justify-content: center;">
-                    <strong>Interpretation.</strong> All gold shortest-path nodes are
-                    retrieved (recall = 1.0) and alternate paths are detected. Ordering
-                    accuracy is 0.60 — the retriever returns the right nodes but doesn't
-                    perfectly preserve Dijkstra ordering, as expected (similarity ranking
-                    ≠ shortest-path ranking). Hop count MAE of 4.0 reflects the same
-                    ordering gap: retrieved node count is correct, but inferred hops
-                    differ from the gold chain length.<br><br>
-                    <strong>Baseline established.</strong> These numbers set the floor
-                    for the <code>trace_evidence_path</code> MCP tool, which uses
-                    Dijkstra directly and should achieve MAE ≈ 0.
+                <div
+                    class="notes"
+                    style="
+                        margin: 0;
+                        display: flex;
+                        flex-direction: column;
+                        justify-content: center;
+                    "
+                >
+                    <strong>Interpretation.</strong> All gold shortest-path
+                    nodes are retrieved (recall = 1.0) and alternate paths are
+                    detected. Ordering accuracy is 0.60 — the retriever returns
+                    the right nodes but doesn't perfectly preserve Dijkstra
+                    ordering, as expected (similarity ranking ≠ shortest-path
+                    ranking). Hop count MAE of 4.0 reflects the same ordering
+                    gap: retrieved node count is correct, but inferred hops
+                    differ from the gold chain length.<br /><br />
+                    <strong>Baseline established.</strong> These numbers set the
+                    floor for the <code>trace_evidence_path</code> MCP tool,
+                    which uses Dijkstra directly and should achieve MAE ≈ 0.
                 </div>
             </div>
 
             <!-- T8 detail -->
-            <div class="tier-grid" style="grid-template-columns: 1fr 1fr;">
-                <div style="grid-column: 1 / -1;">
-                    <h3 style="font-family: var(--mono); font-size: 0.85rem; color: var(--amber); margin-bottom: 0.75rem;">
+            <div class="tier-grid" style="grid-template-columns: 1fr 1fr">
+                <div style="grid-column: 1 / -1">
+                    <h3
+                        style="
+                            font-family: var(--mono);
+                            font-size: 0.85rem;
+                            color: var(--amber);
+                            margin-bottom: 0.75rem;
+                        "
+                    >
                         T8 · Causal DAG Ordering (Toposort)
                     </h3>
                 </div>
@@ -628,22 +850,40 @@
                         </tbody>
                     </table>
                 </div>
-                <div class="notes" style="margin: 0; display: flex; flex-direction: column; justify-content: center;">
-                    <strong>Interpretation.</strong> Source and sink nodes are perfectly
-                    retrieved (recall = 1.0). Ordering accuracy is 0.46 — roughly
-                    coin-flip — because similarity-based retrieval doesn't respect
-                    causal layer ordering. Critical depth MAE of 2.67 confirms the
-                    retriever sees nodes from some but not all layers.<br><br>
-                    <strong>Baseline established.</strong> These results quantify the
-                    gap that the DAG algorithms (<code>Graphonomous.Algorithms.DAG</code>)
-                    close: Kahn's toposort + longest-path DP should push ordering
-                    accuracy toward 1.0 and depth MAE toward 0.
+                <div
+                    class="notes"
+                    style="
+                        margin: 0;
+                        display: flex;
+                        flex-direction: column;
+                        justify-content: center;
+                    "
+                >
+                    <strong>Interpretation.</strong> Source and sink nodes are
+                    perfectly retrieved (recall = 1.0). Ordering accuracy is
+                    0.46 — roughly coin-flip — because similarity-based
+                    retrieval doesn't respect causal layer ordering. Critical
+                    depth MAE of 2.67 confirms the retriever sees nodes from
+                    some but not all layers.<br /><br />
+                    <strong>Baseline established.</strong> These results
+                    quantify the gap that the DAG algorithms
+                    (<code>Graphonomous.Algorithms.DAG</code>) close: Kahn's
+                    toposort + longest-path DP should push ordering accuracy
+                    toward 1.0 and depth MAE toward 0.
                 </div>
             </div>
 
-            <p class="muted" style="font-family: var(--mono); font-size: 0.7rem; margin-top: 1.5rem">
-                All results: sanity mode, <code>--seed 42</code>, fallback embedder.
-                T7/T8 are κ-independent — topology on/off produces identical algorithm metrics by design.
+            <p
+                class="muted"
+                style="
+                    font-family: var(--mono);
+                    font-size: 0.7rem;
+                    margin-top: 1.5rem;
+                "
+            >
+                All results: sanity mode, <code>--seed 42</code>, fallback
+                embedder. T7/T8 are κ-independent — topology on/off produces
+                identical algorithm metrics by design.
             </p>
         </section>
 
@@ -653,9 +893,10 @@
                 <div class="section-label">Five Knobs</div>
                 <h2>Scale the benchmark until it breaks</h2>
                 <p>
-                    The point of a synthetic benchmark is to control the difficulty
-                    axis. These five CLI flags let you push Graphonomous along
-                    orthogonal pressure points and watch where performance degrades.
+                    The point of a synthetic benchmark is to control the
+                    difficulty axis. These five CLI flags let you push
+                    Graphonomous along orthogonal pressure points and watch
+                    where performance degrades.
                 </p>
             </div>
 
@@ -664,9 +905,10 @@
                     <h4>1 · Density</h4>
                     <span class="flag">--density N</span>
                     <p>
-                        T4 chord-edge density. <code>1</code> = bidirectional ring
-                        only, <code>5</code> = dense layered chords. Higher density
-                        increases κ and forces fault-line detection to work harder.
+                        T4 chord-edge density. <code>1</code> = bidirectional
+                        ring only, <code>5</code> = dense layered chords. Higher
+                        density increases κ and forces fault-line detection to
+                        work harder.
                     </p>
                 </div>
 
@@ -674,24 +916,25 @@
                     <h4>2 · Distractor flood</h4>
                     <span class="flag">--distractors N</span>
                     <p>
-                        Injects N acyclic chains of noise alongside the gold SCCs.
-                        Beyond some threshold the similarity stage drops gold
-                        clusters from its top-K, collapsing kappa_recall.
+                        Injects N acyclic chains of noise alongside the gold
+                        SCCs. Beyond some threshold the similarity stage drops
+                        gold clusters from its top-K, collapsing kappa_recall.
                     </p>
                 </div>
 
                 <div class="knob-card">
                     <h4>3 · Retrieval squeeze</h4>
                     <span class="flag">
-                        --similarity-limit N<br>
-                        --final-limit N<br>
-                        --expansion-hops N<br>
+                        --similarity-limit N<br />
+                        --final-limit N<br />
+                        --expansion-hops N<br />
                         --neighbors-per-node N
                     </span>
                     <p>
-                        Shrink the retrieval budget that topology gets to work with.
-                        At <code>similarity-limit=3, hops=0</code>, T4 kappa_recall
-                        drops to 0.90 and faultline_mrr falls to 0.60.
+                        Shrink the retrieval budget that topology gets to work
+                        with. At <code>similarity-limit=3, hops=0</code>, T4
+                        kappa_recall drops to 0.90 and faultline_mrr falls to
+                        0.60.
                     </p>
                 </div>
 
@@ -710,9 +953,9 @@
                     <span class="flag">--homogenize true</span>
                     <p>
                         Strips distinctive domain words and replaces them with
-                        <code>system-N</code> tokens. Similarity retrieval can no
-                        longer shortcut to the right cluster — topology has to
-                        carry the weight.
+                        <code>system-N</code> tokens. Similarity retrieval can
+                        no longer shortcut to the right cluster — topology has
+                        to carry the weight.
                     </p>
                 </div>
             </div>
@@ -724,40 +967,66 @@
                 <div class="section-label">Reproduce</div>
                 <h2>Run it locally</h2>
                 <p>
-                    All tiers are deterministic and reproduce bit-for-bit from the
-                    same seed. Fixtures live in
+                    All tiers are deterministic and reproduce bit-for-bit from
+                    the same seed. Fixtures live in
                     <code>priv/graphmembench/fixtures/T{1..8}/</code>.
                 </p>
             </div>
 
             <div class="cmd-box">
-<span class="comment"># Single tier, sanity mode (5 SCCs, 10 questions)</span><br>
-<span class="prompt">$</span> mix benchmark.graphmembench <span class="flag">--tier 3 --sanity --topology on</span><br>
-<br>
-<span class="comment"># Full-size run, 100 questions per tier</span><br>
-<span class="prompt">$</span> mix benchmark.graphmembench <span class="flag">--tier 4 --density 3</span><br>
-<br>
-<span class="comment"># Squeeze the retrieval budget until topology breaks</span><br>
-<span class="prompt">$</span> mix benchmark.graphmembench <span class="flag">--tier 4 --density 5 \<br>
-&nbsp;&nbsp;&nbsp;&nbsp;--similarity-limit 3 --final-limit 5 --expansion-hops 0</span><br>
-<br>
-<span class="comment"># Homogenized content — similarity can't shortcut</span><br>
-<span class="prompt">$</span> mix benchmark.graphmembench <span class="flag">--tier 6 --homogenize true \<br>
-&nbsp;&nbsp;&nbsp;&nbsp;--distractors 100</span><br>
-<br>
-<span class="comment"># T7: Evidence path tracing (Dijkstra shortest paths)</span><br>
-<span class="prompt">$</span> mix benchmark.graphmembench <span class="flag">--tier 7 --sanity --topology on</span><br>
-<br>
-<span class="comment"># T8: Causal DAG ordering (toposort + longest path)</span><br>
-<span class="prompt">$</span> mix benchmark.graphmembench <span class="flag">--tier 8 --sanity --topology on</span>
+                <span class="comment"
+                    ># Single tier, sanity mode (5 SCCs, 10 questions)</span
+                ><br />
+                <span class="prompt">$</span> mix benchmark.graphmembench
+                <span class="flag">--tier 3 --sanity --topology on</span><br />
+                <br />
+                <span class="comment"
+                    ># Full-size run, 100 questions per tier</span
+                ><br />
+                <span class="prompt">$</span> mix benchmark.graphmembench
+                <span class="flag">--tier 4 --density 3</span><br />
+                <br />
+                <span class="comment"
+                    ># Squeeze the retrieval budget until topology breaks</span
+                ><br />
+                <span class="prompt">$</span> mix benchmark.graphmembench
+                <span class="flag"
+                    >--tier 4 --density 5 \<br />
+                    &nbsp;&nbsp;&nbsp;&nbsp;--similarity-limit 3 --final-limit 5
+                    --expansion-hops 0</span
+                ><br />
+                <br />
+                <span class="comment"
+                    ># Homogenized content — similarity can't shortcut</span
+                ><br />
+                <span class="prompt">$</span> mix benchmark.graphmembench
+                <span class="flag"
+                    >--tier 6 --homogenize true \<br />
+                    &nbsp;&nbsp;&nbsp;&nbsp;--distractors 100</span
+                ><br />
+                <br />
+                <span class="comment"
+                    ># T7: Evidence path tracing (Dijkstra shortest paths)</span
+                ><br />
+                <span class="prompt">$</span> mix benchmark.graphmembench
+                <span class="flag">--tier 7 --sanity --topology on</span><br />
+                <br />
+                <span class="comment"
+                    ># T8: Causal DAG ordering (toposort + longest path)</span
+                ><br />
+                <span class="prompt">$</span> mix benchmark.graphmembench
+                <span class="flag">--tier 8 --sanity --topology on</span>
             </div>
 
             <div class="notes">
                 <strong>Additive-only design.</strong> GraphMemBench v2 is a
-                harness, not a patch — it never modifies <code>retriever.ex</code>,
-                <code>topology.ex</code>, or the LongMemEval path. Running it cannot
-                affect production behavior. Results land in
-                <code>benchmark_results/graphmembench_T{N}_topology_{on,off}.json</code>
+                harness, not a patch — it never modifies
+                <code>retriever.ex</code>, <code>topology.ex</code>, or the
+                LongMemEval path. Running it cannot affect production behavior.
+                Results land in
+                <code
+                    >benchmark_results/graphmembench_T{N}_topology_{on,off}.json</code
+                >
                 for offline comparison.
             </div>
         </section>
@@ -766,13 +1035,18 @@
             <div class="container">
                 <p>
                     GraphMemBench v2 &middot;
-                    <a href="https://github.com/ampersand-systems/graphonomous" target="_blank">
+                    <a
+                        href="https://github.com/c-u-l8er/graphonomous"
+                        target="_blank"
+                    >
                         graphonomous/lib/mix/tasks/benchmark/graphmembench.ex
                     </a>
                 </p>
                 <p style="margin-top: 0.5rem">
                     Built by
-                    <a href="https://ampersandbox.design" target="_blank">[&] Ampersand Box Design</a>
+                    <a href="https://ampersandbox.design" target="_blank"
+                        >[&] Ampersand Box Design</a
+                    >
                 </p>
             </div>
         </footer>

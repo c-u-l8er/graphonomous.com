@@ -33,8 +33,17 @@
                 --gutter: clamp(1.5rem, 4vw, 3rem);
             }
 
-            *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-            html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
+            *,
+            *::before,
+            *::after {
+                box-sizing: border-box;
+                margin: 0;
+                padding: 0;
+            }
+            html {
+                scroll-behavior: smooth;
+                -webkit-font-smoothing: antialiased;
+            }
             body {
                 background: var(--bg);
                 color: var(--text);
@@ -42,15 +51,29 @@
                 font-size: 18px;
                 line-height: 1.7;
             }
-            a { color: var(--cyan); text-decoration: none; transition: color 0.2s; }
-            a:hover { color: var(--text); }
-            .container { max-width: var(--max-w); margin: 0 auto; padding: 0 var(--gutter); }
-            section { padding: 4rem 0; }
+            a {
+                color: var(--cyan);
+                text-decoration: none;
+                transition: color 0.2s;
+            }
+            a:hover {
+                color: var(--text);
+            }
+            .container {
+                max-width: var(--max-w);
+                margin: 0 auto;
+                padding: 0 var(--gutter);
+            }
+            section {
+                padding: 4rem 0;
+            }
 
             /* NAV */
             nav {
                 position: fixed;
-                top: 0; left: 0; right: 0;
+                top: 0;
+                left: 0;
+                right: 0;
                 z-index: 100;
                 background: rgba(8, 9, 12, 0.85);
                 backdrop-filter: blur(12px);
@@ -72,7 +95,11 @@
                 color: var(--text);
                 letter-spacing: 0.02em;
             }
-            .nav-links { display: flex; gap: 1.5rem; list-style: none; }
+            .nav-links {
+                display: flex;
+                gap: 1.5rem;
+                list-style: none;
+            }
             .nav-links a {
                 font-family: var(--mono);
                 font-size: 0.7rem;
@@ -80,10 +107,17 @@
                 text-transform: uppercase;
                 color: var(--dim);
             }
-            .nav-links a:hover, .nav-links a.active { color: var(--cyan); }
+            .nav-links a:hover,
+            .nav-links a.active {
+                color: var(--cyan);
+            }
 
             /* HERO */
-            .hero { padding-top: 8rem; padding-bottom: 2rem; text-align: center; }
+            .hero {
+                padding-top: 8rem;
+                padding-bottom: 2rem;
+                text-align: center;
+            }
             .hero h1 {
                 font-family: var(--serif);
                 font-weight: 400;
@@ -120,7 +154,9 @@
                 border: 1px solid var(--border);
                 border-radius: 8px;
                 padding: 2rem;
-                transition: border-color 0.2s, transform 0.2s;
+                transition:
+                    border-color 0.2s,
+                    transform 0.2s;
                 display: block;
             }
             .bench-card:hover {
@@ -140,7 +176,10 @@
                 background: rgba(74, 245, 198, 0.1);
                 color: var(--cyan);
             }
-            .bench-card .tag.synthetic { background: rgba(123, 140, 255, 0.1); color: var(--blue); }
+            .bench-card .tag.synthetic {
+                background: rgba(123, 140, 255, 0.1);
+                color: var(--blue);
+            }
             .bench-card h2 {
                 font-family: var(--serif);
                 font-weight: 400;
@@ -162,15 +201,21 @@
                 padding-top: 1rem;
                 border-top: 1px solid var(--border);
             }
-            .bench-card .stat { flex-shrink: 0; }
+            .bench-card .stat {
+                flex-shrink: 0;
+            }
             .bench-card .stat .value {
                 font-family: var(--mono);
                 font-size: 1.3rem;
                 font-weight: 700;
                 line-height: 1.1;
             }
-            .bench-card .stat .value.cyan { color: var(--cyan); }
-            .bench-card .stat .value.blue { color: var(--blue); }
+            .bench-card .stat .value.cyan {
+                color: var(--cyan);
+            }
+            .bench-card .stat .value.blue {
+                color: var(--blue);
+            }
             .bench-card .stat .label {
                 font-family: var(--mono);
                 font-size: 0.6rem;
@@ -190,7 +235,9 @@
             }
 
             /* SECTION HEADERS */
-            .section-header { margin-bottom: 2rem; }
+            .section-header {
+                margin-bottom: 2rem;
+            }
             .section-header h2 {
                 font-family: var(--serif);
                 font-weight: 400;
@@ -198,7 +245,11 @@
                 letter-spacing: -0.01em;
                 margin-bottom: 0.5rem;
             }
-            .section-header p { color: var(--dim); font-size: 1rem; max-width: 700px; }
+            .section-header p {
+                color: var(--dim);
+                font-size: 1rem;
+                max-width: 700px;
+            }
 
             /* TABLE */
             .table-wrap {
@@ -208,8 +259,14 @@
                 border-radius: 8px;
                 background: var(--surface);
             }
-            table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
-            thead { background: var(--surface-2); }
+            table {
+                width: 100%;
+                border-collapse: collapse;
+                font-size: 0.9rem;
+            }
+            thead {
+                background: var(--surface-2);
+            }
             th {
                 font-family: var(--mono);
                 font-size: 0.65rem;
@@ -222,8 +279,13 @@
                 white-space: nowrap;
                 border-bottom: 1px solid var(--border);
             }
-            td { padding: 0.65rem 1rem; border-bottom: 1px solid var(--border); }
-            tr:last-child td { border-bottom: none; }
+            td {
+                padding: 0.65rem 1rem;
+                border-bottom: 1px solid var(--border);
+            }
+            tr:last-child td {
+                border-bottom: none;
+            }
 
             /* FOOTER */
             footer {
@@ -236,7 +298,9 @@
                 font-size: 0.7rem;
                 color: var(--muted);
             }
-            footer a { color: var(--dim); }
+            footer a {
+                color: var(--dim);
+            }
         </style>
     </head>
     <body>
@@ -246,8 +310,20 @@
                 <ul class="nav-links">
                     <li><a href="../index.html">Home</a></li>
                     <li><a href="index.html" class="active">Benchmarks</a></li>
-                    <li><a href="https://github.com/ampersand-systems/graphonomous" target="_blank">GitHub</a></li>
-                    <li><a href="https://www.npmjs.com/package/graphonomous" target="_blank">npm</a></li>
+                    <li>
+                        <a
+                            href="https://github.com/c-u-l8er/graphonomous"
+                            target="_blank"
+                            >GitHub</a
+                        >
+                    </li>
+                    <li>
+                        <a
+                            href="https://www.npmjs.com/package/graphonomous"
+                            target="_blank"
+                            >npm</a
+                        >
+                    </li>
                 </ul>
             </div>
         </nav>
@@ -257,10 +333,11 @@
             <div class="section-label">Benchmark Suite</div>
             <h1>Two benchmarks. Two sides of the same question.</h1>
             <p class="subline">
-                LongMemEval measures how Graphonomous performs against a realistic,
-                diverse agent-memory workload. GraphMemBench v2 measures what
-                κ-aware topology actually contributes — under controlled conditions
-                where cycles are the difference between right and wrong.
+                LongMemEval measures how Graphonomous performs against a
+                realistic, diverse agent-memory workload. GraphMemBench v2
+                measures what κ-aware topology actually contributes — under
+                controlled conditions where cycles are the difference between
+                right and wrong.
             </p>
         </header>
 
@@ -271,10 +348,10 @@
                     <span class="tag">Public benchmark</span>
                     <h2>LongMemEval</h2>
                     <p class="desc">
-                        ICLR 2025 long-term memory benchmark: 500 questions across
-                        knowledge-update, temporal reasoning, abstention, single-session,
-                        and multi-session tracks. Graphonomous runs it fully local with a
-                        500M-param embedder.
+                        ICLR 2025 long-term memory benchmark: 500 questions
+                        across knowledge-update, temporal reasoning, abstention,
+                        single-session, and multi-session tracks. Graphonomous
+                        runs it fully local with a 500M-param embedder.
                     </p>
                     <div class="stats">
                         <div class="stat">
@@ -297,11 +374,11 @@
                     <span class="tag synthetic">Synthetic · κ-sensitive</span>
                     <h2>GraphMemBench v2</h2>
                     <p class="desc">
-                        Purpose-built synthetic benchmark for measuring κ-topology's
-                        contribution to retrieval. Eight tiers span κ=0 controls,
-                        simple cycles, dense multi-SCCs, contradiction resolution,
-                        mixed-κ discrimination, evidence path tracing, and causal
-                        DAG ordering.
+                        Purpose-built synthetic benchmark for measuring
+                        κ-topology's contribution to retrieval. Eight tiers span
+                        κ=0 controls, simple cycles, dense multi-SCCs,
+                        contradiction resolution, mixed-κ discrimination,
+                        evidence path tracing, and causal DAG ordering.
                     </p>
                     <div class="stats">
                         <div class="stat">
@@ -328,11 +405,12 @@
                 <div class="section-label">Why both</div>
                 <h2>External realism + internal causality</h2>
                 <p>
-                    LongMemEval tells us whether Graphonomous is competitive with
-                    GPT-4o-powered memory systems on a task users actually care
-                    about. GraphMemBench T1–T6 tell us whether the κ-topology
-                    machinery is doing real work. T7–T8 establish baselines for
-                    graph algorithm quality (Dijkstra paths, toposort ordering).
+                    LongMemEval tells us whether Graphonomous is competitive
+                    with GPT-4o-powered memory systems on a task users actually
+                    care about. GraphMemBench T1–T6 tell us whether the
+                    κ-topology machinery is doing real work. T7–T8 establish
+                    baselines for graph algorithm quality (Dijkstra paths,
+                    toposort ordering).
                 </p>
             </div>
 
@@ -374,7 +452,9 @@
                         <tr>
                             <td>Validation gate</td>
                             <td>92.6% overall QA</td>
-                            <td>T1–T6: ≥3pp κ-delta; T7–T8: algorithm baselines</td>
+                            <td>
+                                T1–T6: ≥3pp κ-delta; T7–T8: algorithm baselines
+                            </td>
                         </tr>
                     </tbody>
                 </table>
@@ -385,13 +465,18 @@
             <div class="container">
                 <p>
                     Graphonomous benchmark suite &middot;
-                    <a href="https://github.com/ampersand-systems/graphonomous" target="_blank">
+                    <a
+                        href="https://github.com/c-u-l8er/graphonomous"
+                        target="_blank"
+                    >
                         View on GitHub
                     </a>
                 </p>
                 <p style="margin-top: 0.5rem">
                     Built by
-                    <a href="https://ampersandbox.design" target="_blank">[&] Ampersand Box Design</a>
+                    <a href="https://ampersandbox.design" target="_blank"
+                        >[&] Ampersand Box Design</a
+                    >
                 </p>
             </div>
         </footer>

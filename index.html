@@ -385,9 +385,16 @@
                 gap: 1.5rem;
                 margin-top: 2rem;
             }
+            @media (max-width: 1100px) {
+                .steps-grid[style*="repeat(5"] {
+                    grid-template-columns: repeat(3, 1fr);
+                }
+            }
             @media (max-width: 800px) {
-                .steps-grid {
-                    grid-template-columns: 1fr;
+                .steps-grid,
+                .steps-grid[style*="repeat(5"],
+                .steps-grid[style*="repeat(3"] {
+                    grid-template-columns: 1fr !important;
                 }
             }
             .step-card {
@@ -406,6 +413,9 @@
             .step-card.rose {
                 border-left-color: var(--rose);
             }
+            .step-card.amber {
+                border-left-color: var(--amber);
+            }
             .step-card h3 {
                 font-family: var(--mono);
                 font-size: 0.8rem;
@@ -422,6 +432,9 @@
             }
             .step-card.rose h3 {
                 color: var(--rose);
+            }
+            .step-card.amber h3 {
+                color: var(--amber);
             }
             .step-card p {
                 font-size: 0.9rem;
@@ -440,6 +453,9 @@
             }
             a.step-card.rose:hover {
                 border-left-color: var(--rose);
+            }
+            a.step-card.amber:hover {
+                border-left-color: var(--amber);
             }
 
             /* ─── MCP TOOLS TABLE ─── */
@@ -535,7 +551,10 @@
                 #types .reveal[style*="grid-template-columns"] {
                     grid-template-columns: 1fr !important;
                 }
-                #tg-filters { flex-direction: column; align-items: flex-start !important; }
+                #tg-filters {
+                    flex-direction: column;
+                    align-items: flex-start !important;
+                }
             }
             .tg-filter-btn {
                 font-family: var(--mono);
@@ -549,8 +568,15 @@
                 cursor: pointer;
                 transition: all 0.2s;
             }
-            .tg-filter-btn:hover { border-color: rgba(74,245,198,0.3); color: var(--text); }
-            .tg-filter-btn.active { background: rgba(74,245,198,0.1); border-color: rgba(74,245,198,0.4); color: var(--cyan); }
+            .tg-filter-btn:hover {
+                border-color: rgba(74, 245, 198, 0.3);
+                color: var(--text);
+            }
+            .tg-filter-btn.active {
+                background: rgba(74, 245, 198, 0.1);
+                border-color: rgba(74, 245, 198, 0.4);
+                color: var(--cyan);
+            }
             .tech-list li {
                 font-family: var(--mono);
                 font-size: 0.8rem;
@@ -715,12 +741,13 @@
             <div class="nav-inner">
                 <span class="nav-brand">graphonomous</span>
                 <ul class="nav-links">
+                    <li><a href="#install">Install</a></li>
                     <li><a href="./demo/">Live Demos</a></li>
                     <li><a href="benchmarks/index.html">Benchmarks</a></li>
-                    <li><a href="#capabilities">Capabilities</a></li>
+                    <li><a href="#prism">PRISM</a></li>
                     <li><a href="#how">How It Works</a></li>
-                    <li><a href="#types">Type System</a></li>
                     <li><a href="#tools">MCP Tools</a></li>
+                    <li><a href="#start">Get Started</a></li>
                     <li>
                         <a href="https://docs.graphonomous.com">Docs</a>
                     </li>
@@ -737,12 +764,13 @@
         <section class="hero" style="margin-top: 3.2rem">
             <canvas id="graph-canvas"></canvas>
             <div class="container">
-                <h1>Knowledge graphs that<br />know when to think</h1>
+                <h1>Agent memory that<br /><em>improves itself</em></h1>
                 <p class="subline">
-                    The only agent memory that detects circular dependencies in
-                    your knowledge, routes reasoning depth automatically,
-                    revises beliefs formally, and forgets on command.
-                    Open-source MCP server &mdash; works with any model.
+                    Most memory systems are key-value stores with embeddings.
+                    Graphonomous is a closed loop &mdash; outcomes change
+                    beliefs, beliefs change retrieval, and the graph gets
+                    sharper with every action. Open-source MCP server, works
+                    with any model.
                 </p>
                 <div class="cta-row">
                     <a href="./demo/" class="btn btn-primary"
@@ -761,15 +789,158 @@
                         >Documentation</a
                     >
                     <a href="/benchmarks/index.html" class="btn btn-ghost"
-                        >Benchmarks &rarr; 92.6%</a
+                        >Benchmarks (A+)</a
                     >
                 </div>
                 <span class="badge"
-                    >v0.3.3 &middot; 29 MCP Tools &middot; 6 Node Types &middot;
-                    &kappa;-Routing &middot; LongMemEval 92.6% &middot;
-                    GraphMemBench 160/160 &middot; Elixir/OTP &middot; Apache
-                    2.0</span
+                    >v0.4.0 &middot; Elixir/OTP &middot; Apache 2.0</span
                 >
+            </div>
+        </section>
+
+        <!-- INSTALL -->
+        <section id="install" style="padding: 3rem 0 2rem">
+            <div class="container">
+                <div class="section-label reveal">One Prompt Install</div>
+                <h2 class="reveal">
+                    Get Graphonomous running in <em>60 seconds</em>
+                </h2>
+                <p class="lead reveal">
+                    Copy this into Claude Code, Codex, Cursor, or any
+                    MCP-capable agent. It installs the server, wires it up, and
+                    starts your first memory session.
+                </p>
+
+                <div class="reveal" style="margin: 2rem 0; position: relative">
+                    <pre
+                        id="install-prompt"
+                        style="
+                            font-family: var(--mono);
+                            font-size: 0.82rem;
+                            color: var(--text);
+                            background: var(--surface);
+                            border: 1px solid var(--border);
+                            border-radius: 10px;
+                            padding: 1.75rem 2rem;
+                            overflow-x: auto;
+                            line-height: 1.7;
+                        "
+                    >
+<span style="color:var(--cyan); font-weight:600;">## Install Graphonomous MCP Server</span>
+
+<span style="color:var(--dim);"># 1. Install the npm package (includes platform-specific binary)</span>
+npm i -g graphonomous
+
+<span style="color:var(--dim);"># 2. Add to your MCP config (~/.mcp.json or project .mcp.json)</span>
+{
+  "mcpServers": {
+    "graphonomous": {
+      "command": "npx",
+      "args": ["-y", "graphonomous", "--db", "~/.graphonomous/knowledge.db"]
+    }
+  }
+}
+
+<span style="color:var(--dim);"># 3. Restart your agent. Graphonomous is now your memory layer.</span>
+<span style="color:var(--dim);"># Every session starts with retrieve → route → act → learn → consolidate.</span></pre>
+                    <button
+                        onclick="
+                            navigator.clipboard
+                                .writeText(
+                                    document.getElementById('install-prompt')
+                                        .innerText,
+                                )
+                                .then(() => {
+                                    this.textContent = 'Copied!';
+                                    setTimeout(
+                                        () => (this.textContent = 'Copy'),
+                                        1500,
+                                    );
+                                })
+                        "
+                        style="
+                            position: absolute;
+                            top: 0.75rem;
+                            right: 0.75rem;
+                            font-family: var(--mono);
+                            font-size: 0.7rem;
+                            background: var(--surface-2);
+                            color: var(--dim);
+                            border: 1px solid var(--border);
+                            border-radius: 6px;
+                            padding: 0.35rem 0.75rem;
+                            cursor: pointer;
+                            transition: all 0.2s;
+                        "
+                        onmouseover="
+                            this.style.color = 'var(--cyan)';
+                            this.style.borderColor = 'var(--cyan)';
+                        "
+                        onmouseout="
+                            this.style.color = 'var(--dim)';
+                            this.style.borderColor = 'var(--border)';
+                        "
+                    >
+                        Copy
+                    </button>
+                </div>
+
+                <div
+                    style="
+                        display: flex;
+                        gap: 1.5rem;
+                        flex-wrap: wrap;
+                        margin-top: 1.5rem;
+                    "
+                    class="reveal"
+                >
+                    <div
+                        style="
+                            flex: 1;
+                            min-width: 200px;
+                            font-size: 0.85rem;
+                            color: var(--dim);
+                            line-height: 1.6;
+                        "
+                    >
+                        <strong style="color: var(--text)">Requirements:</strong
+                        ><br />
+                        Node.js &ge; 18 &middot; macOS or Linux &middot; x64 or
+                        arm64
+                    </div>
+                    <div
+                        style="
+                            flex: 1;
+                            min-width: 200px;
+                            font-size: 0.85rem;
+                            color: var(--dim);
+                            line-height: 1.6;
+                        "
+                    >
+                        <strong style="color: var(--text)">Works with:</strong
+                        ><br />
+                        Claude Code &middot; Codex &middot; Cursor &middot; Zed
+                        &middot; any MCP client
+                    </div>
+                    <div
+                        style="
+                            flex: 1;
+                            min-width: 200px;
+                            font-size: 0.85rem;
+                            color: var(--dim);
+                            line-height: 1.6;
+                        "
+                    >
+                        <strong style="color: var(--text)"
+                            >Data stays local:</strong
+                        ><br />
+                        SQLite DB at
+                        <code
+                            style="font-family: var(--mono); font-size: 0.78rem"
+                            >~/.graphonomous/knowledge.db</code
+                        >
+                    </div>
+                </div>
             </div>
         </section>
 
@@ -1003,39 +1174,681 @@
         <section id="how">
             <div class="container">
                 <div class="section-label reveal">Architecture</div>
-                <h2 class="reveal">How it <em>works</em></h2>
+                <h2 class="reveal">A closed loop, not a <em>pipeline</em></h2>
+                <p class="lead reveal">
+                    Most agent memory systems are pipelines: store &rarr;
+                    retrieve &rarr; done. Graphonomous is a closed loop.
+                    Outcomes feed back into beliefs, beliefs change confidence,
+                    confidence changes retrieval rankings, and the graph
+                    improves with every action &mdash; without retraining any
+                    model.
+                </p>
 
-                <div class="steps-grid">
+                <!-- ── Loop diagram (SVG) ── -->
+                <div
+                    class="loop-diagram reveal"
+                    style="margin: 3rem auto 0; max-width: 780px"
+                >
+                    <svg
+                        viewBox="0 0 780 540"
+                        xmlns="http://www.w3.org/2000/svg"
+                        style="width: 100%; height: auto"
+                    >
+                        <defs>
+                            <!-- Arrow markers per color -->
+                            <marker
+                                id="arr-cyan"
+                                viewBox="0 0 10 8"
+                                refX="9"
+                                refY="4"
+                                markerWidth="8"
+                                markerHeight="6"
+                                orient="auto-start-reverse"
+                            >
+                                <path d="M0,0 L10,4 L0,8 Z" fill="#4af5c6" />
+                            </marker>
+                            <marker
+                                id="arr-blue"
+                                viewBox="0 0 10 8"
+                                refX="9"
+                                refY="4"
+                                markerWidth="8"
+                                markerHeight="6"
+                                orient="auto-start-reverse"
+                            >
+                                <path d="M0,0 L10,4 L0,8 Z" fill="#5dadec" />
+                            </marker>
+                            <marker
+                                id="arr-rose"
+                                viewBox="0 0 10 8"
+                                refX="9"
+                                refY="4"
+                                markerWidth="8"
+                                markerHeight="6"
+                                orient="auto-start-reverse"
+                            >
+                                <path d="M0,0 L10,4 L0,8 Z" fill="#f27a8f" />
+                            </marker>
+                            <marker
+                                id="arr-amber"
+                                viewBox="0 0 10 8"
+                                refX="9"
+                                refY="4"
+                                markerWidth="8"
+                                markerHeight="6"
+                                orient="auto-start-reverse"
+                            >
+                                <path d="M0,0 L10,4 L0,8 Z" fill="#ffc46b" />
+                            </marker>
+                            <!-- Glow filter -->
+                            <filter id="glow">
+                                <feGaussianBlur
+                                    stdDeviation="3"
+                                    result="blur"
+                                />
+                                <feMerge>
+                                    <feMergeNode in="blur" />
+                                    <feMergeNode in="SourceGraphic" />
+                                </feMerge>
+                            </filter>
+                        </defs>
+
+                        <!-- ── Connecting arrows (curved paths between nodes) ── -->
+                        <!-- Pentagon coords: 1(390,52) 2(720,290) 3(594,500) 4(186,500) 5(60,290) -->
+                        <!-- 1→2 Retrieve → Route -->
+                        <path
+                            d="M440,72 C560,100 660,180 700,260"
+                            fill="none"
+                            stroke="#4af5c6"
+                            stroke-width="2"
+                            stroke-dasharray="6,4"
+                            marker-end="url(#arr-cyan)"
+                            opacity="0.7"
+                        />
+                        <!-- 2→3 Route → Act -->
+                        <path
+                            d="M710,320 C700,400 660,460 620,480"
+                            fill="none"
+                            stroke="#5dadec"
+                            stroke-width="2"
+                            stroke-dasharray="6,4"
+                            marker-end="url(#arr-blue)"
+                            opacity="0.7"
+                        />
+                        <!-- 3→4 Act → Learn -->
+                        <path
+                            d="M550,505 C470,530 340,530 230,505"
+                            fill="none"
+                            stroke="#f27a8f"
+                            stroke-width="2"
+                            stroke-dasharray="6,4"
+                            marker-end="url(#arr-rose)"
+                            opacity="0.7"
+                        />
+                        <!-- 4→5 Learn → Consolidate -->
+                        <path
+                            d="M155,475 C110,420 70,360 65,320"
+                            fill="none"
+                            stroke="#ffc46b"
+                            stroke-width="2"
+                            stroke-dasharray="6,4"
+                            marker-end="url(#arr-amber)"
+                            opacity="0.7"
+                        />
+                        <!-- 5→1 Consolidate → Retrieve (the closing arrow) -->
+                        <path
+                            d="M85,260 C100,170 200,90 340,62"
+                            fill="none"
+                            stroke="#4af5c6"
+                            stroke-width="2.5"
+                            stroke-dasharray="8,4"
+                            marker-end="url(#arr-cyan)"
+                            opacity="0.9"
+                            filter="url(#glow)"
+                        />
+
+                        <!-- ── Node boxes ── -->
+                        <!-- 1. RETRIEVE (top center) -->
+                        <g>
+                            <rect
+                                x="310"
+                                y="16"
+                                width="160"
+                                height="72"
+                                rx="10"
+                                fill="#161b22"
+                                stroke="#4af5c6"
+                                stroke-width="1.5"
+                            />
+                            <text
+                                x="390"
+                                y="44"
+                                text-anchor="middle"
+                                fill="#4af5c6"
+                                font-family="'JetBrains Mono',monospace"
+                                font-size="10"
+                                font-weight="600"
+                                letter-spacing="0.08em"
+                            >
+                                1. RETRIEVE
+                            </text>
+                            <text
+                                x="390"
+                                y="62"
+                                text-anchor="middle"
+                                fill="#8b949e"
+                                font-family="-apple-system,system-ui,sans-serif"
+                                font-size="11"
+                            >
+                                hybrid search + &#954; topology
+                            </text>
+                            <text
+                                x="390"
+                                y="78"
+                                text-anchor="middle"
+                                fill="#8b949e"
+                                font-family="-apple-system,system-ui,sans-serif"
+                                font-size="11"
+                            >
+                                + causal_context IDs
+                            </text>
+                        </g>
+                        <!-- 2. ROUTE (right) -->
+                        <g>
+                            <rect
+                                x="640"
+                                y="254"
+                                width="140"
+                                height="72"
+                                rx="10"
+                                fill="#161b22"
+                                stroke="#5dadec"
+                                stroke-width="1.5"
+                            />
+                            <text
+                                x="710"
+                                y="282"
+                                text-anchor="middle"
+                                fill="#5dadec"
+                                font-family="'JetBrains Mono',monospace"
+                                font-size="10"
+                                font-weight="600"
+                                letter-spacing="0.08em"
+                            >
+                                2. ROUTE
+                            </text>
+                            <text
+                                x="710"
+                                y="300"
+                                text-anchor="middle"
+                                fill="#8b949e"
+                                font-family="-apple-system,system-ui,sans-serif"
+                                font-size="11"
+                            >
+                                &#954;=0 &#8594; fast path
+                            </text>
+                            <text
+                                x="710"
+                                y="316"
+                                text-anchor="middle"
+                                fill="#8b949e"
+                                font-family="-apple-system,system-ui,sans-serif"
+                                font-size="11"
+                            >
+                                &#954;&gt;0 &#8594; deliberate
+                            </text>
+                        </g>
+                        <!-- 3. ACT (bottom right) -->
+                        <g>
+                            <rect
+                                x="518"
+                                y="464"
+                                width="152"
+                                height="72"
+                                rx="10"
+                                fill="#161b22"
+                                stroke="#f27a8f"
+                                stroke-width="1.5"
+                            />
+                            <text
+                                x="594"
+                                y="492"
+                                text-anchor="middle"
+                                fill="#f27a8f"
+                                font-family="'JetBrains Mono',monospace"
+                                font-size="10"
+                                font-weight="600"
+                                letter-spacing="0.08em"
+                            >
+                                3. ACT
+                            </text>
+                            <text
+                                x="594"
+                                y="510"
+                                text-anchor="middle"
+                                fill="#8b949e"
+                                font-family="-apple-system,system-ui,sans-serif"
+                                font-size="11"
+                            >
+                                action + causal_parent_ids
+                            </text>
+                            <text
+                                x="594"
+                                y="526"
+                                text-anchor="middle"
+                                fill="#8b949e"
+                                font-family="-apple-system,system-ui,sans-serif"
+                                font-size="11"
+                            >
+                                trace every decision
+                            </text>
+                        </g>
+                        <!-- 4. LEARN (bottom left) -->
+                        <g>
+                            <rect
+                                x="110"
+                                y="464"
+                                width="152"
+                                height="72"
+                                rx="10"
+                                fill="#161b22"
+                                stroke="#ffc46b"
+                                stroke-width="1.5"
+                            />
+                            <text
+                                x="186"
+                                y="492"
+                                text-anchor="middle"
+                                fill="#ffc46b"
+                                font-family="'JetBrains Mono',monospace"
+                                font-size="10"
+                                font-weight="600"
+                                letter-spacing="0.08em"
+                            >
+                                4. LEARN
+                            </text>
+                            <text
+                                x="186"
+                                y="510"
+                                text-anchor="middle"
+                                fill="#8b949e"
+                                font-family="-apple-system,system-ui,sans-serif"
+                                font-size="11"
+                            >
+                                learn_from_outcome
+                            </text>
+                            <text
+                                x="186"
+                                y="526"
+                                text-anchor="middle"
+                                fill="#8b949e"
+                                font-family="-apple-system,system-ui,sans-serif"
+                                font-size="11"
+                            >
+                                confidence &#8593; or &#8595;
+                            </text>
+                        </g>
+                        <!-- 5. CONSOLIDATE (left) -->
+                        <g>
+                            <rect
+                                x="0"
+                                y="254"
+                                width="140"
+                                height="72"
+                                rx="10"
+                                fill="#161b22"
+                                stroke="#4af5c6"
+                                stroke-width="1.5"
+                                stroke-opacity="0.6"
+                            />
+                            <text
+                                x="70"
+                                y="282"
+                                text-anchor="middle"
+                                fill="#4af5c6"
+                                font-family="'JetBrains Mono',monospace"
+                                font-size="10"
+                                font-weight="600"
+                                letter-spacing="0.08em"
+                                opacity="0.8"
+                            >
+                                5. CONSOLIDATE
+                            </text>
+                            <text
+                                x="70"
+                                y="300"
+                                text-anchor="middle"
+                                fill="#8b949e"
+                                font-family="-apple-system,system-ui,sans-serif"
+                                font-size="11"
+                            >
+                                7-stage sleep cycle
+                            </text>
+                            <text
+                                x="70"
+                                y="316"
+                                text-anchor="middle"
+                                fill="#8b949e"
+                                font-family="-apple-system,system-ui,sans-serif"
+                                font-size="11"
+                            >
+                                prune &#183; merge &#183; promote
+                            </text>
+                        </g>
+
+                        <!-- Center label -->
+                        <text
+                            x="390"
+                            y="280"
+                            text-anchor="middle"
+                            fill="#c9d1d9"
+                            font-family="-apple-system,system-ui,sans-serif"
+                            font-size="13"
+                            font-weight="600"
+                            opacity="0.5"
+                        >
+                            every cycle
+                        </text>
+                        <text
+                            x="390"
+                            y="300"
+                            text-anchor="middle"
+                            fill="#c9d1d9"
+                            font-family="-apple-system,system-ui,sans-serif"
+                            font-size="13"
+                            font-weight="600"
+                            opacity="0.5"
+                        >
+                            improves the next
+                        </text>
+                    </svg>
+                </div>
+
+                <!-- ── Detail cards (3-col grid, below diagram) ── -->
+                <div class="steps-grid" style="margin-top: 2.5rem">
                     <div class="step-card cyan reveal">
-                        <h3>Store</h3>
+                        <h3>Retrieve &amp; Route</h3>
                         <p>
-                            Agents store episodic, semantic, and procedural
-                            knowledge as typed graph nodes with confidence
-                            scores and provenance. Edges capture causal,
-                            temporal, and associative relationships.
-                        </p>
-                    </div>
-                    <div class="step-card blue reveal">
-                        <h3>Analyze</h3>
-                        <p>
-                            On every retrieval, Graphonomous computes the
-                            topological structure of the relevant subgraph.
-                            Tarjan's SCC algorithm detects circular
-                            dependencies. The &kappa; invariant measures
-                            entanglement depth.
+                            Hybrid search (embeddings&nbsp;+ BM25&nbsp;+
+                            cross-encoder reranking) returns ranked results.
+                            Every retrieval computes &kappa; topology on the
+                            subgraph. &kappa;&nbsp;=&nbsp;0 takes the fast path;
+                            &kappa;&nbsp;&gt;&nbsp;0 routes to deliberation. The
+                            attention engine decides: act&nbsp;now,
+                            learn&nbsp;more, or escalate.
                         </p>
                     </div>
                     <div class="step-card rose reveal">
-                        <h3>Route</h3>
+                        <h3>Act &amp; Learn</h3>
                         <p>
-                            &kappa; = 0 &rarr; fast retrieval. On constrained
-                            tiers, low-&kappa; regions can be enriched without
-                            full deliberation. Higher-friction regions route to
-                            deliberate (decompose fault lines, reconcile, write
-                            conclusions back). Attention then prioritizes what
-                            to do next under autonomy and budget controls.
+                            Every decision carries
+                            <code>causal_parent_ids</code> &mdash; the graph
+                            nodes that informed it.
+                            <code>learn_from_outcome</code> closes the loop:
+                            success boosts confidence on those nodes, failure
+                            reduces it. Next retrieval ranks results
+                            differently. No gradient descent, no weight updates.
                         </p>
                     </div>
+                    <div class="step-card amber reveal">
+                        <h3>Consolidate</h3>
+                        <p>
+                            During idle time, a 7-stage sleep cycle runs: decay
+                            confidence, prune weak nodes, strengthen
+                            co-activated edges, merge near-duplicates, and
+                            promote proven knowledge from fast to glacial
+                            memory. Then back to Retrieve &mdash; with updated
+                            confidence, cleaner topology, and re-prioritized
+                            goals.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <hr class="sep" />
+
+        <!-- PRISM: SELF-IMPROVING BENCHMARK -->
+        <section id="prism">
+            <div class="container">
+                <div class="section-label reveal">OS-009 &middot; PRISM</div>
+                <h2 class="reveal">
+                    We used Graphonomous to <em>benchmark Graphonomous</em>
+                </h2>
+                <p class="lead reveal">
+                    PRISM (Protocol for Rating Iterative System Memory) is a
+                    self-improving continual learning benchmark. It evaluates
+                    Graphonomous across 9 CL dimensions, then feeds the results
+                    back into the graph &mdash; so the system literally learns
+                    from its own evaluation. Here&rsquo;s what happened over 6
+                    cycles.
+                </p>
+
+                <!-- Cycle progression table -->
+                <div class="reveal" style="overflow-x: auto; margin: 2.5rem 0">
+                    <table class="tools-table">
+                        <thead>
+                            <tr>
+                                <th>Cycle</th>
+                                <th>Score</th>
+                                <th>Scenarios</th>
+                                <th>Dimensions</th>
+                                <th>What changed</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>1</strong></td>
+                                <td style="color: var(--rose)">0.10</td>
+                                <td>5</td>
+                                <td>2 / 9</td>
+                                <td>
+                                    Cold start &mdash; graph full of episodic
+                                    infra nodes, zero procedural knowledge
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>2</strong></td>
+                                <td style="color: var(--amber)">0.76</td>
+                                <td>5</td>
+                                <td>6 / 9</td>
+                                <td>
+                                    Seeded 9 procedural/semantic nodes
+                                    (bootstrap, &kappa;, corrections,
+                                    benchmarks)
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>3</strong></td>
+                                <td style="color: var(--cyan)">0.95</td>
+                                <td>8</td>
+                                <td>9 / 9</td>
+                                <td>
+                                    Full dimension coverage &mdash; added
+                                    consolidation, forgetting, feedback
+                                    scenarios
+                                </td>
+                            </tr>
+                            <tr class="highlight">
+                                <td><strong>4</strong></td>
+                                <td style="color: var(--cyan)">0.99</td>
+                                <td>8</td>
+                                <td>9 / 9</td>
+                                <td>
+                                    Proper methodology &mdash; independent L2
+                                    Sonnet judges, L3 Haiku meta-judge
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>5</strong></td>
+                                <td style="color: var(--rose)">dropped</td>
+                                <td>11</td>
+                                <td>9 / 9</td>
+                                <td>
+                                    Adversarial + cross-domain &mdash; BM25
+                                    keyword attack exposed ranking vulnerability
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>5c</strong></td>
+                                <td style="color: var(--amber)">partial</td>
+                                <td>retests</td>
+                                <td>7</td>
+                                <td>
+                                    3 code fixes (confidence-weighted BM25,
+                                    batch normalization) + 4 bridge nodes
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>6</strong></td>
+                                <td style="color: var(--amber)">0.45</td>
+                                <td>15</td>
+                                <td>6</td>
+                                <td>
+                                    Generalization test &mdash; no new nodes, 2
+                                    new domains. Vocabulary gap exposed.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Story callout -->
+                <div class="callout reveal">
+                    <p>
+                        <strong>The dual loop in action:</strong>
+                        PRISM composes scenarios, runs them against
+                        Graphonomous, judges the results across 9 CL dimensions,
+                        then reflects on what to test next. Meanwhile,
+                        Graphonomous stores every evaluation result as knowledge
+                        nodes &mdash; so each cycle starts with richer context
+                        than the last.
+                    </p>
+                    <p>
+                        Cycle 5 was the breakthrough: adversarial nodes with low
+                        confidence (0.29) outranked correct nodes (0.80+)
+                        because BM25 keyword scoring wasn&rsquo;t
+                        confidence-weighted. PRISM caught it. We fixed it. Cycle
+                        5c confirmed the fix. That&rsquo;s the loop working.
+                    </p>
+                </div>
+
+                <!-- 9 CL Dimensions -->
+                <h3
+                    class="reveal"
+                    style="
+                        margin-top: 3rem;
+                        font-family: var(--mono);
+                        font-size: 0.95rem;
+                        color: var(--dim);
+                    "
+                >
+                    The 9 Continual Learning Dimensions
+                </h3>
+                <div
+                    class="reveal"
+                    style="
+                        display: grid;
+                        grid-template-columns: repeat(
+                            auto-fit,
+                            minmax(280px, 1fr)
+                        );
+                        gap: 1rem;
+                        margin-top: 1.5rem;
+                    "
+                >
+                    <div class="step-card cyan">
+                        <h3>Stability</h3>
+                        <p>
+                            Anti-forgetting &mdash; does old knowledge survive
+                            new learning? Weight: 0.20
+                        </p>
+                    </div>
+                    <div class="step-card cyan">
+                        <h3>Plasticity</h3>
+                        <p>
+                            New acquisition &mdash; can the system learn novel
+                            concepts quickly? Weight: 0.18
+                        </p>
+                    </div>
+                    <div class="step-card blue">
+                        <h3>Knowledge Update</h3>
+                        <p>
+                            Contradiction handling &mdash; does it revise
+                            beliefs when corrected? Weight: 0.15
+                        </p>
+                    </div>
+                    <div class="step-card rose">
+                        <h3>Temporal Reasoning</h3>
+                        <p>
+                            Time-aware retrieval &mdash; does recency and
+                            sequence matter? Weight: 0.12
+                        </p>
+                    </div>
+                    <div class="step-card cyan">
+                        <h3>Consolidation</h3>
+                        <p>
+                            Abstraction &mdash; does it merge, prune, and
+                            promote knowledge? Weight: 0.10
+                        </p>
+                    </div>
+                    <div class="step-card blue">
+                        <h3>Epistemic Awareness</h3>
+                        <p>
+                            Uncertainty &mdash; does it know what it
+                            doesn&rsquo;t know? Weight: 0.08
+                        </p>
+                    </div>
+                    <div class="step-card amber">
+                        <h3>Cross-Domain Transfer</h3>
+                        <p>
+                            Generalization &mdash; does code knowledge help with
+                            business queries? Weight: 0.07
+                        </p>
+                    </div>
+                    <div class="step-card rose">
+                        <h3>Intentional Forgetting</h3>
+                        <p>
+                            Controlled removal &mdash; soft-hide, hard-delete,
+                            GDPR erase. Weight: 0.05
+                        </p>
+                    </div>
+                    <div class="step-card amber">
+                        <h3>Outcome Feedback</h3>
+                        <p>
+                            Self-correction &mdash; does it learn from action
+                            results? Weight: 0.05
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Dual loop diagram -->
+                <div class="callout reveal" style="margin-top: 2.5rem">
+                    <p style="font-size: 0.9rem">
+                        <strong>Two loops, one inside the other:</strong>
+                    </p>
+                    <pre
+                        style="
+                            font-family: var(--mono);
+                            font-size: 0.8rem;
+                            color: var(--dim);
+                            line-height: 1.6;
+                            margin: 1rem 0 0;
+                        "
+                    >
+PRISM (outer):  compose &rarr; interact &rarr; observe &rarr; reflect &rarr; diagnose
+                              &darr;
+            &#9484;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash; Graphonomous (inner) &mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&#9488;
+            &#9474; retrieve &rarr; route &rarr; act &rarr; learn &rarr; consolidate &#9474;
+            &#9492;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&#9496;</pre
+                    >
+                    <p style="font-size: 0.85rem; margin-top: 1rem">
+                        You can do this with your own repo. PRISM&rsquo;s BYOR
+                        (Bring Your Own Repo) registers your git history as
+                        ground truth, auto-discovers CL events from commits, and
+                        generates evaluation scenarios. Run it in Claude Code,
+                        Codex, or any MCP-capable agent.
+                    </p>
                 </div>
             </div>
         </section>
@@ -1046,48 +1859,230 @@
         <section id="types">
             <div class="container">
                 <div class="section-label reveal">Knowledge Graph</div>
-                <h2 class="reveal">See what Graphonomous <em>actually stores</em></h2>
+                <h2 class="reveal">
+                    See what Graphonomous <em>actually stores</em>
+                </h2>
                 <p class="lead reveal">
-                    This is a real knowledge graph &mdash; 6 node types, 17 edge types, and the workflows that connect them.
-                    Filter by scenario to follow the learning loop, watch &kappa;-routing detect circular reasoning,
-                    or see belief revision propagate corrections through the graph. Hover any node for details. Drag to rearrange.
+                    This is a real knowledge graph &mdash; 6 node types, 17 edge
+                    types, and the workflows that connect them. Filter by
+                    scenario to follow the learning loop, watch &kappa;-routing
+                    detect circular reasoning, or see belief revision propagate
+                    corrections through the graph. Hover any node for details.
+                    Drag to rearrange.
                 </p>
 
                 <!-- Filter controls -->
-                <div class="reveal" id="tg-filters" style="display:flex;flex-wrap:wrap;gap:0.5rem;margin-bottom:1.25rem;align-items:center;">
-                    <span style="font-family:var(--mono);font-size:0.65rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--dim);margin-right:0.25rem;">Scenario:</span>
-                    <button class="tg-filter-btn active" data-scenario="all">All</button>
-                    <button class="tg-filter-btn" data-scenario="learning">Learning Loop</button>
-                    <button class="tg-filter-btn" data-scenario="kappa">&kappa;-Routing</button>
-                    <button class="tg-filter-btn" data-scenario="belief">Belief Revision</button>
-                    <button class="tg-filter-btn" data-scenario="attention">Attention &amp; Goals</button>
-                    <button class="tg-filter-btn" data-scenario="forgetting">Forgetting</button>
-                    <span style="flex:1"></span>
-                    <span style="font-family:var(--mono);font-size:0.65rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--dim);margin-right:0.25rem;">Edges:</span>
-                    <button class="tg-filter-btn tg-edge-btn active" data-edgegroup="all">All</button>
-                    <button class="tg-filter-btn tg-edge-btn" data-edgegroup="causal">Causal</button>
-                    <button class="tg-filter-btn tg-edge-btn" data-edgegroup="structural">Structural</button>
-                    <button class="tg-filter-btn tg-edge-btn" data-edgegroup="epistemic">Epistemic</button>
-                    <button class="tg-filter-btn tg-edge-btn" data-edgegroup="temporal">Temporal</button>
+                <div
+                    class="reveal"
+                    id="tg-filters"
+                    style="
+                        display: flex;
+                        flex-wrap: wrap;
+                        gap: 0.5rem;
+                        margin-bottom: 1.25rem;
+                        align-items: center;
+                    "
+                >
+                    <span
+                        style="
+                            font-family: var(--mono);
+                            font-size: 0.65rem;
+                            letter-spacing: 0.08em;
+                            text-transform: uppercase;
+                            color: var(--dim);
+                            margin-right: 0.25rem;
+                        "
+                        >Scenario:</span
+                    >
+                    <button class="tg-filter-btn active" data-scenario="all">
+                        All
+                    </button>
+                    <button class="tg-filter-btn" data-scenario="learning">
+                        Learning Loop
+                    </button>
+                    <button class="tg-filter-btn" data-scenario="kappa">
+                        &kappa;-Routing
+                    </button>
+                    <button class="tg-filter-btn" data-scenario="belief">
+                        Belief Revision
+                    </button>
+                    <button class="tg-filter-btn" data-scenario="attention">
+                        Attention &amp; Goals
+                    </button>
+                    <button class="tg-filter-btn" data-scenario="forgetting">
+                        Forgetting
+                    </button>
+                    <span style="flex: 1"></span>
+                    <span
+                        style="
+                            font-family: var(--mono);
+                            font-size: 0.65rem;
+                            letter-spacing: 0.08em;
+                            text-transform: uppercase;
+                            color: var(--dim);
+                            margin-right: 0.25rem;
+                        "
+                        >Edges:</span
+                    >
+                    <button
+                        class="tg-filter-btn tg-edge-btn active"
+                        data-edgegroup="all"
+                    >
+                        All
+                    </button>
+                    <button
+                        class="tg-filter-btn tg-edge-btn"
+                        data-edgegroup="causal"
+                    >
+                        Causal
+                    </button>
+                    <button
+                        class="tg-filter-btn tg-edge-btn"
+                        data-edgegroup="structural"
+                    >
+                        Structural
+                    </button>
+                    <button
+                        class="tg-filter-btn tg-edge-btn"
+                        data-edgegroup="epistemic"
+                    >
+                        Epistemic
+                    </button>
+                    <button
+                        class="tg-filter-btn tg-edge-btn"
+                        data-edgegroup="temporal"
+                    >
+                        Temporal
+                    </button>
                 </div>
 
                 <!-- Status bar -->
-                <div id="tg-status" style="font-family:var(--mono);font-size:0.65rem;color:var(--dim);margin-bottom:0.75rem;letter-spacing:0.03em;"></div>
+                <div
+                    id="tg-status"
+                    style="
+                        font-family: var(--mono);
+                        font-size: 0.65rem;
+                        color: var(--dim);
+                        margin-bottom: 0.75rem;
+                        letter-spacing: 0.03em;
+                    "
+                ></div>
 
-                <div class="reveal" style="position:relative; width:100%; aspect-ratio:16/10; min-height:520px; background:var(--surface); border:1px solid var(--border); border-radius:10px; overflow:hidden; margin-bottom:2rem;">
-                    <canvas id="type-graph-canvas" style="position:absolute;top:0;left:0;width:100%;height:100%;"></canvas>
-                    <div id="type-graph-tooltip" style="position:absolute;display:none;pointer-events:none;background:rgba(14,16,23,0.95);border:1px solid rgba(255,255,255,0.12);border-radius:8px;padding:0.65rem 0.85rem;font-family:var(--mono);font-size:0.68rem;color:var(--text);z-index:10;max-width:320px;line-height:1.6;box-shadow:0 4px 20px rgba(0,0,0,0.4);"></div>
+                <div
+                    class="reveal"
+                    style="
+                        position: relative;
+                        width: 100%;
+                        aspect-ratio: 16/10;
+                        min-height: 520px;
+                        background: var(--surface);
+                        border: 1px solid var(--border);
+                        border-radius: 10px;
+                        overflow: hidden;
+                        margin-bottom: 2rem;
+                    "
+                >
+                    <canvas
+                        id="type-graph-canvas"
+                        style="
+                            position: absolute;
+                            top: 0;
+                            left: 0;
+                            width: 100%;
+                            height: 100%;
+                        "
+                    ></canvas>
+                    <div
+                        id="type-graph-tooltip"
+                        style="
+                            position: absolute;
+                            display: none;
+                            pointer-events: none;
+                            background: rgba(14, 16, 23, 0.95);
+                            border: 1px solid rgba(255, 255, 255, 0.12);
+                            border-radius: 8px;
+                            padding: 0.65rem 0.85rem;
+                            font-family: var(--mono);
+                            font-size: 0.68rem;
+                            color: var(--text);
+                            z-index: 10;
+                            max-width: 320px;
+                            line-height: 1.6;
+                            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+                        "
+                    ></div>
                 </div>
 
                 <!-- Legend -->
-                <div class="reveal" style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;">
-                    <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1.5rem;">
-                        <h3 style="font-family:var(--mono);font-size:0.7rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--cyan);margin-bottom:1rem;">Node Types (6)</h3>
-                        <div id="node-type-legend" style="display:grid;grid-template-columns:1fr;gap:0.5rem;font-family:var(--mono);font-size:0.72rem;"></div>
+                <div
+                    class="reveal"
+                    style="
+                        display: grid;
+                        grid-template-columns: 1fr 1fr;
+                        gap: 1.5rem;
+                    "
+                >
+                    <div
+                        style="
+                            background: var(--surface);
+                            border: 1px solid var(--border);
+                            border-radius: 10px;
+                            padding: 1.5rem;
+                        "
+                    >
+                        <h3
+                            style="
+                                font-family: var(--mono);
+                                font-size: 0.7rem;
+                                letter-spacing: 0.08em;
+                                text-transform: uppercase;
+                                color: var(--cyan);
+                                margin-bottom: 1rem;
+                            "
+                        >
+                            Node Types (6)
+                        </h3>
+                        <div
+                            id="node-type-legend"
+                            style="
+                                display: grid;
+                                grid-template-columns: 1fr;
+                                gap: 0.5rem;
+                                font-family: var(--mono);
+                                font-size: 0.72rem;
+                            "
+                        ></div>
                     </div>
-                    <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1.5rem;">
-                        <h3 style="font-family:var(--mono);font-size:0.7rem;letter-spacing:0.08em;text-transform:uppercase;color:var(--rose);margin-bottom:1rem;">Edge Types (17)</h3>
-                        <div id="edge-type-legend" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.4rem;font-family:var(--mono);font-size:0.72rem;"></div>
+                    <div
+                        style="
+                            background: var(--surface);
+                            border: 1px solid var(--border);
+                            border-radius: 10px;
+                            padding: 1.5rem;
+                        "
+                    >
+                        <h3
+                            style="
+                                font-family: var(--mono);
+                                font-size: 0.7rem;
+                                letter-spacing: 0.08em;
+                                text-transform: uppercase;
+                                color: var(--rose);
+                                margin-bottom: 1rem;
+                            "
+                        >
+                            Edge Types (17)
+                        </h3>
+                        <div
+                            id="edge-type-legend"
+                            style="
+                                display: grid;
+                                grid-template-columns: 1fr 1fr 1fr;
+                                gap: 0.4rem;
+                                font-family: var(--mono);
+                                font-size: 0.72rem;
+                            "
+                        ></div>
                     </div>
                 </div>
             </div>
@@ -1098,210 +2093,317 @@
         <!-- MCP TOOLS -->
         <section id="tools">
             <div class="container">
-                <div class="section-label reveal">MCP Server</div>
-                <h2 class="reveal">Available <em>tools</em></h2>
+                <div class="section-label reveal">
+                    MCP Server &middot; Dual-Loop Machine Architecture
+                </div>
+                <h2 class="reveal">5 machines, <em>29 actions</em></h2>
+                <p
+                    class="dim reveal"
+                    style="
+                        max-width: 680px;
+                        margin: 0 auto 2rem;
+                        text-align: center;
+                        font-size: 0.95rem;
+                    "
+                >
+                    Tool selection accuracy degrades past ~30 tools. Instead of
+                    29 individual tools, Graphonomous v0.4 exposes
+                    <strong>5 loop-phase machines</strong> &mdash; one per phase
+                    of the closed memory loop. Each machine dispatches via an
+                    <code>action</code> parameter.
+                </p>
+
+                <!-- Machine architecture diagram -->
+                <div
+                    class="callout reveal"
+                    style="
+                        text-align: center;
+                        font-family: var(--mono);
+                        font-size: 0.8rem;
+                        line-height: 2;
+                        margin-bottom: 2.5rem;
+                    "
+                >
+                    <span style="color: var(--cyan)">retrieve</span> &rarr;
+                    <span style="color: var(--blue)">route</span> &rarr;
+                    <span style="color: var(--rose)">act</span> &rarr;
+                    <span style="color: var(--amber)">learn</span> &rarr;
+                    <span style="color: var(--cyan)">consolidate</span>
+                    <br />
+                    <span style="color: var(--dim); font-size: 0.7rem">
+                        &ldquo;What do I know?&rdquo; &rarr; &ldquo;What should
+                        I do?&rdquo; &rarr; &ldquo;Do it&rdquo; &rarr;
+                        &ldquo;Did it work?&rdquo; &rarr; &ldquo;Clean up&rdquo;
+                    </span>
+                </div>
 
                 <table class="tools-table reveal">
                     <thead>
                         <tr>
-                            <th>Tool</th>
+                            <th>Machine</th>
+                            <th>Actions</th>
                             <th>Description</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr>
-                            <td>store_node</td>
-                            <td>
-                                Persist knowledge nodes with type, confidence,
-                                metadata
+                        <tr class="highlight">
+                            <td style="color: var(--cyan)">retrieve</td>
+                            <td
+                                style="
+                                    font-family: var(--mono);
+                                    font-size: 0.75rem;
+                                "
+                            >
+                                context, episodic, procedural, coverage,
+                                trace_evidence, frontier
                             </td>
-                        </tr>
-                        <tr>
-                            <td>store_edge</td>
                             <td>
-                                Create directed relationships between nodes (17
-                                edge types, default weight 0.3)
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>delete_node</td>
-                            <td>Remove a node and its connected edges</td>
-                        </tr>
-                        <tr>
-                            <td>manage_edge</td>
-                            <td>
-                                Edge lifecycle &mdash; list, update
-                                weight/decay, delete
+                                &kappa;-aware ranked retrieval, time-filtered
+                                episodes, procedural search, epistemic coverage,
+                                Dijkstra evidence paths, Wilson interval
+                                uncertainty
                             </td>
                         </tr>
                         <tr class="highlight">
-                            <td>retrieve_context</td>
-                            <td>
-                                Semantic search + neighborhood expansion +
-                                topology annotations + κ-aware routing
+                            <td style="color: var(--blue)">route</td>
+                            <td
+                                style="
+                                    font-family: var(--mono);
+                                    font-size: 0.75rem;
+                                "
+                            >
+                                topology, deliberate, attention_survey,
+                                attention_cycle, review_goal
                             </td>
-                        </tr>
-                        <tr>
-                            <td>query_graph</td>
                             <td>
-                                List, filter, similarity search across the graph
-                            </td>
-                        </tr>
-                        <tr class="highlight">
-                            <td>topology_analyze</td>
-                            <td>
-                                Compute SCCs, &kappa; values, routing decision,
-                                fault-line edges
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>graph_traverse</td>
-                            <td>
-                                BFS walk with depth and relationship filters
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>graph_stats</td>
-                            <td>
-                                Aggregate counts, type distributions, confidence
-                                stats, orphan detection
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>retrieve_episodic</td>
-                            <td>Time-range filtered episodic node retrieval</td>
-                        </tr>
-                        <tr>
-                            <td>retrieve_procedural</td>
-                            <td>
-                                Semantic search scoped to procedural how-to
-                                nodes
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>coverage_query</td>
-                            <td>
-                                Standalone epistemic coverage &mdash;
-                                act/learn/escalate decision
+                                SCC/&kappa; analysis, &kappa;-driven
+                                deliberation, priority survey, triage &rarr;
+                                dispatch, coverage-driven gate
                             </td>
                         </tr>
                         <tr class="highlight">
-                            <td>trace_evidence_path</td>
-                            <td>
-                                Weighted Dijkstra / Yen&rsquo;s K-shortest paths
-                                for evidence provenance tracing
+                            <td style="color: var(--rose)">act</td>
+                            <td
+                                style="
+                                    font-family: var(--mono);
+                                    font-size: 0.75rem;
+                                "
+                            >
+                                store_node, store_edge, delete_node,
+                                manage_edge, manage_goal, belief_revise,
+                                forget_node, forget_policy, gdpr_erase
                             </td>
-                        </tr>
-                        <tr>
-                            <td>learn_from_outcome</td>
                             <td>
-                                Update confidence across causal chains from
-                                grounded outcomes
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>learn_from_feedback</td>
-                            <td>
-                                Positive/negative/correction feedback on nodes
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>learn_detect_novelty</td>
-                            <td>
-                                Similarity-based novelty scoring for new
-                                concepts
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>learn_from_interaction</td>
-                            <td>
-                                Full pipeline: novelty &rarr; store &rarr;
-                                extract claims &rarr; link
+                                All graph mutations: node/edge CRUD, goal
+                                lifecycle, AGM belief revision,
+                                soft/hard/cascade forgetting, GDPR erasure
                             </td>
                         </tr>
                         <tr class="highlight">
-                            <td>deliberate</td>
-                            <td>
-                                κ-driven focused reasoning over cyclic regions
-                                with optional crystallization
+                            <td style="color: var(--amber)">learn</td>
+                            <td
+                                style="
+                                    font-family: var(--mono);
+                                    font-size: 0.75rem;
+                                "
+                            >
+                                from_outcome, from_feedback, detect_novelty,
+                                from_interaction, contradictions
                             </td>
-                        </tr>
-                        <tr>
-                            <td>manage_goal</td>
                             <td>
-                                Goal lifecycle &mdash; create, transition, link
-                                nodes, set progress
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>review_goal</td>
-                            <td>Coverage-driven decision gate for goals</td>
-                        </tr>
-                        <tr>
-                            <td>run_consolidation</td>
-                            <td>
-                                7-stage pipeline: decay, prune, strengthen,
-                                merge, promote, abstract
+                                Causal confidence updates, feedback processing,
+                                novelty scoring, full ingestion pipeline,
+                                contradiction detection
                             </td>
                         </tr>
                         <tr class="highlight">
-                            <td>attention_survey</td>
-                            <td>
-                                Ranked attention map across goals, coverage, and
-                                topology signals
+                            <td style="color: var(--cyan)">consolidate</td>
+                            <td
+                                style="
+                                    font-family: var(--mono);
+                                    font-size: 0.75rem;
+                                "
+                            >
+                                run, stats, query, traverse
                             </td>
-                        </tr>
-                        <tr class="highlight">
-                            <td>attention_run_cycle</td>
                             <td>
-                                Trigger one survey/triage/dispatch attention
-                                cycle with autonomy override
-                            </td>
-                        </tr>
-                        <tr class="highlight">
-                            <td>belief_revise</td>
-                            <td>
-                                AGM-style expand/revise/contract with confidence
-                                propagation through dependency graphs
-                            </td>
-                        </tr>
-                        <tr class="highlight">
-                            <td>belief_contradictions</td>
-                            <td>
-                                Detect contradictions via semantic similarity +
-                                negation markers
-                            </td>
-                        </tr>
-                        <tr class="highlight">
-                            <td>epistemic_frontier</td>
-                            <td>
-                                Wilson score intervals &mdash; find where
-                                evidence would most reduce uncertainty
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>forget_node</td>
-                            <td>
-                                Soft (hide), hard (delete), or cascade (delete +
-                                orphans) forgetting modes
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>forget_by_policy</td>
-                            <td>
-                                Hybrid LRU + priority-decay automatic pruning
-                                with dry-run preview
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>gdpr_erase</td>
-                            <td>
-                                GDPR Article 17 permanent deletion with audit
-                                trail
+                                7-stage consolidation, aggregate statistics,
+                                operation-based inspection, BFS traversal
                             </td>
                         </tr>
                     </tbody>
                 </table>
+
+                <!-- Dual-loop callout -->
+                <div class="callout reveal" style="margin-top: 2.5rem">
+                    <p style="font-size: 0.9rem">
+                        <strong>Dual-loop interlocking with PRISM:</strong>
+                        When PRISM (OS-009) benchmarks Graphonomous, both closed
+                        loops nest. PRISM&rsquo;s 6 machines +
+                        Graphonomous&rsquo;s 5 machines =
+                        <strong>11 tools</strong>
+                        in a shared session, down from 76. The outer loop
+                        improves the benchmark. The inner loop improves the
+                        memory. Each makes the other sharper.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <hr class="sep" />
+
+        <!-- GET STARTED -->
+        <section id="start">
+            <div class="container">
+                <div class="section-label reveal">Try It Yourself</div>
+                <h2 class="reveal">Get started in <em>three prompts</em></h2>
+                <p class="lead reveal">
+                    Copy these into Claude Code, Codex, or any MCP-capable
+                    coding agent. Graphonomous runs as a local MCP server
+                    &mdash; your knowledge stays on your machine.
+                </p>
+
+                <div class="reveal" style="margin: 2rem 0">
+                    <h3
+                        style="
+                            font-family: var(--mono);
+                            font-size: 0.85rem;
+                            color: var(--cyan);
+                            margin-bottom: 0.75rem;
+                        "
+                    >
+                        1. Bootstrap a Graphonomous session
+                    </h3>
+                    <pre
+                        style="
+                            font-family: var(--mono);
+                            font-size: 0.8rem;
+                            color: var(--text);
+                            background: var(--surface);
+                            border: 1px solid var(--border);
+                            border-radius: 8px;
+                            padding: 1.5rem;
+                            overflow-x: auto;
+                            line-height: 1.6;
+                        "
+                    >
+Start a Graphonomous memory session for this repo.
+1. retrieve(action: "context", query: "session context")
+2. Check active goals: act(action: "manage_goal", goal_operation: "list_goals")
+3. Survey attention: route(action: "attention_survey")
+Then proceed with my task, storing durable knowledge as we go.</pre
+                    >
+                </div>
+
+                <div class="reveal" style="margin: 2rem 0">
+                    <h3
+                        style="
+                            font-family: var(--mono);
+                            font-size: 0.85rem;
+                            color: var(--cyan);
+                            margin-bottom: 0.75rem;
+                        "
+                    >
+                        2. Run a PRISM benchmark cycle
+                    </h3>
+                    <pre
+                        style="
+                            font-family: var(--mono);
+                            font-size: 0.8rem;
+                            color: var(--text);
+                            background: var(--surface);
+                            border: 1px solid var(--border);
+                            border-radius: 8px;
+                            padding: 1.5rem;
+                            overflow-x: auto;
+                            line-height: 1.6;
+                        "
+                    >
+Run a PRISM evaluation cycle against Graphonomous:
+1. config(action: "register_system", name: "graphonomous", transport: "stdio")
+2. compose(action: "byor_register", repo_url: ".", commit_range: "HEAD~20..HEAD")
+3. compose(action: "byor_discover") to find CL events in commit history
+4. compose(action: "scenarios") to generate evaluation scenarios
+5. interact(action: "run") for each scenario
+6. observe(action: "judge_transcript") with L2 dimension scoring
+7. reflect(action: "analyze_gaps") to find weak dimensions
+8. Store results: act(action: "store_node") with cycle outcomes</pre
+                    >
+                </div>
+
+                <div class="reveal" style="margin: 2rem 0">
+                    <h3
+                        style="
+                            font-family: var(--mono);
+                            font-size: 0.85rem;
+                            color: var(--cyan);
+                            margin-bottom: 0.75rem;
+                        "
+                    >
+                        3. Close the dual loop
+                    </h3>
+                    <pre
+                        style="
+                            font-family: var(--mono);
+                            font-size: 0.8rem;
+                            color: var(--text);
+                            background: var(--surface);
+                            border: 1px solid var(--border);
+                            border-radius: 8px;
+                            padding: 1.5rem;
+                            overflow-x: auto;
+                            line-height: 1.6;
+                        "
+                    >
+Use PRISM results to improve Graphonomous, then re-evaluate:
+1. diagnose(action: "failure_patterns") to cluster weaknesses
+2. diagnose(action: "suggest_fixes") for targeted improvements
+3. Fix the code or seed bridge nodes to fill vocabulary gaps
+4. interact(action: "run") to retest failing scenarios
+5. observe(action: "judge_transcript") to re-score
+6. learn(action: "from_outcome", status: "success|failure") to close the loop
+7. consolidate(action: "run") to clean up the graph
+Repeat. Each cycle makes both the benchmark and the memory sharper.</pre
+                    >
+                </div>
+
+                <div class="callout reveal" style="margin-top: 1.5rem">
+                    <p style="font-size: 0.9rem">
+                        <strong>MCP config:</strong> Add this to your
+                        <code
+                            style="
+                                font-family: var(--mono);
+                                background: var(--surface-2);
+                                padding: 0.15rem 0.4rem;
+                                border-radius: 4px;
+                            "
+                            >.mcp.json</code
+                        >
+                        or IDE settings to connect both servers:
+                    </p>
+                    <pre
+                        style="
+                            font-family: var(--mono);
+                            font-size: 0.78rem;
+                            color: var(--text);
+                            margin-top: 0.75rem;
+                            line-height: 1.5;
+                        "
+                    >
+{
+  "mcpServers": {
+    "graphonomous": {
+      "command": "path/to/graphonomous/scripts/graphonomous_mcp_wrapper.sh",
+      "args": ["--db", "~/.graphonomous/knowledge.db"]
+    },
+    "prism": {
+      "command": "path/to/PRISM/scripts/prism_mcp_wrapper.sh",
+      "args": []
+    }
+  }
+}</pre
+                    >
+                </div>
             </div>
         </section>
 
@@ -1310,62 +2412,111 @@
         <!-- WHAT MAKES THIS DIFFERENT -->
         <section id="different">
             <div class="container">
-                <div class="section-label reveal">Comparison</div>
-                <h2 class="reveal">What makes this <em>different</em></h2>
+                <div class="section-label reveal">Why Integration Matters</div>
+                <h2 class="reveal">
+                    Features are easy. <em>Integration</em> is the moat.
+                </h2>
 
                 <div class="callout reveal">
                     <p>
-                        Every agent memory system retrieves context.
-                        Graphonomous is the only one that tells you the
-                        <em>shape</em> of what you retrieved &mdash; and adjusts
-                        reasoning depth based on that shape.
+                        Any system can add confidence scores. Any system can add
+                        a consolidation step. The difference is what happens
+                        when these features <em>talk to each other</em>.
                     </p>
+                    <p>
+                        In Graphonomous, a failed outcome reduces confidence on
+                        the causal parent nodes that informed the decision.
+                        Lower confidence changes the &kappa; topology of that
+                        subgraph. Changed topology changes the routing decision
+                        on the next retrieval. The attention engine
+                        re-prioritizes goals based on the new coverage
+                        landscape. During idle time, consolidation prunes the
+                        weakened nodes and strengthens what worked. One outcome
+                        ripples through the entire system &mdash; retrieval,
+                        routing, attention, and memory lifecycle &mdash; without
+                        any component knowing about the others.
+                    </p>
+                    <p>
+                        That causal chain breaks if any piece lives in a
+                        separate system. Bolted-on confidence scores don&rsquo;t
+                        feed into topology analysis. A standalone consolidator
+                        can&rsquo;t see which nodes were used in failed
+                        decisions. Separate goal tracking can&rsquo;t query the
+                        graph&rsquo;s epistemic coverage. The integrated
+                        architecture is the product.
+                    </p>
+                </div>
+
+                <div class="section-label reveal" style="margin-top: 3rem">
+                    Landscape
+                </div>
+                <h2 class="reveal" style="margin-bottom: 1rem">
+                    Where others <em>stop</em>
+                </h2>
+                <p class="lead reveal">
+                    Each of these systems does something well. None of them
+                    close the loop.
+                </p>
+
+                <div class="callout reveal">
                     <ul>
                         <li>
-                            <strong>Mem0</strong> stores facts with smart
-                            updates. It doesn&rsquo;t detect circular
-                            dependencies, revise beliefs, or route inference
-                            depth.
+                            <strong>Letta (MemGPT)</strong> pioneered
+                            &ldquo;continual learning in token space&rdquo; with
+                            sleep-time consolidation and skill caching. But
+                            memory items have no confidence scores, no
+                            outcome-based feedback, and no topology awareness.
+                            Learning means rewriting text, not updating a causal
+                            graph.
                         </li>
                         <li>
                             <strong>Zep / Graphiti</strong> builds temporal
-                            knowledge graphs. It doesn&rsquo;t compute topology,
-                            forget intentionally, or track epistemic
-                            uncertainty.
+                            knowledge graphs with sophisticated entity
+                            deduplication and a four-timestamp bi-timeline.
+                            Strong on &ldquo;what changed when.&rdquo; But no
+                            confidence tracking, no outcome learning, no
+                            topology analysis, and contradictions are resolved
+                            by temporal invalidation alone &mdash; new
+                            overwrites old.
                         </li>
                         <li>
-                            <strong>Letta (MemGPT)</strong> pages memory in and
-                            out of context. It doesn&rsquo;t know when context
-                            is tangled or self-correct retrieval rankings.
+                            <strong>Hindsight</strong> has an opinion network
+                            with updateable confidence &mdash; the closest
+                            competitor architecturally. But updates are linear
+                            alpha adjustments, not formal belief revision. No
+                            causal attribution chains, no topology routing, no
+                            consolidation cycles, and confidence exists only on
+                            opinions, not on facts or experiences.
                         </li>
                         <li>
-                            <strong>Hindsight</strong> (arXiv 2512.12818) uses
-                            CARA reflection and multi-signal retrieval. Strong
-                            on LongMemEval but cloud-LLM dependent, no topology
-                            awareness, no GDPR forgetting, and no belief
-                            revision.
+                            <strong>Cognee</strong> extracts knowledge graphs
+                            with a behavioral critic that scores memory by
+                            downstream utility &mdash; a genuine innovation. But
+                            no per-node confidence, no causal feedback loop, and
+                            no topology-aware retrieval.
                         </li>
                         <li>
-                            <strong>Vendor-locked memory</strong> &mdash;
-                            proprietary agent memory systems are locked to one
-                            model. Graphonomous is MCP-native and works with
-                            Claude, ChatGPT, Cursor, or any model that speaks
-                            MCP.
+                            <strong>MemPalace</strong> achieves 96.6&ndash;100%
+                            retrieval accuracy with zero API calls &mdash;
+                            best-in-class for pure recall. But it&rsquo;s
+                            storage and retrieval only. No learning loop, no
+                            confidence, no consolidation.
                         </li>
                     </ul>
-                    <p>
-                        Graphonomous computes &kappa; &mdash; a proved
-                        graph-theoretic invariant &mdash; on every retrieval.
-                        When your knowledge has feedback loops, the system tells
-                        you exactly where they are and how to reason through
-                        them.
+
+                    <p style="margin-top: 1.5rem">
+                        Graphonomous is the only system where confidence
+                        tracking, causal attribution, &kappa;-routing, belief
+                        revision, sleep-cycle consolidation, multi-timescale
+                        memory, and goal-aware attention all operate on the
+                        <em>same graph</em>. MCP-native, works with any model,
+                        runs on SQLite at the edge.
                     </p>
                     <p>
                         <strong>GDPR-compliant forgetting</strong> is built in.
                         Soft forget, cascade delete, policy-based pruning, and
                         permanent audit-logged erasure (Article 17) &mdash; all
-                        in one tool surface, with no other agent memory system
-                        offering the same.
+                        in one tool surface.
                     </p>
                 </div>
             </div>
@@ -1946,32 +3097,141 @@
             (function () {
                 // ── Type definitions ──
                 const NODE_TYPES = [
-                    { name: "semantic",   color: "#7b8cff", desc: "Facts, concepts, architecture" },
-                    { name: "procedural", color: "#ff6b8a", desc: "How-to knowledge, workflows" },
-                    { name: "episodic",   color: "#4af5c6", desc: "Observed events, interactions" },
-                    { name: "temporal",   color: "#ffc46b", desc: "Time-indexed patterns" },
-                    { name: "outcome",    color: "#f97316", desc: "Empirical results of actions" },
-                    { name: "goal",       color: "#a78bfa", desc: "Durable intent over long horizons" },
+                    {
+                        name: "semantic",
+                        color: "#7b8cff",
+                        desc: "Facts, concepts, architecture",
+                    },
+                    {
+                        name: "procedural",
+                        color: "#ff6b8a",
+                        desc: "How-to knowledge, workflows",
+                    },
+                    {
+                        name: "episodic",
+                        color: "#4af5c6",
+                        desc: "Observed events, interactions",
+                    },
+                    {
+                        name: "temporal",
+                        color: "#ffc46b",
+                        desc: "Time-indexed patterns",
+                    },
+                    {
+                        name: "outcome",
+                        color: "#f97316",
+                        desc: "Empirical results of actions",
+                    },
+                    {
+                        name: "goal",
+                        color: "#a78bfa",
+                        desc: "Durable intent over long horizons",
+                    },
                 ];
 
                 const EDGE_TYPES = [
-                    { name: "causes",          color: "#ff6b8a", dash: false, group: "causal" },
-                    { name: "causal",          color: "#ff6b8a", dash: true,  group: "causal" },
-                    { name: "supports",        color: "#4af5c6", dash: false, group: "epistemic" },
-                    { name: "contradicts",     color: "#ef4444", dash: false, group: "epistemic" },
-                    { name: "derived_from",    color: "#7b8cff", dash: false, group: "causal" },
-                    { name: "related_to",      color: "#6b6980", dash: false, group: "structural" },
-                    { name: "related",         color: "#6b6980", dash: true,  group: "structural" },
-                    { name: "part_of",         color: "#a78bfa", dash: false, group: "structural" },
-                    { name: "follows",         color: "#ffc46b", dash: false, group: "structural" },
-                    { name: "supersedes",      color: "#f97316", dash: false, group: "epistemic" },
-                    { name: "superseded_by",   color: "#f97316", dash: true,  group: "epistemic" },
-                    { name: "depends_on",      color: "#60a5fa", dash: false, group: "structural" },
-                    { name: "similar_to",      color: "#818cf8", dash: true,  group: "epistemic" },
-                    { name: "resolves",        color: "#34d399", dash: false, group: "causal" },
-                    { name: "temporal_before",  color: "#fbbf24", dash: false, group: "temporal" },
-                    { name: "temporal_after",   color: "#fbbf24", dash: true,  group: "temporal" },
-                    { name: "co_occurs",       color: "#94a3b8", dash: true,  group: "temporal" },
+                    {
+                        name: "causes",
+                        color: "#ff6b8a",
+                        dash: false,
+                        group: "causal",
+                    },
+                    {
+                        name: "causal",
+                        color: "#ff6b8a",
+                        dash: true,
+                        group: "causal",
+                    },
+                    {
+                        name: "supports",
+                        color: "#4af5c6",
+                        dash: false,
+                        group: "epistemic",
+                    },
+                    {
+                        name: "contradicts",
+                        color: "#ef4444",
+                        dash: false,
+                        group: "epistemic",
+                    },
+                    {
+                        name: "derived_from",
+                        color: "#7b8cff",
+                        dash: false,
+                        group: "causal",
+                    },
+                    {
+                        name: "related_to",
+                        color: "#6b6980",
+                        dash: false,
+                        group: "structural",
+                    },
+                    {
+                        name: "related",
+                        color: "#6b6980",
+                        dash: true,
+                        group: "structural",
+                    },
+                    {
+                        name: "part_of",
+                        color: "#a78bfa",
+                        dash: false,
+                        group: "structural",
+                    },
+                    {
+                        name: "follows",
+                        color: "#ffc46b",
+                        dash: false,
+                        group: "structural",
+                    },
+                    {
+                        name: "supersedes",
+                        color: "#f97316",
+                        dash: false,
+                        group: "epistemic",
+                    },
+                    {
+                        name: "superseded_by",
+                        color: "#f97316",
+                        dash: true,
+                        group: "epistemic",
+                    },
+                    {
+                        name: "depends_on",
+                        color: "#60a5fa",
+                        dash: false,
+                        group: "structural",
+                    },
+                    {
+                        name: "similar_to",
+                        color: "#818cf8",
+                        dash: true,
+                        group: "epistemic",
+                    },
+                    {
+                        name: "resolves",
+                        color: "#34d399",
+                        dash: false,
+                        group: "causal",
+                    },
+                    {
+                        name: "temporal_before",
+                        color: "#fbbf24",
+                        dash: false,
+                        group: "temporal",
+                    },
+                    {
+                        name: "temporal_after",
+                        color: "#fbbf24",
+                        dash: true,
+                        group: "temporal",
+                    },
+                    {
+                        name: "co_occurs",
+                        color: "#94a3b8",
+                        dash: true,
+                        group: "temporal",
+                    },
                 ];
 
                 // ── Graph data: ~45 nodes telling 5 interconnected stories ──
@@ -1979,157 +3239,796 @@
                 // scenarios: learning, kappa, belief, attention, forgetting
                 const N = [
                     // ── Learning Loop (store → retrieve → learn → consolidate) ──
-                    { id:"store-node",     label:"store_node",              type:1, scenarios:["learning"],    conf:0.95, desc:"Persist atomic knowledge with type + confidence" },
-                    { id:"store-edge",     label:"store_edge",              type:1, scenarios:["learning"],    conf:0.95, desc:"Create typed directed relationships (17 types)" },
-                    { id:"retrieve",       label:"retrieve_context",        type:1, scenarios:["learning"],    conf:0.95, desc:"Hybrid semantic + BM25 + graph expansion retrieval" },
-                    { id:"agent-reasons",  label:"Agent reasons",           type:2, scenarios:["learning"],    conf:0.80, desc:"Agent uses retrieved context to inform decisions" },
-                    { id:"action-taken",   label:"Action taken",            type:2, scenarios:["learning"],    conf:0.75, desc:"Agent executes a decision grounded in retrieved knowledge" },
-                    { id:"learn-outcome",  label:"learn_from_outcome",      type:1, scenarios:["learning"],    conf:0.95, desc:"Report success/failure → update confidence on causal nodes" },
-                    { id:"outcome-success",label:"Outcome: success",        type:4, scenarios:["learning"],    conf:0.90, desc:"Action succeeded → confidence increases on causal chain" },
-                    { id:"outcome-fail",   label:"Outcome: failure",        type:4, scenarios:["learning"],    conf:0.85, desc:"Action failed → confidence decreases on causal chain" },
-                    { id:"consolidate",    label:"run_consolidation",       type:1, scenarios:["learning"],    conf:0.95, desc:"7-stage pipeline: decay → prune → strengthen → merge → promote → abstract" },
-                    { id:"decay-conf",     label:"1. Decay confidence",     type:1, scenarios:["learning"],    conf:0.90, desc:"Time-based decay: unused knowledge loses confidence" },
-                    { id:"prune-weak",     label:"2. Prune weak",           type:1, scenarios:["learning"],    conf:0.90, desc:"Remove nodes below confidence threshold" },
-                    { id:"strengthen",     label:"4. Strengthen co-active", type:1, scenarios:["learning"],    conf:0.90, desc:"Boost edges between frequently co-retrieved nodes" },
-                    { id:"merge-similar",  label:"5. Merge similar",        type:1, scenarios:["learning"],    conf:0.90, desc:"Merge >95% embedding-similar nodes (deduplicate)" },
-                    { id:"gen-abstract",   label:"7. Generate abstractions",type:1, scenarios:["learning"],    conf:0.90, desc:"Create semantic nodes from episodic clusters (pattern extraction)" },
+                    {
+                        id: "store-node",
+                        label: "store_node",
+                        type: 1,
+                        scenarios: ["learning"],
+                        conf: 0.95,
+                        desc: "Persist atomic knowledge with type + confidence",
+                    },
+                    {
+                        id: "store-edge",
+                        label: "store_edge",
+                        type: 1,
+                        scenarios: ["learning"],
+                        conf: 0.95,
+                        desc: "Create typed directed relationships (17 types)",
+                    },
+                    {
+                        id: "retrieve",
+                        label: "retrieve_context",
+                        type: 1,
+                        scenarios: ["learning"],
+                        conf: 0.95,
+                        desc: "Hybrid semantic + BM25 + graph expansion retrieval",
+                    },
+                    {
+                        id: "agent-reasons",
+                        label: "Agent reasons",
+                        type: 2,
+                        scenarios: ["learning"],
+                        conf: 0.8,
+                        desc: "Agent uses retrieved context to inform decisions",
+                    },
+                    {
+                        id: "action-taken",
+                        label: "Action taken",
+                        type: 2,
+                        scenarios: ["learning"],
+                        conf: 0.75,
+                        desc: "Agent executes a decision grounded in retrieved knowledge",
+                    },
+                    {
+                        id: "learn-outcome",
+                        label: "learn_from_outcome",
+                        type: 1,
+                        scenarios: ["learning"],
+                        conf: 0.95,
+                        desc: "Report success/failure → update confidence on causal nodes",
+                    },
+                    {
+                        id: "outcome-success",
+                        label: "Outcome: success",
+                        type: 4,
+                        scenarios: ["learning"],
+                        conf: 0.9,
+                        desc: "Action succeeded → confidence increases on causal chain",
+                    },
+                    {
+                        id: "outcome-fail",
+                        label: "Outcome: failure",
+                        type: 4,
+                        scenarios: ["learning"],
+                        conf: 0.85,
+                        desc: "Action failed → confidence decreases on causal chain",
+                    },
+                    {
+                        id: "consolidate",
+                        label: "run_consolidation",
+                        type: 1,
+                        scenarios: ["learning"],
+                        conf: 0.95,
+                        desc: "7-stage pipeline: decay → prune → strengthen → merge → promote → abstract",
+                    },
+                    {
+                        id: "decay-conf",
+                        label: "1. Decay confidence",
+                        type: 1,
+                        scenarios: ["learning"],
+                        conf: 0.9,
+                        desc: "Time-based decay: unused knowledge loses confidence",
+                    },
+                    {
+                        id: "prune-weak",
+                        label: "2. Prune weak",
+                        type: 1,
+                        scenarios: ["learning"],
+                        conf: 0.9,
+                        desc: "Remove nodes below confidence threshold",
+                    },
+                    {
+                        id: "strengthen",
+                        label: "4. Strengthen co-active",
+                        type: 1,
+                        scenarios: ["learning"],
+                        conf: 0.9,
+                        desc: "Boost edges between frequently co-retrieved nodes",
+                    },
+                    {
+                        id: "merge-similar",
+                        label: "5. Merge similar",
+                        type: 1,
+                        scenarios: ["learning"],
+                        conf: 0.9,
+                        desc: "Merge >95% embedding-similar nodes (deduplicate)",
+                    },
+                    {
+                        id: "gen-abstract",
+                        label: "7. Generate abstractions",
+                        type: 1,
+                        scenarios: ["learning"],
+                        conf: 0.9,
+                        desc: "Create semantic nodes from episodic clusters (pattern extraction)",
+                    },
 
                     // ── κ-Routing (topology → SCC → deliberation) ──
-                    { id:"topology",       label:"topology_analyze",        type:1, scenarios:["kappa"],       conf:0.95, desc:"Compute SCCs via Tarjan's algorithm + κ invariant" },
-                    { id:"dag-region",     label:"DAG region (κ=0)",        type:0, scenarios:["kappa"],       conf:0.95, desc:"Acyclic knowledge → single-pass retrieval is sufficient" },
-                    { id:"scc-region",     label:"SCC region (κ>0)",        type:0, scenarios:["kappa"],       conf:0.95, desc:"Circular dependencies detected → deliberation required" },
-                    { id:"fast-route",     label:"Route: fast",             type:4, scenarios:["kappa"],       conf:0.95, desc:"κ=0: skip deliberation, return retrieved context directly" },
-                    { id:"delib-route",    label:"Route: deliberate",       type:4, scenarios:["kappa"],       conf:0.95, desc:"κ>0: activate deliberation with κ-scaled budget" },
-                    { id:"deliberate",     label:"deliberate",              type:1, scenarios:["kappa"],       conf:0.95, desc:"κ-driven reasoning over cyclic regions with fault-line focus" },
-                    { id:"fault-line",     label:"Fault-line edge",         type:0, scenarios:["kappa"],       conf:0.90, desc:"Weakest assumption in the cycle — where to focus reasoning" },
-                    { id:"delib-budget",   label:"Deliberation budget",     type:0, scenarios:["kappa"],       conf:0.90, desc:"max_iterations, agent_count, confidence_threshold scaled by κ" },
+                    {
+                        id: "topology",
+                        label: "topology_analyze",
+                        type: 1,
+                        scenarios: ["kappa"],
+                        conf: 0.95,
+                        desc: "Compute SCCs via Tarjan's algorithm + κ invariant",
+                    },
+                    {
+                        id: "dag-region",
+                        label: "DAG region (κ=0)",
+                        type: 0,
+                        scenarios: ["kappa"],
+                        conf: 0.95,
+                        desc: "Acyclic knowledge → single-pass retrieval is sufficient",
+                    },
+                    {
+                        id: "scc-region",
+                        label: "SCC region (κ>0)",
+                        type: 0,
+                        scenarios: ["kappa"],
+                        conf: 0.95,
+                        desc: "Circular dependencies detected → deliberation required",
+                    },
+                    {
+                        id: "fast-route",
+                        label: "Route: fast",
+                        type: 4,
+                        scenarios: ["kappa"],
+                        conf: 0.95,
+                        desc: "κ=0: skip deliberation, return retrieved context directly",
+                    },
+                    {
+                        id: "delib-route",
+                        label: "Route: deliberate",
+                        type: 4,
+                        scenarios: ["kappa"],
+                        conf: 0.95,
+                        desc: "κ>0: activate deliberation with κ-scaled budget",
+                    },
+                    {
+                        id: "deliberate",
+                        label: "deliberate",
+                        type: 1,
+                        scenarios: ["kappa"],
+                        conf: 0.95,
+                        desc: "κ-driven reasoning over cyclic regions with fault-line focus",
+                    },
+                    {
+                        id: "fault-line",
+                        label: "Fault-line edge",
+                        type: 0,
+                        scenarios: ["kappa"],
+                        conf: 0.9,
+                        desc: "Weakest assumption in the cycle — where to focus reasoning",
+                    },
+                    {
+                        id: "delib-budget",
+                        label: "Deliberation budget",
+                        type: 0,
+                        scenarios: ["kappa"],
+                        conf: 0.9,
+                        desc: "max_iterations, agent_count, confidence_threshold scaled by κ",
+                    },
                     // Business cycle SCC example
-                    { id:"market-share",   label:"Market share",            type:0, scenarios:["kappa"],       conf:0.70, desc:"Example: market share drives product investment (part of business cycle SCC)" },
-                    { id:"revenue",        label:"Revenue",                 type:0, scenarios:["kappa"],       conf:0.70, desc:"Revenue funds R&D → circular dependency with market share" },
-                    { id:"rd-invest",      label:"R&D investment",          type:0, scenarios:["kappa"],       conf:0.70, desc:"R&D improves product quality → feeds back to market share" },
-                    { id:"prod-quality",   label:"Product quality",         type:0, scenarios:["kappa"],       conf:0.70, desc:"Quality drives market share — closes the business cycle loop" },
+                    {
+                        id: "market-share",
+                        label: "Market share",
+                        type: 0,
+                        scenarios: ["kappa"],
+                        conf: 0.7,
+                        desc: "Example: market share drives product investment (part of business cycle SCC)",
+                    },
+                    {
+                        id: "revenue",
+                        label: "Revenue",
+                        type: 0,
+                        scenarios: ["kappa"],
+                        conf: 0.7,
+                        desc: "Revenue funds R&D → circular dependency with market share",
+                    },
+                    {
+                        id: "rd-invest",
+                        label: "R&D investment",
+                        type: 0,
+                        scenarios: ["kappa"],
+                        conf: 0.7,
+                        desc: "R&D improves product quality → feeds back to market share",
+                    },
+                    {
+                        id: "prod-quality",
+                        label: "Product quality",
+                        type: 0,
+                        scenarios: ["kappa"],
+                        conf: 0.7,
+                        desc: "Quality drives market share — closes the business cycle loop",
+                    },
 
                     // ── Belief Revision (expand → contradict → revise → propagate) ──
-                    { id:"belief-revise",  label:"belief_revise",           type:1, scenarios:["belief"],      conf:0.95, desc:"AGM-style expand/revise/contract with confidence propagation" },
-                    { id:"old-belief",     label:"\"Cache TTL is 5m\"",     type:0, scenarios:["belief"],      conf:0.40, desc:"Old belief — confidence reduced after revision (was 0.85)" },
-                    { id:"new-belief",     label:"\"Cache TTL is 15m\"",    type:0, scenarios:["belief"],      conf:0.90, desc:"New belief from production measurement — supersedes old" },
-                    { id:"contradiction",  label:"belief_contradictions",   type:1, scenarios:["belief"],      conf:0.95, desc:"Detect conflicts via semantic similarity ≥0.75 + negation markers" },
-                    { id:"conf-propagate", label:"Confidence propagation",  type:2, scenarios:["belief"],      conf:0.85, desc:"Revision cascades: dependents of revised node lose 0.6× confidence" },
-                    { id:"dependent-a",    label:"Auth token expiry",       type:0, scenarios:["belief"],      conf:0.55, desc:"Depended on old cache TTL — confidence reduced by cascade (was 0.80)" },
-                    { id:"dependent-b",    label:"Rate limiter config",     type:0, scenarios:["belief"],      conf:0.50, desc:"Also depended on old cache TTL — confidence reduced by cascade (was 0.75)" },
-                    { id:"evidence-path",  label:"trace_evidence_path",     type:1, scenarios:["belief"],      conf:0.95, desc:"Dijkstra / Yen's K-shortest paths for provenance tracing" },
+                    {
+                        id: "belief-revise",
+                        label: "belief_revise",
+                        type: 1,
+                        scenarios: ["belief"],
+                        conf: 0.95,
+                        desc: "AGM-style expand/revise/contract with confidence propagation",
+                    },
+                    {
+                        id: "old-belief",
+                        label: '"Cache TTL is 5m"',
+                        type: 0,
+                        scenarios: ["belief"],
+                        conf: 0.4,
+                        desc: "Old belief — confidence reduced after revision (was 0.85)",
+                    },
+                    {
+                        id: "new-belief",
+                        label: '"Cache TTL is 15m"',
+                        type: 0,
+                        scenarios: ["belief"],
+                        conf: 0.9,
+                        desc: "New belief from production measurement — supersedes old",
+                    },
+                    {
+                        id: "contradiction",
+                        label: "belief_contradictions",
+                        type: 1,
+                        scenarios: ["belief"],
+                        conf: 0.95,
+                        desc: "Detect conflicts via semantic similarity ≥0.75 + negation markers",
+                    },
+                    {
+                        id: "conf-propagate",
+                        label: "Confidence propagation",
+                        type: 2,
+                        scenarios: ["belief"],
+                        conf: 0.85,
+                        desc: "Revision cascades: dependents of revised node lose 0.6× confidence",
+                    },
+                    {
+                        id: "dependent-a",
+                        label: "Auth token expiry",
+                        type: 0,
+                        scenarios: ["belief"],
+                        conf: 0.55,
+                        desc: "Depended on old cache TTL — confidence reduced by cascade (was 0.80)",
+                    },
+                    {
+                        id: "dependent-b",
+                        label: "Rate limiter config",
+                        type: 0,
+                        scenarios: ["belief"],
+                        conf: 0.5,
+                        desc: "Also depended on old cache TTL — confidence reduced by cascade (was 0.75)",
+                    },
+                    {
+                        id: "evidence-path",
+                        label: "trace_evidence_path",
+                        type: 1,
+                        scenarios: ["belief"],
+                        conf: 0.95,
+                        desc: "Dijkstra / Yen's K-shortest paths for provenance tracing",
+                    },
 
                     // ── Attention & Goals (survey → triage → dispatch) ──
-                    { id:"goal-ship",      label:"Ship v0.4",              type:5, scenarios:["attention"],    conf:0.85, desc:"Goal: active, progress 60%, horizon medium, deadline Q2" },
-                    { id:"goal-bench",     label:"Hit 95% LongMemEval",   type:5, scenarios:["attention"],    conf:0.75, desc:"Goal: active, progress 40%, depends on embedding improvements" },
-                    { id:"goal-gdpr",      label:"GDPR compliance",       type:5, scenarios:["attention"],    conf:0.90, desc:"Goal: active, progress 80%, blocks production deployment" },
-                    { id:"attn-survey",    label:"attention_survey",        type:1, scenarios:["attention"],    conf:0.95, desc:"Rank goals by urgency + coverage gaps + topology signals" },
-                    { id:"attn-dispatch",  label:"attention_run_cycle",     type:1, scenarios:["attention"],    conf:0.95, desc:"Survey → triage → dispatch with autonomy controls (observe/advise/act)" },
-                    { id:"coverage-q",     label:"coverage_query",          type:1, scenarios:["attention"],    conf:0.95, desc:"Returns coverage_score, confidence_mean, gaps → act/learn/escalate" },
-                    { id:"route-act",      label:"Route: act",             type:4, scenarios:["attention"],    conf:0.85, desc:"Adequate knowledge + clean topology → proceed with action" },
-                    { id:"route-learn",    label:"Route: learn",           type:4, scenarios:["attention"],    conf:0.70, desc:"Gaps identified but recoverable → gather more context first" },
-                    { id:"route-escalate", label:"Route: escalate",        type:4, scenarios:["attention"],    conf:0.60, desc:"Insufficient knowledge or complex topology → human/multi-agent review" },
-                    { id:"epistemic-f",    label:"epistemic_frontier",      type:1, scenarios:["attention"],    conf:0.95, desc:"Wilson score intervals → where one more data point reduces uncertainty most" },
-                    { id:"review-goal",    label:"review_goal",             type:1, scenarios:["attention"],    conf:0.95, desc:"Coverage-driven decision gate: should we proceed or gather more?" },
+                    {
+                        id: "goal-ship",
+                        label: "Ship v0.4",
+                        type: 5,
+                        scenarios: ["attention"],
+                        conf: 0.85,
+                        desc: "Goal: active, progress 60%, horizon medium, deadline Q2",
+                    },
+                    {
+                        id: "goal-bench",
+                        label: "Hit 95% LongMemEval",
+                        type: 5,
+                        scenarios: ["attention"],
+                        conf: 0.75,
+                        desc: "Goal: active, progress 40%, depends on embedding improvements",
+                    },
+                    {
+                        id: "goal-gdpr",
+                        label: "GDPR compliance",
+                        type: 5,
+                        scenarios: ["attention"],
+                        conf: 0.9,
+                        desc: "Goal: active, progress 80%, blocks production deployment",
+                    },
+                    {
+                        id: "attn-survey",
+                        label: "attention_survey",
+                        type: 1,
+                        scenarios: ["attention"],
+                        conf: 0.95,
+                        desc: "Rank goals by urgency + coverage gaps + topology signals",
+                    },
+                    {
+                        id: "attn-dispatch",
+                        label: "attention_run_cycle",
+                        type: 1,
+                        scenarios: ["attention"],
+                        conf: 0.95,
+                        desc: "Survey → triage → dispatch with autonomy controls (observe/advise/act)",
+                    },
+                    {
+                        id: "coverage-q",
+                        label: "coverage_query",
+                        type: 1,
+                        scenarios: ["attention"],
+                        conf: 0.95,
+                        desc: "Returns coverage_score, confidence_mean, gaps → act/learn/escalate",
+                    },
+                    {
+                        id: "route-act",
+                        label: "Route: act",
+                        type: 4,
+                        scenarios: ["attention"],
+                        conf: 0.85,
+                        desc: "Adequate knowledge + clean topology → proceed with action",
+                    },
+                    {
+                        id: "route-learn",
+                        label: "Route: learn",
+                        type: 4,
+                        scenarios: ["attention"],
+                        conf: 0.7,
+                        desc: "Gaps identified but recoverable → gather more context first",
+                    },
+                    {
+                        id: "route-escalate",
+                        label: "Route: escalate",
+                        type: 4,
+                        scenarios: ["attention"],
+                        conf: 0.6,
+                        desc: "Insufficient knowledge or complex topology → human/multi-agent review",
+                    },
+                    {
+                        id: "epistemic-f",
+                        label: "epistemic_frontier",
+                        type: 1,
+                        scenarios: ["attention"],
+                        conf: 0.95,
+                        desc: "Wilson score intervals → where one more data point reduces uncertainty most",
+                    },
+                    {
+                        id: "review-goal",
+                        label: "review_goal",
+                        type: 1,
+                        scenarios: ["attention"],
+                        conf: 0.95,
+                        desc: "Coverage-driven decision gate: should we proceed or gather more?",
+                    },
 
                     // ── Forgetting (soft → hard → cascade → policy → GDPR) ──
-                    { id:"forget-soft",    label:"Soft forget (hide)",      type:1, scenarios:["forgetting"],  conf:0.95, desc:"Hide from retrieval, preserve graph structure (reversible)" },
-                    { id:"forget-hard",    label:"Hard forget (delete)",    type:1, scenarios:["forgetting"],  conf:0.95, desc:"Permanent delete with constant-time unlink (no recovery)" },
-                    { id:"forget-cascade", label:"Cascade forget",          type:1, scenarios:["forgetting"],  conf:0.95, desc:"Delete node + orphaned dependents (remove clusters)" },
-                    { id:"forget-policy",  label:"forget_by_policy",        type:1, scenarios:["forgetting"],  conf:0.95, desc:"Hybrid LRU + priority-decay automatic pruning with dry-run preview" },
-                    { id:"gdpr-erase",     label:"gdpr_erase",              type:1, scenarios:["forgetting"],  conf:0.95, desc:"GDPR Article 17 permanent deletion with audit trail" },
-                    { id:"stale-node",     label:"Stale API endpoint",      type:0, scenarios:["forgetting"],  conf:0.15, desc:"Low confidence, low access — candidate for policy pruning" },
-                    { id:"orphan-node",    label:"Orphaned fact",           type:0, scenarios:["forgetting"],  conf:0.20, desc:"No edges remaining after parent deleted — cascade target" },
-                    { id:"user-pii",       label:"User PII record",         type:2, scenarios:["forgetting"],  conf:0.95, desc:"Personal data requiring GDPR-compliant erasure with audit" },
+                    {
+                        id: "forget-soft",
+                        label: "Soft forget (hide)",
+                        type: 1,
+                        scenarios: ["forgetting"],
+                        conf: 0.95,
+                        desc: "Hide from retrieval, preserve graph structure (reversible)",
+                    },
+                    {
+                        id: "forget-hard",
+                        label: "Hard forget (delete)",
+                        type: 1,
+                        scenarios: ["forgetting"],
+                        conf: 0.95,
+                        desc: "Permanent delete with constant-time unlink (no recovery)",
+                    },
+                    {
+                        id: "forget-cascade",
+                        label: "Cascade forget",
+                        type: 1,
+                        scenarios: ["forgetting"],
+                        conf: 0.95,
+                        desc: "Delete node + orphaned dependents (remove clusters)",
+                    },
+                    {
+                        id: "forget-policy",
+                        label: "forget_by_policy",
+                        type: 1,
+                        scenarios: ["forgetting"],
+                        conf: 0.95,
+                        desc: "Hybrid LRU + priority-decay automatic pruning with dry-run preview",
+                    },
+                    {
+                        id: "gdpr-erase",
+                        label: "gdpr_erase",
+                        type: 1,
+                        scenarios: ["forgetting"],
+                        conf: 0.95,
+                        desc: "GDPR Article 17 permanent deletion with audit trail",
+                    },
+                    {
+                        id: "stale-node",
+                        label: "Stale API endpoint",
+                        type: 0,
+                        scenarios: ["forgetting"],
+                        conf: 0.15,
+                        desc: "Low confidence, low access — candidate for policy pruning",
+                    },
+                    {
+                        id: "orphan-node",
+                        label: "Orphaned fact",
+                        type: 0,
+                        scenarios: ["forgetting"],
+                        conf: 0.2,
+                        desc: "No edges remaining after parent deleted — cascade target",
+                    },
+                    {
+                        id: "user-pii",
+                        label: "User PII record",
+                        type: 2,
+                        scenarios: ["forgetting"],
+                        conf: 0.95,
+                        desc: "Personal data requiring GDPR-compliant erasure with audit",
+                    },
                 ];
 
                 // Edge definitions — all 17 edge types used, semantically meaningful
                 // Edge type indices match EDGE_TYPES array
                 const E = [
                     // ── Learning Loop ──
-                    { s:"store-node",  d:"retrieve",       t:8,  sc:["learning"] },        // follows
-                    { s:"store-edge",  d:"retrieve",       t:8,  sc:["learning"] },        // follows
-                    { s:"retrieve",    d:"agent-reasons",  t:0,  sc:["learning"] },        // causes
-                    { s:"agent-reasons",d:"action-taken",  t:0,  sc:["learning"] },        // causes
-                    { s:"action-taken",d:"learn-outcome",  t:8,  sc:["learning"] },        // follows
-                    { s:"learn-outcome",d:"outcome-success",t:0, sc:["learning"] },        // causes
-                    { s:"learn-outcome",d:"outcome-fail",  t:0,  sc:["learning"] },        // causes
-                    { s:"outcome-success",d:"retrieve",    t:2,  sc:["learning"] },        // supports (feedback loop)
-                    { s:"outcome-fail",d:"retrieve",       t:2,  sc:["learning"] },        // supports (feedback loop)
-                    { s:"consolidate", d:"decay-conf",     t:7,  sc:["learning"] },        // part_of
-                    { s:"consolidate", d:"prune-weak",     t:7,  sc:["learning"] },        // part_of
-                    { s:"consolidate", d:"strengthen",     t:7,  sc:["learning"] },        // part_of
-                    { s:"consolidate", d:"merge-similar",  t:7,  sc:["learning"] },        // part_of
-                    { s:"consolidate", d:"gen-abstract",   t:7,  sc:["learning"] },        // part_of
-                    { s:"decay-conf",  d:"prune-weak",     t:8,  sc:["learning"] },        // follows
-                    { s:"prune-weak",  d:"strengthen",     t:8,  sc:["learning"] },        // follows
-                    { s:"strengthen",  d:"merge-similar",  t:8,  sc:["learning"] },        // follows
-                    { s:"merge-similar",d:"gen-abstract",  t:8,  sc:["learning"] },        // follows
-                    { s:"outcome-success",d:"consolidate", t:14, sc:["learning"] },        // temporal_before
+                    { s: "store-node", d: "retrieve", t: 8, sc: ["learning"] }, // follows
+                    { s: "store-edge", d: "retrieve", t: 8, sc: ["learning"] }, // follows
+                    {
+                        s: "retrieve",
+                        d: "agent-reasons",
+                        t: 0,
+                        sc: ["learning"],
+                    }, // causes
+                    {
+                        s: "agent-reasons",
+                        d: "action-taken",
+                        t: 0,
+                        sc: ["learning"],
+                    }, // causes
+                    {
+                        s: "action-taken",
+                        d: "learn-outcome",
+                        t: 8,
+                        sc: ["learning"],
+                    }, // follows
+                    {
+                        s: "learn-outcome",
+                        d: "outcome-success",
+                        t: 0,
+                        sc: ["learning"],
+                    }, // causes
+                    {
+                        s: "learn-outcome",
+                        d: "outcome-fail",
+                        t: 0,
+                        sc: ["learning"],
+                    }, // causes
+                    {
+                        s: "outcome-success",
+                        d: "retrieve",
+                        t: 2,
+                        sc: ["learning"],
+                    }, // supports (feedback loop)
+                    {
+                        s: "outcome-fail",
+                        d: "retrieve",
+                        t: 2,
+                        sc: ["learning"],
+                    }, // supports (feedback loop)
+                    {
+                        s: "consolidate",
+                        d: "decay-conf",
+                        t: 7,
+                        sc: ["learning"],
+                    }, // part_of
+                    {
+                        s: "consolidate",
+                        d: "prune-weak",
+                        t: 7,
+                        sc: ["learning"],
+                    }, // part_of
+                    {
+                        s: "consolidate",
+                        d: "strengthen",
+                        t: 7,
+                        sc: ["learning"],
+                    }, // part_of
+                    {
+                        s: "consolidate",
+                        d: "merge-similar",
+                        t: 7,
+                        sc: ["learning"],
+                    }, // part_of
+                    {
+                        s: "consolidate",
+                        d: "gen-abstract",
+                        t: 7,
+                        sc: ["learning"],
+                    }, // part_of
+                    {
+                        s: "decay-conf",
+                        d: "prune-weak",
+                        t: 8,
+                        sc: ["learning"],
+                    }, // follows
+                    {
+                        s: "prune-weak",
+                        d: "strengthen",
+                        t: 8,
+                        sc: ["learning"],
+                    }, // follows
+                    {
+                        s: "strengthen",
+                        d: "merge-similar",
+                        t: 8,
+                        sc: ["learning"],
+                    }, // follows
+                    {
+                        s: "merge-similar",
+                        d: "gen-abstract",
+                        t: 8,
+                        sc: ["learning"],
+                    }, // follows
+                    {
+                        s: "outcome-success",
+                        d: "consolidate",
+                        t: 14,
+                        sc: ["learning"],
+                    }, // temporal_before
 
                     // ── κ-Routing ──
-                    { s:"retrieve",    d:"topology",       t:0,  sc:["kappa","learning"] },// causes
-                    { s:"topology",    d:"dag-region",     t:4,  sc:["kappa"] },           // derived_from
-                    { s:"topology",    d:"scc-region",     t:4,  sc:["kappa"] },           // derived_from
-                    { s:"dag-region",  d:"fast-route",     t:0,  sc:["kappa"] },           // causes
-                    { s:"scc-region",  d:"delib-route",    t:0,  sc:["kappa"] },           // causes
-                    { s:"delib-route", d:"deliberate",     t:0,  sc:["kappa"] },           // causes
-                    { s:"deliberate",  d:"fault-line",     t:11, sc:["kappa"] },           // depends_on
-                    { s:"deliberate",  d:"delib-budget",   t:11, sc:["kappa"] },           // depends_on
+                    {
+                        s: "retrieve",
+                        d: "topology",
+                        t: 0,
+                        sc: ["kappa", "learning"],
+                    }, // causes
+                    { s: "topology", d: "dag-region", t: 4, sc: ["kappa"] }, // derived_from
+                    { s: "topology", d: "scc-region", t: 4, sc: ["kappa"] }, // derived_from
+                    { s: "dag-region", d: "fast-route", t: 0, sc: ["kappa"] }, // causes
+                    { s: "scc-region", d: "delib-route", t: 0, sc: ["kappa"] }, // causes
+                    { s: "delib-route", d: "deliberate", t: 0, sc: ["kappa"] }, // causes
+                    { s: "deliberate", d: "fault-line", t: 11, sc: ["kappa"] }, // depends_on
+                    {
+                        s: "deliberate",
+                        d: "delib-budget",
+                        t: 11,
+                        sc: ["kappa"],
+                    }, // depends_on
                     // Business cycle SCC (κ=1)
-                    { s:"market-share",d:"revenue",        t:0,  sc:["kappa"] },           // causes
-                    { s:"revenue",     d:"rd-invest",      t:0,  sc:["kappa"] },           // causes
-                    { s:"rd-invest",   d:"prod-quality",   t:0,  sc:["kappa"] },           // causes
-                    { s:"prod-quality",d:"market-share",   t:1,  sc:["kappa"] },           // causal (closes loop)
-                    { s:"scc-region",  d:"market-share",   t:5,  sc:["kappa"] },           // related_to
-                    { s:"fault-line",  d:"prod-quality",   t:5,  sc:["kappa"] },           // related_to (weakest edge)
+                    { s: "market-share", d: "revenue", t: 0, sc: ["kappa"] }, // causes
+                    { s: "revenue", d: "rd-invest", t: 0, sc: ["kappa"] }, // causes
+                    { s: "rd-invest", d: "prod-quality", t: 0, sc: ["kappa"] }, // causes
+                    {
+                        s: "prod-quality",
+                        d: "market-share",
+                        t: 1,
+                        sc: ["kappa"],
+                    }, // causal (closes loop)
+                    { s: "scc-region", d: "market-share", t: 5, sc: ["kappa"] }, // related_to
+                    { s: "fault-line", d: "prod-quality", t: 5, sc: ["kappa"] }, // related_to (weakest edge)
 
                     // ── Belief Revision ──
-                    { s:"contradiction",d:"old-belief",    t:3,  sc:["belief"] },          // contradicts
-                    { s:"contradiction",d:"new-belief",    t:3,  sc:["belief"] },          // contradicts
-                    { s:"new-belief",  d:"old-belief",     t:9,  sc:["belief"] },          // supersedes
-                    { s:"old-belief",  d:"new-belief",     t:10, sc:["belief"] },          // superseded_by
-                    { s:"belief-revise",d:"new-belief",    t:0,  sc:["belief"] },          // causes
-                    { s:"belief-revise",d:"conf-propagate",t:0,  sc:["belief"] },          // causes
-                    { s:"conf-propagate",d:"dependent-a",  t:0,  sc:["belief"] },          // causes
-                    { s:"conf-propagate",d:"dependent-b",  t:0,  sc:["belief"] },          // causes
-                    { s:"dependent-a", d:"old-belief",     t:11, sc:["belief"] },          // depends_on
-                    { s:"dependent-b", d:"old-belief",     t:11, sc:["belief"] },          // depends_on
-                    { s:"old-belief",  d:"new-belief",     t:12, sc:["belief"] },          // similar_to
-                    { s:"evidence-path",d:"old-belief",    t:4,  sc:["belief"] },          // derived_from (traces provenance)
-                    { s:"evidence-path",d:"new-belief",    t:4,  sc:["belief"] },          // derived_from
+                    {
+                        s: "contradiction",
+                        d: "old-belief",
+                        t: 3,
+                        sc: ["belief"],
+                    }, // contradicts
+                    {
+                        s: "contradiction",
+                        d: "new-belief",
+                        t: 3,
+                        sc: ["belief"],
+                    }, // contradicts
+                    { s: "new-belief", d: "old-belief", t: 9, sc: ["belief"] }, // supersedes
+                    { s: "old-belief", d: "new-belief", t: 10, sc: ["belief"] }, // superseded_by
+                    {
+                        s: "belief-revise",
+                        d: "new-belief",
+                        t: 0,
+                        sc: ["belief"],
+                    }, // causes
+                    {
+                        s: "belief-revise",
+                        d: "conf-propagate",
+                        t: 0,
+                        sc: ["belief"],
+                    }, // causes
+                    {
+                        s: "conf-propagate",
+                        d: "dependent-a",
+                        t: 0,
+                        sc: ["belief"],
+                    }, // causes
+                    {
+                        s: "conf-propagate",
+                        d: "dependent-b",
+                        t: 0,
+                        sc: ["belief"],
+                    }, // causes
+                    {
+                        s: "dependent-a",
+                        d: "old-belief",
+                        t: 11,
+                        sc: ["belief"],
+                    }, // depends_on
+                    {
+                        s: "dependent-b",
+                        d: "old-belief",
+                        t: 11,
+                        sc: ["belief"],
+                    }, // depends_on
+                    { s: "old-belief", d: "new-belief", t: 12, sc: ["belief"] }, // similar_to
+                    {
+                        s: "evidence-path",
+                        d: "old-belief",
+                        t: 4,
+                        sc: ["belief"],
+                    }, // derived_from (traces provenance)
+                    {
+                        s: "evidence-path",
+                        d: "new-belief",
+                        t: 4,
+                        sc: ["belief"],
+                    }, // derived_from
 
                     // ── Attention & Goals ──
-                    { s:"attn-survey", d:"goal-ship",      t:5,  sc:["attention"] },       // related_to
-                    { s:"attn-survey", d:"goal-bench",     t:5,  sc:["attention"] },       // related_to
-                    { s:"attn-survey", d:"goal-gdpr",      t:5,  sc:["attention"] },       // related_to
-                    { s:"attn-survey", d:"attn-dispatch",  t:8,  sc:["attention"] },       // follows
-                    { s:"coverage-q",  d:"route-act",      t:0,  sc:["attention"] },       // causes
-                    { s:"coverage-q",  d:"route-learn",    t:0,  sc:["attention"] },       // causes
-                    { s:"coverage-q",  d:"route-escalate", t:0,  sc:["attention"] },       // causes
-                    { s:"goal-ship",   d:"goal-bench",     t:11, sc:["attention"] },       // depends_on
-                    { s:"goal-gdpr",   d:"goal-ship",      t:14, sc:["attention"] },       // temporal_before
-                    { s:"review-goal", d:"coverage-q",     t:0,  sc:["attention"] },       // causes
-                    { s:"epistemic-f", d:"route-learn",    t:2,  sc:["attention"] },       // supports
-                    { s:"attn-dispatch",d:"review-goal",   t:8,  sc:["attention"] },       // follows
-                    { s:"goal-bench",  d:"retrieve",       t:6,  sc:["attention","learning"] }, // related
+                    {
+                        s: "attn-survey",
+                        d: "goal-ship",
+                        t: 5,
+                        sc: ["attention"],
+                    }, // related_to
+                    {
+                        s: "attn-survey",
+                        d: "goal-bench",
+                        t: 5,
+                        sc: ["attention"],
+                    }, // related_to
+                    {
+                        s: "attn-survey",
+                        d: "goal-gdpr",
+                        t: 5,
+                        sc: ["attention"],
+                    }, // related_to
+                    {
+                        s: "attn-survey",
+                        d: "attn-dispatch",
+                        t: 8,
+                        sc: ["attention"],
+                    }, // follows
+                    {
+                        s: "coverage-q",
+                        d: "route-act",
+                        t: 0,
+                        sc: ["attention"],
+                    }, // causes
+                    {
+                        s: "coverage-q",
+                        d: "route-learn",
+                        t: 0,
+                        sc: ["attention"],
+                    }, // causes
+                    {
+                        s: "coverage-q",
+                        d: "route-escalate",
+                        t: 0,
+                        sc: ["attention"],
+                    }, // causes
+                    {
+                        s: "goal-ship",
+                        d: "goal-bench",
+                        t: 11,
+                        sc: ["attention"],
+                    }, // depends_on
+                    {
+                        s: "goal-gdpr",
+                        d: "goal-ship",
+                        t: 14,
+                        sc: ["attention"],
+                    }, // temporal_before
+                    {
+                        s: "review-goal",
+                        d: "coverage-q",
+                        t: 0,
+                        sc: ["attention"],
+                    }, // causes
+                    {
+                        s: "epistemic-f",
+                        d: "route-learn",
+                        t: 2,
+                        sc: ["attention"],
+                    }, // supports
+                    {
+                        s: "attn-dispatch",
+                        d: "review-goal",
+                        t: 8,
+                        sc: ["attention"],
+                    }, // follows
+                    {
+                        s: "goal-bench",
+                        d: "retrieve",
+                        t: 6,
+                        sc: ["attention", "learning"],
+                    }, // related
 
                     // ── Forgetting ──
-                    { s:"forget-policy",d:"stale-node",    t:0,  sc:["forgetting"] },      // causes (prunes it)
-                    { s:"forget-cascade",d:"orphan-node",  t:0,  sc:["forgetting"] },      // causes
-                    { s:"gdpr-erase",  d:"user-pii",       t:0,  sc:["forgetting"] },      // causes
-                    { s:"forget-soft", d:"forget-hard",    t:8,  sc:["forgetting"] },      // follows (escalation path)
-                    { s:"forget-hard", d:"forget-cascade",  t:8,  sc:["forgetting"] },     // follows
-                    { s:"stale-node",  d:"orphan-node",    t:6,  sc:["forgetting"] },      // related (both prunable)
-                    { s:"stale-node",  d:"prune-weak",     t:16, sc:["forgetting","learning"] }, // co_occurs
-                    { s:"consolidate", d:"forget-policy",  t:13, sc:["forgetting","learning"] }, // resolves
-                    { s:"user-pii",    d:"dependent-a",    t:15, sc:["forgetting","belief"] },   // temporal_after
+                    {
+                        s: "forget-policy",
+                        d: "stale-node",
+                        t: 0,
+                        sc: ["forgetting"],
+                    }, // causes (prunes it)
+                    {
+                        s: "forget-cascade",
+                        d: "orphan-node",
+                        t: 0,
+                        sc: ["forgetting"],
+                    }, // causes
+                    {
+                        s: "gdpr-erase",
+                        d: "user-pii",
+                        t: 0,
+                        sc: ["forgetting"],
+                    }, // causes
+                    {
+                        s: "forget-soft",
+                        d: "forget-hard",
+                        t: 8,
+                        sc: ["forgetting"],
+                    }, // follows (escalation path)
+                    {
+                        s: "forget-hard",
+                        d: "forget-cascade",
+                        t: 8,
+                        sc: ["forgetting"],
+                    }, // follows
+                    {
+                        s: "stale-node",
+                        d: "orphan-node",
+                        t: 6,
+                        sc: ["forgetting"],
+                    }, // related (both prunable)
+                    {
+                        s: "stale-node",
+                        d: "prune-weak",
+                        t: 16,
+                        sc: ["forgetting", "learning"],
+                    }, // co_occurs
+                    {
+                        s: "consolidate",
+                        d: "forget-policy",
+                        t: 13,
+                        sc: ["forgetting", "learning"],
+                    }, // resolves
+                    {
+                        s: "user-pii",
+                        d: "dependent-a",
+                        t: 15,
+                        sc: ["forgetting", "belief"],
+                    }, // temporal_after
                 ];
 
                 // Build index maps
                 const nodeMap = {};
-                N.forEach((n, i) => { n._i = i; n.x = 0; n.y = 0; nodeMap[n.id] = i; });
-                E.forEach(e => { e._si = nodeMap[e.s]; e._di = nodeMap[e.d]; });
+                N.forEach((n, i) => {
+                    n._i = i;
+                    n.x = 0;
+                    n.y = 0;
+                    nodeMap[n.id] = i;
+                });
+                E.forEach((e) => {
+                    e._si = nodeMap[e.s];
+                    e._di = nodeMap[e.d];
+                });
 
                 // ── Filter state ──
                 let activeScenario = "all";
@@ -2141,15 +4040,28 @@
                 }
                 function isEdgeVisible(e) {
                     const et = EDGE_TYPES[e.t];
-                    if (activeEdgeGroup !== "all" && et.group !== activeEdgeGroup) return false;
+                    if (
+                        activeEdgeGroup !== "all" &&
+                        et.group !== activeEdgeGroup
+                    )
+                        return false;
                     if (activeScenario === "all") return true;
                     return e.sc.includes(activeScenario);
                 }
 
-                function getVisibleNodes() { return N.filter(isNodeVisible); }
+                function getVisibleNodes() {
+                    return N.filter(isNodeVisible);
+                }
                 function getVisibleEdges() {
-                    const visNodeIds = new Set(getVisibleNodes().map(n => n._i));
-                    return E.filter(e => isEdgeVisible(e) && visNodeIds.has(e._si) && visNodeIds.has(e._di));
+                    const visNodeIds = new Set(
+                        getVisibleNodes().map((n) => n._i),
+                    );
+                    return E.filter(
+                        (e) =>
+                            isEdgeVisible(e) &&
+                            visNodeIds.has(e._si) &&
+                            visNodeIds.has(e._di),
+                    );
                 }
 
                 // ── Canvas setup ──
@@ -2160,7 +4072,8 @@
                 let tgW, tgH, logW, logH;
                 let hoveredNode = null;
                 let dragging = null;
-                let dragOffX = 0, dragOffY = 0;
+                let dragOffX = 0,
+                    dragOffY = 0;
 
                 function tgResize() {
                     const rect = tgCanvas.parentElement.getBoundingClientRect();
@@ -2179,15 +4092,27 @@
                     const vis = getVisibleNodes();
                     if (!vis.length) return;
                     const pad = 50;
-                    const w = logW - pad * 2, h = logH - pad * 2;
-                    const cx = logW / 2, cy = logH / 2;
+                    const w = logW - pad * 2,
+                        h = logH - pad * 2;
+                    const cx = logW / 2,
+                        cy = logH / 2;
 
                     if (activeScenario === "all") {
                         // Force-directed initial positions by scenario cluster
-                        const clusters = { learning: {cx: 0.25, cy: 0.3}, kappa: {cx: 0.75, cy: 0.3}, belief: {cx: 0.25, cy: 0.75}, attention: {cx: 0.75, cy: 0.75}, forgetting: {cx: 0.5, cy: 0.55} };
-                        vis.forEach(n => {
-                            if (dragging !== null && N[dragging]?.id === n.id) return;
-                            const cl = clusters[n.scenarios[0]] || {cx:0.5, cy:0.5};
+                        const clusters = {
+                            learning: { cx: 0.25, cy: 0.3 },
+                            kappa: { cx: 0.75, cy: 0.3 },
+                            belief: { cx: 0.25, cy: 0.75 },
+                            attention: { cx: 0.75, cy: 0.75 },
+                            forgetting: { cx: 0.5, cy: 0.55 },
+                        };
+                        vis.forEach((n) => {
+                            if (dragging !== null && N[dragging]?.id === n.id)
+                                return;
+                            const cl = clusters[n.scenarios[0]] || {
+                                cx: 0.5,
+                                cy: 0.5,
+                            };
                             const angle = Math.random() * Math.PI * 2;
                             const spread = 0.12 + Math.random() * 0.08;
                             n.x = pad + w * (cl.cx + Math.cos(angle) * spread);
@@ -2197,8 +4122,10 @@
                         // Arc layout for filtered view
                         const r = Math.min(w, h) * 0.38;
                         vis.forEach((n, i) => {
-                            if (dragging !== null && N[dragging]?.id === n.id) return;
-                            const angle = (i / vis.length) * Math.PI * 2 - Math.PI / 2;
+                            if (dragging !== null && N[dragging]?.id === n.id)
+                                return;
+                            const angle =
+                                (i / vis.length) * Math.PI * 2 - Math.PI / 2;
                             n.x = cx + Math.cos(angle) * r;
                             n.y = cy + Math.sin(angle) * r;
                         });
@@ -2210,46 +4137,98 @@
                         // Repulsion between visible nodes
                         for (let i = 0; i < vis.length; i++) {
                             for (let j = i + 1; j < vis.length; j++) {
-                                const a = vis[i], b = vis[j];
-                                let dx = b.x - a.x, dy = b.y - a.y;
+                                const a = vis[i],
+                                    b = vis[j];
+                                let dx = b.x - a.x,
+                                    dy = b.y - a.y;
                                 let dist = Math.sqrt(dx * dx + dy * dy) || 1;
                                 if (dist < 120) {
                                     const force = (120 - dist) * 0.15;
-                                    const fx = (dx / dist) * force, fy = (dy / dist) * force;
-                                    if (!(dragging !== null && N[dragging]?.id === a.id)) { a.x -= fx; a.y -= fy; }
-                                    if (!(dragging !== null && N[dragging]?.id === b.id)) { b.x += fx; b.y += fy; }
+                                    const fx = (dx / dist) * force,
+                                        fy = (dy / dist) * force;
+                                    if (
+                                        !(
+                                            dragging !== null &&
+                                            N[dragging]?.id === a.id
+                                        )
+                                    ) {
+                                        a.x -= fx;
+                                        a.y -= fy;
+                                    }
+                                    if (
+                                        !(
+                                            dragging !== null &&
+                                            N[dragging]?.id === b.id
+                                        )
+                                    ) {
+                                        b.x += fx;
+                                        b.y += fy;
+                                    }
                                 }
                             }
                         }
                         // Attraction along edges
-                        visEdges.forEach(e => {
-                            const a = N[e._si], b = N[e._di];
-                            let dx = b.x - a.x, dy = b.y - a.y;
+                        visEdges.forEach((e) => {
+                            const a = N[e._si],
+                                b = N[e._di];
+                            let dx = b.x - a.x,
+                                dy = b.y - a.y;
                             let dist = Math.sqrt(dx * dx + dy * dy) || 1;
-                            const idealDist = activeScenario === "all" ? 90 : 110;
+                            const idealDist =
+                                activeScenario === "all" ? 90 : 110;
                             if (dist > idealDist) {
                                 const force = (dist - idealDist) * 0.02;
-                                const fx = (dx / dist) * force, fy = (dy / dist) * force;
-                                if (!(dragging !== null && N[dragging]?.id === a.id)) { a.x += fx; a.y += fy; }
-                                if (!(dragging !== null && N[dragging]?.id === b.id)) { b.x -= fx; b.y -= fy; }
+                                const fx = (dx / dist) * force,
+                                    fy = (dy / dist) * force;
+                                if (
+                                    !(
+                                        dragging !== null &&
+                                        N[dragging]?.id === a.id
+                                    )
+                                ) {
+                                    a.x += fx;
+                                    a.y += fy;
+                                }
+                                if (
+                                    !(
+                                        dragging !== null &&
+                                        N[dragging]?.id === b.id
+                                    )
+                                ) {
+                                    b.x -= fx;
+                                    b.y -= fy;
+                                }
                             }
                         });
                         // Boundary constraint
-                        vis.forEach(n => {
+                        vis.forEach((n) => {
                             n.x = Math.max(pad, Math.min(logW - pad, n.x));
                             n.y = Math.max(pad, Math.min(logH - pad, n.y));
                         });
                     }
                 }
 
-                function drawArrow(x1, y1, x2, y2, color, dashed, highlight, dimmed) {
-                    const dx = x2 - x1, dy = y2 - y1;
+                function drawArrow(
+                    x1,
+                    y1,
+                    x2,
+                    y2,
+                    color,
+                    dashed,
+                    highlight,
+                    dimmed,
+                ) {
+                    const dx = x2 - x1,
+                        dy = y2 - y1;
                     const dist = Math.sqrt(dx * dx + dy * dy);
                     if (dist < 1) return;
-                    const ux = dx / dist, uy = dy / dist;
+                    const ux = dx / dist,
+                        uy = dy / dist;
                     const r = 16;
-                    const ax = x2 - ux * r, ay = y2 - uy * r;
-                    const sx = x1 + ux * r, sy = y1 + uy * r;
+                    const ax = x2 - ux * r,
+                        ay = y2 - uy * r;
+                    const sx = x1 + ux * r,
+                        sy = y1 + uy * r;
                     const alpha = dimmed ? 0.08 : highlight ? 0.9 : 0.3;
 
                     tgCtx.save();
@@ -2267,8 +4246,14 @@
                     tgCtx.fillStyle = color;
                     tgCtx.beginPath();
                     tgCtx.moveTo(ax, ay);
-                    tgCtx.lineTo(ax - ux * aSize - uy * aSize * 0.5, ay - uy * aSize + ux * aSize * 0.5);
-                    tgCtx.lineTo(ax - ux * aSize + uy * aSize * 0.5, ay - uy * aSize - ux * aSize * 0.5);
+                    tgCtx.lineTo(
+                        ax - ux * aSize - uy * aSize * 0.5,
+                        ay - uy * aSize + ux * aSize * 0.5,
+                    );
+                    tgCtx.lineTo(
+                        ax - ux * aSize + uy * aSize * 0.5,
+                        ay - uy * aSize - ux * aSize * 0.5,
+                    );
                     tgCtx.closePath();
                     tgCtx.fill();
                     tgCtx.restore();
@@ -2280,7 +4265,7 @@
                     tgCtx.fillRect(0, 0, logW, logH);
 
                     const vis = getVisibleNodes();
-                    const visSet = new Set(vis.map(n => n._i));
+                    const visSet = new Set(vis.map((n) => n._i));
                     const visEdges = getVisibleEdges();
 
                     // Hover highlighting
@@ -2289,28 +4274,57 @@
                     if (hoveredNode !== null && visSet.has(hoveredNode)) {
                         hlNodes.add(hoveredNode);
                         visEdges.forEach((e, i) => {
-                            if (e._si === hoveredNode || e._di === hoveredNode) {
+                            if (
+                                e._si === hoveredNode ||
+                                e._di === hoveredNode
+                            ) {
                                 hlEdges.add(i);
                                 hlNodes.add(e._si);
                                 hlNodes.add(e._di);
                             }
                         });
                     }
-                    const hasHover = hoveredNode !== null && visSet.has(hoveredNode);
+                    const hasHover =
+                        hoveredNode !== null && visSet.has(hoveredNode);
 
                     // Scenario cluster labels (all view only)
                     if (activeScenario === "all") {
                         const labels = [
-                            { text: "LEARNING LOOP", x: 0.25, y: 0.12, color: "#4af5c680" },
-                            { text: "κ-ROUTING", x: 0.75, y: 0.12, color: "#ff6b8a80" },
-                            { text: "BELIEF REVISION", x: 0.25, y: 0.92, color: "#7b8cff80" },
-                            { text: "ATTENTION & GOALS", x: 0.75, y: 0.92, color: "#a78bfa80" },
-                            { text: "FORGETTING", x: 0.5, y: 0.42, color: "#f9731680" },
+                            {
+                                text: "LEARNING LOOP",
+                                x: 0.25,
+                                y: 0.12,
+                                color: "#4af5c680",
+                            },
+                            {
+                                text: "κ-ROUTING",
+                                x: 0.75,
+                                y: 0.12,
+                                color: "#ff6b8a80",
+                            },
+                            {
+                                text: "BELIEF REVISION",
+                                x: 0.25,
+                                y: 0.92,
+                                color: "#7b8cff80",
+                            },
+                            {
+                                text: "ATTENTION & GOALS",
+                                x: 0.75,
+                                y: 0.92,
+                                color: "#a78bfa80",
+                            },
+                            {
+                                text: "FORGETTING",
+                                x: 0.5,
+                                y: 0.42,
+                                color: "#f9731680",
+                            },
                         ];
                         tgCtx.save();
                         tgCtx.font = "600 9px 'JetBrains Mono', monospace";
                         tgCtx.textAlign = "center";
-                        labels.forEach(l => {
+                        labels.forEach((l) => {
                             tgCtx.fillStyle = l.color;
                             tgCtx.fillText(l.text, logW * l.x, logH * l.y);
                         });
@@ -2319,11 +4333,21 @@
 
                     // Draw edges
                     visEdges.forEach((e, i) => {
-                        const src = N[e._si], dst = N[e._di];
+                        const src = N[e._si],
+                            dst = N[e._di];
                         const et = EDGE_TYPES[e.t];
                         const hl = hlEdges.has(i);
                         const dim = hasHover && !hl;
-                        drawArrow(src.x, src.y, dst.x, dst.y, et.color, et.dash, hl, dim);
+                        drawArrow(
+                            src.x,
+                            src.y,
+                            dst.x,
+                            dst.y,
+                            et.color,
+                            et.dash,
+                            hl,
+                            dim,
+                        );
 
                         if (hl) {
                             const mx = (src.x + dst.x) / 2;
@@ -2333,7 +4357,12 @@
                             tgCtx.fillStyle = "#0e1017";
                             tgCtx.globalAlpha = 0.7;
                             const tw = tgCtx.measureText(et.name).width;
-                            tgCtx.fillRect(mx - tw/2 - 3, my - 12, tw + 6, 14);
+                            tgCtx.fillRect(
+                                mx - tw / 2 - 3,
+                                my - 12,
+                                tw + 6,
+                                14,
+                            );
                             tgCtx.globalAlpha = 1;
                             tgCtx.fillStyle = et.color;
                             tgCtx.textAlign = "center";
@@ -2343,7 +4372,7 @@
                     });
 
                     // Draw nodes
-                    vis.forEach(n => {
+                    vis.forEach((n) => {
                         const nt = NODE_TYPES[n.type];
                         const hl = !hasHover || hlNodes.has(n._i);
                         const isHovered = hoveredNode === n._i;
@@ -2353,7 +4382,14 @@
                         // Glow
                         tgCtx.save();
                         tgCtx.globalAlpha = alpha * 0.12;
-                        const grad = tgCtx.createRadialGradient(n.x, n.y, 0, n.x, n.y, r * 3.5);
+                        const grad = tgCtx.createRadialGradient(
+                            n.x,
+                            n.y,
+                            0,
+                            n.x,
+                            n.y,
+                            r * 3.5,
+                        );
                         grad.addColorStop(0, nt.color);
                         grad.addColorStop(1, "transparent");
                         tgCtx.fillStyle = grad;
@@ -2368,7 +4404,13 @@
                         tgCtx.strokeStyle = nt.color;
                         tgCtx.lineWidth = 2;
                         tgCtx.beginPath();
-                        tgCtx.arc(n.x, n.y, r + 3, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * n.conf);
+                        tgCtx.arc(
+                            n.x,
+                            n.y,
+                            r + 3,
+                            -Math.PI / 2,
+                            -Math.PI / 2 + Math.PI * 2 * n.conf,
+                        );
                         tgCtx.stroke();
                         tgCtx.restore();
 
@@ -2386,7 +4428,13 @@
                         // Colored center dot
                         tgCtx.fillStyle = nt.color;
                         tgCtx.beginPath();
-                        tgCtx.arc(n.x, n.y, isHovered ? 5 : 3.5, 0, Math.PI * 2);
+                        tgCtx.arc(
+                            n.x,
+                            n.y,
+                            isHovered ? 5 : 3.5,
+                            0,
+                            Math.PI * 2,
+                        );
                         tgCtx.fill();
                         tgCtx.restore();
 
@@ -2394,14 +4442,24 @@
                         if (hl || activeScenario !== "all") {
                             tgCtx.save();
                             tgCtx.globalAlpha = alpha * 0.9;
-                            tgCtx.font = (isHovered ? "600 " : "500 ") + "9px 'JetBrains Mono', monospace";
+                            tgCtx.font =
+                                (isHovered ? "600 " : "500 ") +
+                                "9px 'JetBrains Mono', monospace";
                             tgCtx.fillStyle = nt.color;
                             tgCtx.textAlign = "center";
-                            const label = n.label.length > 22 ? n.label.slice(0, 20) + "…" : n.label;
+                            const label =
+                                n.label.length > 22
+                                    ? n.label.slice(0, 20) + "…"
+                                    : n.label;
                             // Background for readability
                             const tw = tgCtx.measureText(label).width;
                             tgCtx.fillStyle = "rgba(14,16,23,0.75)";
-                            tgCtx.fillRect(n.x - tw/2 - 2, n.y + r + 5, tw + 4, 13);
+                            tgCtx.fillRect(
+                                n.x - tw / 2 - 2,
+                                n.y + r + 5,
+                                tw + 4,
+                                13,
+                            );
                             tgCtx.fillStyle = nt.color;
                             tgCtx.fillText(label, n.x, n.y + r + 15);
                             tgCtx.restore();
@@ -2409,12 +4467,22 @@
                     });
 
                     // Update status
-                    const vn = vis.length, ve = visEdges.length;
-                    const etUsed = new Set(visEdges.map(e => EDGE_TYPES[e.t].name));
-                    const ntUsed = new Set(vis.map(n => NODE_TYPES[n.type].name));
-                    statusBar.textContent = `${vn} nodes (${ntUsed.size} types) · ${ve} edges (${etUsed.size} types)` +
-                        (activeScenario !== "all" ? ` · Scenario: ${activeScenario}` : "") +
-                        (activeEdgeGroup !== "all" ? ` · Edge filter: ${activeEdgeGroup}` : "");
+                    const vn = vis.length,
+                        ve = visEdges.length;
+                    const etUsed = new Set(
+                        visEdges.map((e) => EDGE_TYPES[e.t].name),
+                    );
+                    const ntUsed = new Set(
+                        vis.map((n) => NODE_TYPES[n.type].name),
+                    );
+                    statusBar.textContent =
+                        `${vn} nodes (${ntUsed.size} types) · ${ve} edges (${etUsed.size} types)` +
+                        (activeScenario !== "all"
+                            ? ` · Scenario: ${activeScenario}`
+                            : "") +
+                        (activeEdgeGroup !== "all"
+                            ? ` · Edge filter: ${activeEdgeGroup}`
+                            : "");
                 }
 
                 // ── Hit detection ──
@@ -2422,7 +4490,8 @@
                     const vis = getVisibleNodes();
                     for (let i = vis.length - 1; i >= 0; i--) {
                         const n = vis[i];
-                        const dx = mx - n.x, dy = my - n.y;
+                        const dx = mx - n.x,
+                            dy = my - n.y;
                         if (dx * dx + dy * dy < 22 * 22) return n._i;
                     }
                     return null;
@@ -2435,8 +4504,14 @@
                     const my = e.clientY - rect.top;
 
                     if (dragging !== null) {
-                        N[dragging].x = Math.max(30, Math.min(logW - 30, mx + dragOffX));
-                        N[dragging].y = Math.max(30, Math.min(logH - 30, my + dragOffY));
+                        N[dragging].x = Math.max(
+                            30,
+                            Math.min(logW - 30, mx + dragOffX),
+                        );
+                        N[dragging].y = Math.max(
+                            30,
+                            Math.min(logH - 30, my + dragOffY),
+                        );
                         drawTypeGraph();
                         return;
                     }
@@ -2450,24 +4525,37 @@
                         const n = N[hit];
                         const nt = NODE_TYPES[n.type];
                         const visEdges = getVisibleEdges();
-                        const connEdges = visEdges.filter(e => e._si === hit || e._di === hit);
-                        const edgeLabels = connEdges.slice(0, 8).map(e => {
-                            const et = EDGE_TYPES[e.t];
-                            const other = e._si === hit ? N[e._di] : N[e._si];
-                            const dir = e._si === hit ? "\u2192" : "\u2190";
-                            return `<span style="color:${et.color}">${et.name}</span> ${dir} ${other.label}`;
-                        }).join("<br>");
-                        const more = connEdges.length > 8 ? `<br><span style="color:var(--dim)">+${connEdges.length - 8} more</span>` : "";
+                        const connEdges = visEdges.filter(
+                            (e) => e._si === hit || e._di === hit,
+                        );
+                        const edgeLabels = connEdges
+                            .slice(0, 8)
+                            .map((e) => {
+                                const et = EDGE_TYPES[e.t];
+                                const other =
+                                    e._si === hit ? N[e._di] : N[e._si];
+                                const dir = e._si === hit ? "\u2192" : "\u2190";
+                                return `<span style="color:${et.color}">${et.name}</span> ${dir} ${other.label}`;
+                            })
+                            .join("<br>");
+                        const more =
+                            connEdges.length > 8
+                                ? `<br><span style="color:var(--dim)">+${connEdges.length - 8} more</span>`
+                                : "";
                         tooltip.innerHTML =
                             `<strong style="color:${nt.color};font-size:0.75rem">${n.label}</strong><br>` +
                             `<span style="color:var(--dim)">type:</span> <span style="color:${nt.color}">${nt.name}</span> ` +
-                            `<span style="color:var(--dim)">conf:</span> <span style="color:${n.conf >= 0.7 ? nt.color : '#f97316'}">${n.conf.toFixed(2)}</span><br>` +
+                            `<span style="color:var(--dim)">conf:</span> <span style="color:${n.conf >= 0.7 ? nt.color : "#f97316"}">${n.conf.toFixed(2)}</span><br>` +
                             `<span style="color:var(--dim);font-size:0.63rem">${n.desc}</span><br>` +
-                            (edgeLabels ? `<div style="margin-top:4px;border-top:1px solid rgba(255,255,255,0.06);padding-top:4px">${edgeLabels}${more}</div>` : "");
+                            (edgeLabels
+                                ? `<div style="margin-top:4px;border-top:1px solid rgba(255,255,255,0.06);padding-top:4px">${edgeLabels}${more}</div>`
+                                : "");
                         tooltip.style.display = "block";
-                        const ttLeft = mx + 20 + 320 > logW ? mx - 340 : mx + 20;
+                        const ttLeft =
+                            mx + 20 + 320 > logW ? mx - 340 : mx + 20;
                         tooltip.style.left = Math.max(4, ttLeft) + "px";
-                        tooltip.style.top = Math.max(4, Math.min(my + 16, logH - 200)) + "px";
+                        tooltip.style.top =
+                            Math.max(4, Math.min(my + 16, logH - 200)) + "px";
                         tgCanvas.style.cursor = "grab";
                     } else {
                         tooltip.style.display = "none";
@@ -2477,7 +4565,8 @@
 
                 tgCanvas.addEventListener("mousedown", (e) => {
                     const rect = tgCanvas.getBoundingClientRect();
-                    const mx = e.clientX - rect.left, my = e.clientY - rect.top;
+                    const mx = e.clientX - rect.left,
+                        my = e.clientY - rect.top;
                     const hit = nodeAt(mx, my);
                     if (hit !== null) {
                         dragging = hit;
@@ -2488,7 +4577,9 @@
                     }
                 });
 
-                tgCanvas.addEventListener("mouseup", () => { dragging = null; });
+                tgCanvas.addEventListener("mouseup", () => {
+                    dragging = null;
+                });
                 tgCanvas.addEventListener("mouseleave", () => {
                     dragging = null;
                     hoveredNode = null;
@@ -2497,44 +4588,70 @@
                 });
 
                 // ── Filter controls ──
-                document.querySelectorAll("#tg-filters .tg-filter-btn:not(.tg-edge-btn)").forEach(btn => {
-                    btn.addEventListener("click", () => {
-                        document.querySelectorAll("#tg-filters .tg-filter-btn:not(.tg-edge-btn)").forEach(b => b.classList.remove("active"));
-                        btn.classList.add("active");
-                        activeScenario = btn.dataset.scenario;
-                        hoveredNode = null;
-                        tooltip.style.display = "none";
-                        tgResize();
-                        drawTypeGraph();
+                document
+                    .querySelectorAll(
+                        "#tg-filters .tg-filter-btn:not(.tg-edge-btn)",
+                    )
+                    .forEach((btn) => {
+                        btn.addEventListener("click", () => {
+                            document
+                                .querySelectorAll(
+                                    "#tg-filters .tg-filter-btn:not(.tg-edge-btn)",
+                                )
+                                .forEach((b) => b.classList.remove("active"));
+                            btn.classList.add("active");
+                            activeScenario = btn.dataset.scenario;
+                            hoveredNode = null;
+                            tooltip.style.display = "none";
+                            tgResize();
+                            drawTypeGraph();
+                        });
                     });
-                });
-                document.querySelectorAll("#tg-filters .tg-edge-btn").forEach(btn => {
-                    btn.addEventListener("click", () => {
-                        document.querySelectorAll("#tg-filters .tg-edge-btn").forEach(b => b.classList.remove("active"));
-                        btn.classList.add("active");
-                        activeEdgeGroup = btn.dataset.edgegroup;
-                        drawTypeGraph();
+                document
+                    .querySelectorAll("#tg-filters .tg-edge-btn")
+                    .forEach((btn) => {
+                        btn.addEventListener("click", () => {
+                            document
+                                .querySelectorAll("#tg-filters .tg-edge-btn")
+                                .forEach((b) => b.classList.remove("active"));
+                            btn.classList.add("active");
+                            activeEdgeGroup = btn.dataset.edgegroup;
+                            drawTypeGraph();
+                        });
                     });
-                });
 
                 // ── Legends ──
                 const nlDiv = document.getElementById("node-type-legend");
-                NODE_TYPES.forEach(t => {
+                NODE_TYPES.forEach((t) => {
                     nlDiv.innerHTML += `<div style="color:var(--dim)"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${t.color};margin-right:6px;vertical-align:middle;"></span><strong style="color:${t.color};font-weight:500">${t.name}</strong> — ${t.desc}</div>`;
                 });
                 const elDiv = document.getElementById("edge-type-legend");
-                EDGE_TYPES.forEach(t => {
-                    const style = t.dash ? "border-top:2px dashed " + t.color : "border-top:2px solid " + t.color;
+                EDGE_TYPES.forEach((t) => {
+                    const style = t.dash
+                        ? "border-top:2px dashed " + t.color
+                        : "border-top:2px solid " + t.color;
                     elDiv.innerHTML += `<div style="color:var(--dim)"><span style="display:inline-block;width:14px;${style};margin-right:6px;vertical-align:middle;"></span>${t.name}<span style="color:var(--muted);margin-left:4px">(${t.group})</span></div>`;
                 });
 
                 // ── Init ──
-                window.addEventListener("resize", () => { tgResize(); drawTypeGraph(); });
-                setTimeout(() => { tgResize(); drawTypeGraph(); }, 150);
+                window.addEventListener("resize", () => {
+                    tgResize();
+                    drawTypeGraph();
+                });
+                setTimeout(() => {
+                    tgResize();
+                    drawTypeGraph();
+                }, 150);
 
-                const tgObs = new IntersectionObserver((entries) => {
-                    if (entries[0].isIntersecting) { tgResize(); drawTypeGraph(); }
-                }, { threshold: 0.1 });
+                const tgObs = new IntersectionObserver(
+                    (entries) => {
+                        if (entries[0].isIntersecting) {
+                            tgResize();
+                            drawTypeGraph();
+                        }
+                    },
+                    { threshold: 0.1 },
+                );
                 tgObs.observe(tgCanvas.parentElement);
             })();
         </script>

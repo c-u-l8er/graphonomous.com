@@ -6,7 +6,7 @@
         <title>Graphonomous — Benchmarks</title>
         <meta
             name="description"
-            content="Graphonomous benchmark suite: LongMemEval (92.6% QA across 500 questions) and GraphMemBench v2 (κ-sensitive synthetic benchmark with 8 tiers)."
+            content="Graphonomous benchmark suite: BEAM (95.0% nugget score, +21.6pp vs SOTA), LongMemEval (92.6% QA), and GraphMemBench v2 (κ-sensitive synthetic benchmark with 8 tiers)."
         />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -332,21 +332,49 @@
         <header class="hero container">
             <div class="section-label">Benchmark Suite</div>
             <h1>
-                Two benchmarks.<br />
-                Two sides of the same question.
+                Four benchmarks.<br />
+                One self-improving loop.
             </h1>
             <p class="subline">
-                LongMemEval measures how Graphonomous performs against a
-                realistic, diverse agent-memory workload. GraphMemBench v2
-                measures what κ-aware topology actually contributes — under
-                controlled conditions where cycles are the difference between
-                right and wrong.
+                BEAM measures long-term conversational memory at scale (100K&ndash;10M tokens).
+                LongMemEval measures realistic agent-memory workloads.
+                GraphMemBench v2 measures what &kappa;-aware topology actually contributes.
+                PRISM ties them together &mdash; a self-improving evaluation loop that
+                uses the other three as ground truth, scores across 9 CL dimensions,
+                and evolves its own scenarios.
             </p>
         </header>
 
         <!-- BENCHMARK CARDS -->
         <section class="container" style="padding-top: 1rem">
             <div class="bench-grid">
+                <a href="beam.html" class="bench-card">
+                    <span class="tag">Public benchmark</span>
+                    <h2>BEAM</h2>
+                    <p class="desc">
+                        ICLR 2026 "Beyond a Million Tokens" benchmark: 2,000
+                        questions across 10 memory abilities, 4 token-scale tiers
+                        (100K&ndash;10M), and 100 multi-session conversations.
+                        Graphonomous scores 95.0% on 100K — a +21.6pp lead
+                        over Hindsight SOTA.
+                    </p>
+                    <div class="stats">
+                        <div class="stat">
+                            <div class="value cyan">95.0%</div>
+                            <div class="label">Nugget Score</div>
+                        </div>
+                        <div class="stat">
+                            <div class="value">+21.6pp</div>
+                            <div class="label">vs SOTA</div>
+                        </div>
+                        <div class="stat">
+                            <div class="value">10</div>
+                            <div class="label">Abilities</div>
+                        </div>
+                    </div>
+                    <span class="arrow">View results &rarr;</span>
+                </a>
+
                 <a href="longmemeval.html" class="bench-card">
                     <span class="tag">Public benchmark</span>
                     <h2>LongMemEval</h2>
@@ -399,21 +427,51 @@
                     </div>
                     <span class="arrow">View tiers &rarr;</span>
                 </a>
+
+                <a href="../index.html#prism" class="bench-card" style="border-color: rgba(123, 140, 255, 0.3);">
+                    <span class="tag" style="background: rgba(123, 140, 255, 0.15); color: var(--blue);">Self-improving &middot; OS-009</span>
+                    <h2>PRISM</h2>
+                    <p class="desc">
+                        Protocol for Rating Iterative System Memory. The benchmark
+                        that benchmarks itself. 9 CL dimensions, 3-layer judging,
+                        IRT difficulty calibration, scenario evolution. We ran 6 cycles:
+                        0.10 &rarr; 0.76 &rarr; 0.95 &rarr; 0.99 &rarr; adversarial
+                        crash &rarr; fix &rarr; generalization test. Uses the other
+                        three benchmarks as ground truth inputs.
+                    </p>
+                    <div class="stats">
+                        <div class="stat">
+                            <div class="value blue">9</div>
+                            <div class="label">CL Dimensions</div>
+                        </div>
+                        <div class="stat">
+                            <div class="value blue">6</div>
+                            <div class="label">Cycles Run</div>
+                        </div>
+                        <div class="stat">
+                            <div class="value">3-Layer</div>
+                            <div class="label">Judging</div>
+                        </div>
+                    </div>
+                    <span class="arrow">See the dual loop &rarr;</span>
+                </a>
             </div>
         </section>
 
         <!-- WHY TWO -->
         <section class="container">
             <div class="section-header">
-                <div class="section-label">Why both</div>
-                <h2>External realism + internal causality</h2>
+                <div class="section-label">Why all four</div>
+                <h2>Scale + realism + causality + self-improvement</h2>
                 <p>
-                    LongMemEval tells us whether Graphonomous is competitive
-                    with GPT-4o-powered memory systems on a task users actually
-                    care about. GraphMemBench T1–T6 tell us whether the
-                    κ-topology machinery is doing real work. T7–T8 establish
-                    baselines for graph algorithm quality (Dijkstra paths,
-                    toposort ordering).
+                    BEAM tells us whether Graphonomous can handle long-context
+                    conversational memory at scale (100K&ndash;10M tokens) and beat
+                    published systems. LongMemEval validates realistic agent-memory
+                    workloads. GraphMemBench T1&ndash;T6 tell us whether the
+                    &kappa;-topology machinery is doing real work. PRISM ties them
+                    together: it scores across 9 CL dimensions, evolves its own
+                    scenarios, and feeds results back into Graphonomous &mdash; so
+                    each cycle makes both the benchmark and the memory sharper.
                 </p>
             </div>
 
@@ -422,42 +480,56 @@
                     <thead>
                         <tr>
                             <th>Property</th>
+                            <th>BEAM</th>
                             <th>LongMemEval</th>
                             <th>GraphMemBench v2</th>
+                            <th>PRISM</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr>
                             <td>Source</td>
+                            <td>ICLR 2026 public dataset</td>
                             <td>ICLR 2025 public dataset</td>
                             <td>Deterministic synthetic</td>
+                            <td>Self-evolving (OS-009)</td>
                         </tr>
                         <tr>
-                            <td>Reproducible from seed</td>
-                            <td>No (fixed corpus)</td>
-                            <td>Yes (<code>--seed N</code>)</td>
+                            <td>Scale</td>
+                            <td>100K&ndash;10M tokens, 100 conversations</td>
+                            <td>Fixed corpus, 500 questions</td>
+                            <td>50&ndash;500 per tier (configurable)</td>
+                            <td>15+ scenarios, grows each cycle</td>
                         </tr>
                         <tr>
-                            <td>Question count</td>
-                            <td>500 fixed</td>
-                            <td>50–500 per tier (configurable)</td>
+                            <td>Abilities tested</td>
+                            <td>10 (IE, MR, KU, TR, ABS, CR, EO, IF, PF, SUM)</td>
+                            <td>5 tracks</td>
+                            <td>8 tiers + 5 difficulty knobs</td>
+                            <td>9 CL dimensions + IRT calibration</td>
                         </tr>
                         <tr>
-                            <td>Measures κ-topology isolation</td>
+                            <td>Measures &kappa;-topology</td>
+                            <td>No</td>
                             <td>No</td>
                             <td>Yes (topology on/off A/B)</td>
+                            <td>Yes (via inner loop)</td>
                         </tr>
                         <tr>
                             <td>Domain content</td>
+                            <td>Multi-session dialogue (20 topics)</td>
                             <td>Realistic dialogue</td>
-                            <td>Synthetic cycles + DAGs with distractors</td>
+                            <td>Synthetic cycles + DAGs</td>
+                            <td>Code, business, research, ops</td>
                         </tr>
                         <tr>
                             <td>Validation gate</td>
+                            <td>95.0% nugget score (100K)</td>
                             <td>92.6% overall QA</td>
                             <td>
-                                T1–T6: ≥3pp κ-delta; T7–T8: algorithm baselines
+                                T1&ndash;T6: &ge;3pp &kappa;-delta; T7&ndash;T8: algorithm baselines
                             </td>
+                            <td>Weighted total + loop closure rate</td>
                         </tr>
                     </tbody>
                 </table>

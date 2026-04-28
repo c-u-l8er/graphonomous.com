@@ -794,9 +794,7 @@
                         >Benchmarks (A+)</a
                     >
                 </div>
-                <span class="badge"
-                    >v0.4.1 &middot; Elixir/OTP &middot; Apache 2.0</span
-                >
+                <span class="badge">Elixir/OTP &middot; Apache 2.0</span>
             </div>
         </section>
 
@@ -1865,10 +1863,18 @@ PRISM (outer):  compose &rarr; interact &rarr; observe &rarr; reflect &rarr; dia
                                 border: 1px solid var(--blue);
                                 border-radius: 4px;
                                 color: var(--blue);
-                                transition: background 0.2s, color 0.2s;
+                                transition:
+                                    background 0.2s,
+                                    color 0.2s;
                             "
-                            onmouseover="this.style.background='var(--blue)';this.style.color='var(--bg)'"
-                            onmouseout="this.style.background='transparent';this.style.color='var(--blue)'"
+                            onmouseover="
+                                this.style.background = 'var(--blue)';
+                                this.style.color = 'var(--bg)';
+                            "
+                            onmouseout="
+                                this.style.background = 'transparent';
+                                this.style.color = 'var(--blue)';
+                            "
                         >
                             Explore PRISM &rarr;
                         </a>

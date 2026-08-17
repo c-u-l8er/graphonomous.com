@@ -1,0 +1,129 @@
+{
+  "schema": "computedriven-surface-v1",
+  "_comment": "The frozen record this site is generated from. Nothing on a generated page may state a rung, a status or a count that is not here or in witness.json. build-site.mjs reads it; launch-gate.mjs refuses to publish when the artifact and this file disagree.",
+
+  "shell_revision": "shell-r4",
+  "version": "0.5.0",
+  "origin": "https://graphonomous.com",
+  "repo": "https://github.com/c-u-l8er/graphonomous",
+  "surface": "Graphonomous",
+  "layer": "memory",
+  "parent": "ComputeDriven",
+
+  "tier": 2,
+  "_tier_comment": "ampersand-nav/src/amp-nav.js records `graphonomous: { name: \"Graphonomous\", place: 2, layer: \"memory\", rung: \"live_deployed\" }`, and graphonomous.com IS in sync-nav.sh's target list (line 33). place 2 is inside the story, so this surface takes the STANDARD band with the layer sentence, not the tier-4 attribution variant reserved for place 4. Read, not assumed — SHELL.md §1.",
+
+  "question": "Can a memory get sharper from being used?",
+
+  "surface_rung": "live_deployed",
+  "surface_rung_covers": "one artifact — one npm package and one binary — graphonomous@0.4.2, and the single linux-x64 archive its install downloads",
+  "verified_at": "2026-08-16",
+
+  "status": {
+    "statement": "graphonomous@[[published_version]] is on the public npm registry and installs on linux-x64. The engine in this repository is [[tree_version]], and it has never been published. The installer advertises [[install_targets_total]] platforms; [[install_targets_ok]] of them has a release asset.",
+    "source": "mix test at graphonomous commit 5a9e00b; registry.npmjs.org/graphonomous dist-tags; an HTTP probe of every one of the [[install_targets_total]] release assets v[[published_version]] declares. Every figure on this page is emitted from records/witness.json, and check.mjs re-derives each one against the tree and the registry.",
+    "limit": "The test count was measured on the [[tree_version]] tree in this repository, which is NOT the artifact npm serves — so [[tests_total]] passing is evidence about code you cannot install. Nothing here establishes that the published [[published_version]] binary passes those tests, that the engine is correct rather than merely green, or that anyone outside this machine has ever run it. The demo and benchmark pages elsewhere on this domain were not audited by this pass and are not covered by the rung above."
+  },
+
+  "advance": {
+    "next_rung": "external",
+    "requires": "Someone who is not us installs it and reports a result — a filed issue, a benchmark run, or a fork. That is the only rung nobody here can award themselves. Publishing [[tree_version]], and building the missing platform binaries, is what would make it possible for most people to try."
+  },
+
+  "install": {
+    "npm": "npm i -g graphonomous",
+    "tag_source": "https://registry.npmjs.org/graphonomous",
+    "config_path": "~/.mcp.json",
+    "db_default": "~/.graphonomous/knowledge.db",
+    "node_min": "18"
+  },
+
+  "loop": [
+    { "phase": "retrieve", "q": "What do I know?", "actions": "context · episodic · procedural · coverage · trace_evidence · frontier · replay" },
+    { "phase": "route", "q": "What should I do?", "actions": "topology · deliberate · attention_survey · attention_cycle · review_goal" },
+    { "phase": "act", "q": "Do it.", "actions": "store_node · store_edge · store_trace · delete_node · manage_edge · manage_goal · belief_revise · forget_node · forget_policy · gdpr_erase" },
+    { "phase": "learn", "q": "Did it work?", "actions": "from_outcome · from_feedback · detect_novelty · from_interaction · contradictions" },
+    { "phase": "consolidate", "q": "Clean up.", "actions": "run · stats · query · traverse" }
+  ],
+
+  "retracted": [
+    {
+      "string": "455 tests",
+      "why": "The suite reports [[tests_total]]. 455 was the count at some earlier commit and had been sitting in the present tense."
+    },
+    {
+      "string": "29 actions",
+      "why": "The [[machines]] machine modules declare [[actions]] valid actions between them. The published table also omitted retrieve/replay and act/store_trace, so it was internally short by the same two."
+    },
+    {
+      "string": "29 individual tools",
+      "why": "Same stale denominator, in the sentence that argues why the machines exist."
+    },
+    {
+      "string": "29 MCP tools",
+      "why": "Same stale denominator, attached to a 100% pass-rate claim."
+    },
+    {
+      "string": "macOS or Linux",
+      "why": "Published as an install requirement. Only linux-x64 has a release asset; the other advertised targets all return 404 and the postinstall exits non-zero. The largest single audience for this page could not install it, and the page said they could."
+    },
+    {
+      "string": "No other agent memory system does this",
+      "why": "A claim about every other system in a field, with no survey behind it. Nothing on this site establishes what other systems do."
+    },
+    {
+      "string": "96.6",
+      "why": "A retrieval-accuracy figure attributed to a third-party system with no citation, in a comparison table this site cannot witness."
+    }
+  ],
+
+  "contact": {
+    "kind": "github_issues",
+    "url": "https://github.com/c-u-l8er/graphonomous/issues",
+    "_comment": "Deliberately NOT a mailto: (Travis's call, 2026-08-11) and deliberately NOT toolboxhvac's Formspree endpoint. No Formspree endpoint exists for graphonomous.com; it needs its own or an explicit ruling to share one. Flagged [TRAVIS]."
+  },
+
+  "gates": {
+    "_comment": "Same shape as toolboxhvac.com/review-status.json. A gate may not read approved without its evidence, reviewer and date fields, and launch-gate.mjs enforces that.",
+    "test_suite": {
+      "label": "The engine's own suite passes on the tree",
+      "status": "approved",
+      "description": "mix test run to completion in graphonomous/ at commit 5a9e00b, clean working tree.",
+      "evidence": "records/witness.json#tests_total",
+      "reviewer": "mix test (Elixir 1.19.4 / OTP 28)",
+      "date": "2026-08-16"
+    },
+    "install_matrix": {
+      "label": "Every platform the installer advertises was probed",
+      "status": "approved",
+      "description": "All [[install_targets_total]] targets resolve-platform.js can produce were requested from the v[[published_version]] GitHub release; [[install_targets_ok]] is present.",
+      "evidence": "records/witness.json#install_targets",
+      "reviewer": "HTTP probe of github.com/c-u-l8er/graphonomous/releases/download/v0.4.2/",
+      "date": "2026-08-16"
+    },
+    "published_release_parity": {
+      "label": "The published artifact is the tree this page describes",
+      "status": "pending",
+      "description": "npm serves [[published_version]] (published [[published_at]]). The tree is [[tree_version]]. Until they agree, the test count on this page describes code nobody can install, and the page says so rather than blurring it.",
+      "evidence": null,
+      "reviewer": null,
+      "date": null
+    },
+    "binary_smoke_test": {
+      "label": "The published binary starts and answers an MCP handshake",
+      "status": "pending",
+      "description": "Nobody here has run `npm i -g graphonomous` from the registry into a clean machine and spoken MCP to the result. The suite proves the source; it does not prove the tarball.",
+      "evidence": null,
+      "reviewer": null,
+      "date": null
+    },
+    "independent_use": {
+      "label": "Someone who is not us produced a result with it",
+      "status": "pending",
+      "description": "The only rung nobody here can award themselves. A filed issue, a reported benchmark, or a fork that runs the suite.",
+      "evidence": null,
+      "reviewer": null,
+      "date": null
+    }
+  }
+}

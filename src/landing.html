@@ -1,0 +1,84 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Can a memory get sharper from being used? — Graphonomous</title>
+<meta name="description" content="Graphonomous is an MCP memory server whose graph changes shape from outcomes: five loop-phase machines, confidence that moves when an action succeeds or fails, and a published install that currently works on exactly one platform. Every number here is generated from a frozen record.">
+<meta name="falsifiable-question" content="{{QUESTION}}">
+<link rel="canonical" href="{{ORIGIN}}/">
+<meta name="theme-color" content="#07090e">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>{{CSS}}</style>
+<script type="module" src="/amp-nav.js"></script></head><body>
+{{BAND}}
+<amp-nav property="graphonomous"></amp-nav>
+<div class="wrap">
+
+<div class="top"><a class="logo" href="/">graph<span>onomous</span></a>
+<nav><a href="#install">Install</a><a href="#loop">The loop</a><a href="#evidence">Evidence</a><a href="/demo/">Demos</a><a class="btn" href="{{REPO}}">Source</a></nav></div>
+
+<section class="hero">
+<div class="front">
+<div class="eyebrow">The question this site exists to answer</div>
+<h1>Can a memory get sharper from <em>being used?</em></h1>
+<p class="lede">Most agent memory is a key-value store with embeddings: what you put in is what you get back, forever, at the same rank. Graphonomous is a loop instead. An action reports its outcome, the confidence on the nodes that informed it moves, the topology of that neighbourhood changes, and the <strong>next retrieval ranks differently</strong> — with no model retrained and no weights touched. Whether that actually makes an agent better is the open question. What is settled is that the mechanism exists, runs, and can be read.</p>
+<p><a class="btn" href="#install">Install it</a>&nbsp;&nbsp;<a class="btn ghost" href="#evidence">What is actually proven</a></p>
+</div>
+<!-- The identifying animation (SHELL.md §8). It comes AFTER the h1 in source
+     order and sits behind it, because the question comes first. It renders no
+     data and asserts nothing: /memory.js takes no input from this document and
+     writes nothing back into it. Delete the script tag at the foot of this
+     page and every figure, chip, status row and word here is still present. -->
+<div class="idanim" aria-hidden="true"><canvas data-identity-animation></canvas></div>
+</section>
+
+{{PLATE}}
+
+<section id="install">
+<div class="eyebrow">Install, and the part most pages leave out</div>
+<h2>One command &mdash; on one platform.</h2>
+<p class="lede">The registry has it, the binary downloads, and the server answers on stdio. It is also the honest version: the installer advertises four targets and <strong>only one of them has ever been built.</strong> If you are on a Mac, this will fail, and it will fail during <code>npm i</code> rather than later.</p>
+{{INSTALL}}
+<h3 class="mt">Every target the installer will try to fetch</h3>
+<p class="lede sm">{{INSTALL_NOTE}}</p>
+{{INSTALL_TABLE}}
+<p class="lede sm">The gap is not a mystery and it is not hard: <code>npm/scripts/resolve-platform.js</code> maps two platforms by two architectures, and the release workflow has only ever produced one of the four archives. Until the other three exist, the reachable audience for this package is Linux on x86-64. That is the single largest thing standing between this project and someone outside it trying it.</p>
+</section>
+
+<section id="loop">
+<div class="eyebrow">The architecture, in the only shape that matters</div>
+<h2>Five machines, because tool choice degrades before capability does.</h2>
+<p class="lede">The engine exposes one tool per phase of the loop rather than one tool per capability. Each machine dispatches on an <code>action</code> parameter, so a client sees a short menu of verbs and the long menu lives underneath. The phases are the same five PULSE names every loop in this portfolio declares.</p>
+{{LOOP}}
+<p class="lede sm">Every action above is read out of the <code>@valid_actions</code> list in its machine module at build time. When a machine gains one, this page gains one; when this page and the modules disagree, the build stops. That is how the previously published table came to be short by two — <code>retrieve/replay</code> and <code>act/store_trace</code> both existed in the code and neither was on the page.</p>
+</section>
+
+<section id="evidence">
+<div class="eyebrow">How this was checked</div>
+<h2>The suite is green on code you cannot install.</h2>
+<p class="lede">Those two halves belong in one sentence, and separating them is how a page starts lying. The engine's own suite passes. The engine's own suite runs against the tree in this repository, and the tree is a version ahead of anything the registry serves.</p>
+
+<h3 class="mt">Status of this surface</h3>
+{{STATUS}}
+
+<h3 class="mt">The review ledger</h3>
+<p class="lede sm">A gate is either <code>approved</code> with its evidence, its reviewer and its date, or it is <code>pending</code>. There is no third state, and the publication gate refuses an artifact whose ledger claims approval without all three fields.</p>
+{{GATES}}
+
+{{RETRACTION}}
+</section>
+
+<section id="do">
+<div class="eyebrow">What you can do here</div>
+<h2>Two rungs, two different invitations.</h2>
+<p class="lede">A page may only ask you to do what its evidence has earned. There is a deployed artifact, so this page may ask you to use it &mdash; on the one platform it exists for. The version being described is only in the tree, so about that, it may ask you to read and to run the tests, and nothing more.</p>
+{{CTA}}
+</section>
+
+</div>
+<footer><div class="in">
+<div>&copy; {{YEAR}} Graphonomous&ensp;·&ensp;<a href="/">{{QUESTION}}</a></div>
+<div class="links"><a href="/demo/">Demos</a><a href="/benchmarks/">Benchmarks</a><a href="{{REPO}}">Source</a><a href="{{CONTACT}}">Challenge a claim</a><a href="https://ampersandboxdesign.com">[&amp;]</a></div>
+</div>
+<p class="attrib"><span class="stamp">{{STAMP}}</span>&ensp;·&ensp;Decoration only: the graph above draws nothing that is measured and nothing that is claimed. Its node and link counts were chosen so that they are not any figure on this page, and the publication gate refuses the build if one of them ever becomes one. Every number here is emitted from <code>records/witness.json</code> at build time, and each entry in that file names the command that produced it. The whole content of this page renders with JavaScript disabled &mdash; two deferred external files, the portfolio nav and the animation, add nothing the content depends on. Corrections go to the issue tracker; there is no email address on this site, deliberately.</p>
+</footer>
+<script src="/memory.js" defer></script>
+</body></html>

@@ -1,0 +1,102 @@
+{
+  "schema": "computedriven-witness-v1",
+  "_comment": "Every number that reaches a page comes from here, and every entry names the command that produced it and the exact world it was produced in. check.mjs re-derives each `derivable` entry against the real thing — the sibling checkout, the npm registry, the release assets — and exits non-zero on disagreement. build-site.mjs will not emit a page if any figure in the template has no entry here. A number cannot be typed onto this site by hand and survive.",
+
+  "measured_at": "2026-08-16",
+  "engine_commit": "5a9e00b2320415d341abdcee21be992b23bb192f",
+  "engine_path": "../graphonomous",
+  "site_commit_at_measure": "0c0de2fbca546e7373aef62544b5c84faccadfcc",
+
+  "facts": {
+    "tree_version": {
+      "value": "0.4.3",
+      "label": "Version in the tree",
+      "command": "grep 'version:' ../graphonomous/mix.exs",
+      "derivable": "mix_version"
+    },
+    "published_version": {
+      "value": "0.4.2",
+      "label": "Version on npm",
+      "command": "curl -s https://registry.npmjs.org/graphonomous | jq -r '.\"dist-tags\".latest'",
+      "derivable": "npm_dist_tag"
+    },
+    "published_at": {
+      "value": "2026-04-11",
+      "label": "Published",
+      "command": "curl -s https://registry.npmjs.org/graphonomous | jq -r '.time[\"0.4.2\"]'",
+      "derivable": "npm_publish_date"
+    },
+    "tests_total": {
+      "value": "577",
+      "label": "Tests",
+      "command": "cd ../graphonomous && mix test",
+      "raw": "577 tests, 0 failures — Finished in 13.1 seconds (1.2s async, 11.9s sync)",
+      "derivable": null,
+      "note": "Not re-derived by check.mjs: running the suite needs an Elixir toolchain and a compiled _build, which a Pages builder does not have. The raw line above is the whole output that established it, and the gate refuses if this figure and the page disagree."
+    },
+    "tests_failed": {
+      "value": "0",
+      "label": "Failures",
+      "command": "cd ../graphonomous && mix test",
+      "derivable": null
+    },
+    "machines": {
+      "value": "5",
+      "label": "MCP machines",
+      "command": "grep -c 'component(Graphonomous.MCP.Machines' ../graphonomous/lib/graphonomous/mcp/machines/server.ex",
+      "derivable": "machine_count"
+    },
+    "actions": {
+      "value": "31",
+      "label": "Actions across them",
+      "command": "for m in retrieve route act learn consolidate; do grep -oP '@valid_actions ~w\\(\\K[^)]+' ../graphonomous/lib/graphonomous/mcp/machines/$m.ex; done | wc -w",
+      "derivable": "action_count"
+    },
+    "demos": {
+      "value": "18",
+      "label": "Demo pages on this domain",
+      "command": "ls -d demo/*/ | wc -l",
+      "derivable": "demo_count"
+    },
+    "elixir_req": {
+      "value": "~> 1.17",
+      "label": "Elixir requirement",
+      "command": "grep 'elixir:' ../graphonomous/mix.exs",
+      "derivable": "elixir_req"
+    },
+    "install_targets_ok": {
+      "value": "1",
+      "label": "Platforms that install",
+      "command": "see install_targets below",
+      "derivable": "install_ok_count"
+    },
+    "install_targets_total": {
+      "value": "4",
+      "label": "Platforms advertised",
+      "command": "node -e \"console.log(Object.keys(require('../graphonomous/npm/scripts/resolve-platform').PLATFORM_MAP).length * Object.keys(require('../graphonomous/npm/scripts/resolve-platform').ARCH_MAP).length)\"",
+      "derivable": "install_total_count"
+    }
+  },
+
+  "install_targets": {
+    "_comment": "resolve-platform.js maps two platforms x two architectures, and postinstall.js exits non-zero when the asset it derives is missing. Each row was requested from the v0.4.2 release with curl on 2026-08-16. The status column is the HTTP code that came back, not an opinion about it.",
+    "release": "https://github.com/c-u-l8er/graphonomous/releases/download/v0.4.2/",
+    "asset_pattern": "graphonomous-v0.4.2-<target>.tar.gz",
+    "rows": [
+      { "target": "linux-x64", "http": 200, "result": "installs" },
+      { "target": "linux-arm64", "http": 404, "result": "no asset — install exits 1" },
+      { "target": "darwin-x64", "http": 404, "result": "no asset — install exits 1" },
+      { "target": "darwin-arm64", "http": 404, "result": "no asset — install exits 1" }
+    ]
+  },
+
+  "routes": {
+    "_comment": "Checked on the served domain 2026-08-16, not by listing the local tree. graphonomous.com answers every path with the homepage, so a 200 proves nothing on its own — these rows are the ones whose body differs from the homepage's, which is what makes them real routes.",
+    "rows": [
+      { "path": "/", "bytes": 220137, "distinct": true },
+      { "path": "/demo/", "bytes": 34274, "distinct": true },
+      { "path": "/benchmarks/", "bytes": 21827, "distinct": true },
+      { "path": "/nonexistent-abc123/", "bytes": 220137, "distinct": false }
+    ]
+  }
+}

@@ -77,12 +77,23 @@ img,canvas,svg{max-width:100%}
    than hard-edged so the lede stays readable where they overlap. */
 .hero{position:relative;overflow:hidden}
 .hero .front{position:relative;z-index:1}
-.idanim{position:absolute;z-index:0;top:0;bottom:0;right:-34px;left:auto;width:min(48vw,490px);pointer-events:none;
-  -webkit-mask-image:radial-gradient(circle at 54% 50%,#000 48%,transparent 84%);
-  mask-image:radial-gradient(circle at 54% 50%,#000 48%,transparent 84%)}
+/* right:0, NOT a negative offset. .hero clips at the wrap edge, so a canvas
+   that hangs past it loses whatever is drawn out there — invisible while the
+   old layout left its right margin empty, and an obvious slice through the
+   rightmost nodes once placement filled the field. The mask is centred right
+   of middle so the fade falls on the side the lede is on. */
+.idanim{position:absolute;z-index:0;top:0;bottom:0;right:0;left:auto;width:min(48vw,500px);pointer-events:none;
+  -webkit-mask-image:radial-gradient(circle at 62% 50%,#000 54%,transparent 96%);
+  mask-image:radial-gradient(circle at 62% 50%,#000 54%,transparent 96%)}
 .idanim canvas{display:block;width:100%;height:100%}
 @media(min-width:861px){.hero .lede{max-width:min(52ch,57%)}}
-@media(max-width:860px){.idanim{right:-28%;width:min(88vw,470px);opacity:.24}}
+/* Narrow: the graph sits BEHIND the copy, so it drops to a texture. right:0
+   here for the same reason as above — the old -28% bleed was tuned for a
+   layout whose right margin was empty, and with the field filled it threw
+   away half the graph past the clip and left the rest reading as specks. */
+@media(max-width:860px){.idanim{right:0;width:min(94vw,520px);opacity:.22;
+  -webkit-mask-image:radial-gradient(circle at 62% 50%,#000 46%,transparent 88%);
+  mask-image:radial-gradient(circle at 62% 50%,#000 46%,transparent 88%)}}
 
 /* --- sections --- */
 section{padding:56px 0;border-top:1px solid var(--line)}

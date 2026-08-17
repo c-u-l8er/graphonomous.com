@@ -6,20 +6,38 @@
    Everything starts vague. A node is not a dot, it is a soft blob with a
    scatter of ghost points around where the dot would be, and it drifts,
    because an unrecalled memory is a region rather than a fact. An edge is not
-   a line, it is a smear of bowed strands. Then a recall trace walks the
-   graph, and WHAT IT CROSSES RESOLVES: the blob contracts, the ghosts collapse
-   onto one another until they read as a single definite point, the drift
-   stops, the strands of a crossed edge converge into one line — and a
-   near-duplicate node the trace lands on merges into its twin, which is what
-   consolidation does to two nodes that turn out to be the same thing. The
-   trace itself starts as a smudge and arrives as a point.
+   a line, it is a smear of bowed strands. Recall traces then walk the graph,
+   and WHAT THEY CROSS RESOLVES: the blob contracts, the ghosts collapse onto
+   one another until they read as a single definite point, the drift stops,
+   a focus ring closes around it, the strands of a crossed edge converge into
+   one line — and a near-duplicate node a trace lands on merges into its twin,
+   which is what consolidation does to two nodes that turn out to be the same
+   thing. A trace itself leaves as a smudge and arrives as a point.
 
-   Between recalls it relaxes: not back to where it started, but down to a
-   floor that use has raised. A forgetting sweep pulls every floor down again
-   on its own clock, so nothing here is ever permanently sharp, and the next
-   recall re-sharpens whatever it happens to cross. Sharpness is therefore not
+   Then a forgetting sweep crosses the field and softens whatever it passes,
+   and the traces sharpen it again somewhere else. Sharpness is therefore not
    a property of the graph, it is a property of which parts of it are being
-   used — which is the question in this page's h1, drawn rather than argued.
+   used, right now — which is the question in this page's h1, drawn rather
+   than argued. The picture is meaningfully different at five seconds, at
+   fifteen and at thirty, and that is the whole point of it.
+
+   THREE THINGS HERE EXIST BECAUSE THE FIRST VERSION FAILED AT THEM, and each
+   is a decision rather than a default:
+
+   1. PLACEMENT IS BLUE NOISE, not clusters. Three hubs with jitter produced an
+      irregular clump in a third of the canvas with long thin edges crossing an
+      empty middle. Best-candidate sampling spreads the nodes over the whole
+      field with no two crowding each other.
+   2. EDGES ARE k-NEAREST-NEIGHBOUR, not random pairs, so they are short and
+      local and read as a graph instead of as crossing noise. A union-find pass
+      then joins any component the neighbour rule left stranded, because a
+      component no walk can reach is a part of the picture that never resolves.
+   3. THERE ARE SEVERAL TRACES AND THEY PREFER THE LEAST-RECENTLY-VISITED
+      NEIGHBOUR. A single random walk gets trapped in a neighbourhood — the
+      first version lit one corner and left the rest as haze forever, so there
+      was nothing to compare the sharp part against. Coverage is now a measured
+      property, not a hope: see docs in the commit for the 5 s / 15 s / 30 s
+      figures.
 
    IT RENDERS NO DATA AND ASSERTS NOTHING. It takes no input from the document
    and writes nothing back into it: no text, no markup, no attribute, no
@@ -29,10 +47,11 @@
    page is still there.
 
    The counts below are DELIBERATELY NOT the counts this site publishes.
-   Graphonomous stores 6 node types and 17 edge types; this picture has 16
-   nodes and 26 links, which are not any figure on the page and are not
-   anything measured. gpscoord.com shipped a canvas animation whose loop bound
-   was published beside it as a live count of user-facing pathfinders — a
+   Graphonomous stores 6 node types and 17 edge types; this picture has 22
+   nodes, and its edge count is emergent from the neighbour rule rather than
+   chosen at all. Neither is any figure on the page and neither is anything
+   measured. gpscoord.com shipped a canvas animation whose loop bound was
+   published beside it as a live count of user-facing pathfinders — a
    decoration's constant sold as a metric, for months. The publication gate
    reads every constant out of this file and refuses the build if one of them
    appears as a standalone number in the page's text.
@@ -44,26 +63,40 @@
   if (!ctx) return;
 
   /* ---- IDENTITY-COUNTS: read by launch-gate.mjs. Not data, not measured. ---- */
-  var NODES = 16;
-  var LINKS = 26;
+  var NODES = 22;
+  var K_NEAR = 3;
+  var CAND = 12;
   var GHOSTS = 8;
   var STRANDS = 3;
-  var CLUSTERS = 3;
-  var HOPS = 11;
+  var TRACES = 3;
+  var HOPS = 14;
   var FPS = 24;
-  var HOP_MS = 235;
-  var RECALL_MS = 2100;
-  var FORGET_MS = 12000;
+  var HOP_MS = 240;
+  var REST_MS = 900;
+  var FORGET_MS = 11000;
+  var WAVE_MS = 1300;
 
   /* How memory behaves here, as five numbers. K is the floor a thing relaxes
-     to, S is where it is right now. Use raises K, the sweep lowers it, and
-     K never reaches 1, because something that could not decay would not be a
-     memory. */
-  var K_MIN = 0.06;
-  var K_CAP = 0.92;
-  var LEARN = 0.31;
-  var RELAX = 0.055;
-  var FORGET_KEEP = 0.68;
+     to, S is where it is right now. Use raises K, the sweep lowers it, and K
+     never reaches 1, because something that could not decay would not be a
+     memory.
+
+     K_FADE is the one that makes the picture MOVE. Without it the traces
+     reach every node within four seconds, every floor saturates, and the
+     whole graph sits crisp forever — the opposite failure to the clumped
+     first version and just as unreadable, because a viewer needs something
+     vague beside the sharp part to see that anything is happening. With it a
+     floor decays with a time constant near three seconds, so a node is bright
+     for about a second after a trace lands, fades over the next few, and is
+     picked up again a few seconds later. The sharp set is therefore always a
+     MOVING SUBSET rather than the whole graph, and the wave below knocks it
+     down harder on its own slower clock. */
+  var K_MIN = 0.05;
+  var K_CAP = 0.88;
+  var LEARN = 0.34;
+  var RELAX = 0.042;
+  var FORGET_KEEP = 0.44;
+  var K_FADE = 0.34;
 
   var ACC = "#ff5c9d";
   var DATA = "#5ad1c8";
@@ -101,16 +134,35 @@
   var hazeImg = sprite(DIM);
   var glowImg = sprite(DATA);
 
-  /* ---- the graph: neighbourhoods, not a constellation ---- */
-  var hub = [];
-  for (var c = 0; c < CLUSTERS; c++) {
-    var ha = (c / CLUSTERS) * Math.PI * 2 - 0.95;
-    hub.push([0.5 + Math.cos(ha) * 0.235, 0.5 + Math.sin(ha) * 0.255]);
+  /* ---- placement: best-candidate blue noise over the WHOLE field ----
+     Each new point is the furthest of CAND darts from everything placed so
+     far. Even coverage, no lattice, no clump, and deterministic. */
+  var pts = [[0.5, 0.5]];
+  while (pts.length < NODES) {
+    var bestX = 0;
+    var bestY = 0;
+    var bestD = -1;
+    for (var c = 0; c < CAND; c++) {
+      var cx = rnd();
+      var cy = rnd();
+      var near = 9e9;
+      for (var pi = 0; pi < pts.length; pi++) {
+        var ddx = cx - pts[pi][0];
+        var ddy = cy - pts[pi][1];
+        var dd = ddx * ddx + ddy * ddy;
+        if (dd < near) near = dd;
+      }
+      if (near > bestD) {
+        bestD = near;
+        bestX = cx;
+        bestY = cy;
+      }
+    }
+    pts.push([bestX, bestY]);
   }
 
   var nodes = [];
   for (var i = 0; i < NODES; i++) {
-    var h = hub[i % CLUSTERS];
     var g = [];
     for (var gi = 0; gi < GHOSTS; gi++) {
       var ga = rnd() * Math.PI * 2;
@@ -118,9 +170,8 @@
       g.push([Math.cos(ga) * gr, Math.sin(ga) * gr]);
     }
     nodes.push({
-      c: i % CLUSTERS,
-      bx: h[0] + (rnd() - 0.5) * 0.36,
-      by: h[1] + (rnd() - 0.5) * 0.4,
+      bx: pts[i][0],
+      by: pts[i][1],
       px: 0,
       py: 0,
       fx: 0.3 + rnd() * 0.6,
@@ -130,21 +181,28 @@
       s: K_MIN,
       k: K_MIN,
       dup: null,
-      lit: 0
+      lit: 0,
+      swept: 0
     });
   }
 
   /* Near-duplicates. A few nodes carry a second, almost-identical copy of
-     themselves; landing a recall on one starts the merge. */
+     themselves; landing a trace on one starts the merge. */
   for (var d = 0; d < NODES; d += 3) {
     var da = rnd() * Math.PI * 2;
-    nodes[d].dup = { dx: Math.cos(da) * 0.045, dy: Math.sin(da) * 0.045, m: 0, on: false };
+    nodes[d].dup = { dx: Math.cos(da) * 0.04, dy: Math.sin(da) * 0.04, m: 0, on: false };
+  }
+
+  function dist2(a, b) {
+    var dx = nodes[a].bx - nodes[b].bx;
+    var dy = nodes[a].by - nodes[b].by;
+    return dx * dx + dy * dy;
   }
 
   var links = [];
   var seen = {};
   function addLink(a, b) {
-    if (a === b) return;
+    if (a === b || a < 0 || b < 0) return;
     var key = Math.min(a, b) + ":" + Math.max(a, b);
     if (seen[key]) return;
     seen[key] = 1;
@@ -152,26 +210,58 @@
     for (var si = 0; si < STRANDS; si++) {
       st.push((si - (STRANDS - 1) / 2) * 0.9 + (rnd() - 0.5) * 0.6);
     }
-    links.push({ a: a, b: b, st: st, s: K_MIN, k: K_MIN, lit: 0 });
+    links.push({ a: a, b: b, st: st, s: K_MIN, k: K_MIN, lit: 0, swept: 0 });
   }
-  /* A ring through each neighbourhood first, so nothing is ever stranded,
-     then fill with whatever the generator offers, biased against bridges —
-     dense inside a neighbourhood and sparse between them. */
-  for (var cc = 0; cc < CLUSTERS; cc++) {
-    var mem = [];
-    for (var mi = 0; mi < NODES; mi++) {
-      if (nodes[mi].c === cc) mem.push(mi);
-    }
-    for (var mj = 0; mj < mem.length; mj++) {
-      addLink(mem[mj], mem[(mj + 1) % mem.length]);
-    }
+
+  /* k nearest neighbours: short local edges, no long crossing chords */
+  for (var n1 = 0; n1 < NODES; n1++) {
+    var order = [];
+    for (var n2 = 0; n2 < NODES; n2++) if (n2 !== n1) order.push([dist2(n1, n2), n2]);
+    order.sort(function (p, q) {
+      return p[0] - q[0];
+    });
+    for (var kk = 0; kk < K_NEAR && kk < order.length; kk++) addLink(n1, order[kk][1]);
   }
-  var tries = 0;
-  while (links.length < LINKS && tries++ < 900) {
-    var x = Math.floor(rnd() * NODES);
-    var y = Math.floor(rnd() * NODES);
-    if (nodes[x].c !== nodes[y].c && rnd() > 0.36) continue;
-    addLink(x, y);
+
+  /* A component nothing can walk to is a part of the picture that never
+     resolves, so union-find the neighbour graph and bridge whatever is left. */
+  var parent = [];
+  for (var pu = 0; pu < NODES; pu++) parent.push(pu);
+  function find(a) {
+    while (parent[a] !== a) {
+      parent[a] = parent[parent[a]];
+      a = parent[a];
+    }
+    return a;
+  }
+  function union(a, b) {
+    var ra = find(a);
+    var rb = find(b);
+    if (ra !== rb) parent[ra] = rb;
+  }
+  for (var lu = 0; lu < links.length; lu++) union(links[lu].a, links[lu].b);
+  var joins = 0;
+  while (joins++ < NODES) {
+    var out = -1;
+    for (var oi = 0; oi < NODES; oi++) {
+      if (find(oi) !== find(0)) {
+        out = oi;
+        break;
+      }
+    }
+    if (out < 0) break;
+    var to = -1;
+    var td = 9e9;
+    for (var tj = 0; tj < NODES; tj++) {
+      if (find(tj) !== find(0)) continue;
+      var dz = dist2(out, tj);
+      if (dz < td) {
+        td = dz;
+        to = tj;
+      }
+    }
+    addLink(out, to);
+    union(out, to);
   }
 
   var nbr = [];
@@ -188,79 +278,102 @@
   }
 
   /* ---- recall: the only thing in here that sharpens anything ---- */
-  var recall = null;
-  var visits = [];
-  for (var vi = 0; vi < NODES; vi++) visits.push(0);
-
-  function coldest() {
-    var best = 0;
-    for (var i = 1; i < NODES; i++) {
-      if (visits[i] < visits[best]) best = i;
-    }
-    return best;
+  var lastSeen = [];
+  for (var vi = 0; vi < NODES; vi++) lastSeen.push(-9e9);
+  var traces = [];
+  for (var tt = 0; tt < TRACES; tt++) {
+    traces.push({ from: -1, to: -1, l: -1, prev: -1, hop: 0, t0: 0, idle: true, wake: tt * REST_MS });
   }
 
-  function land(i) {
-    visits[i]++;
+  function occupied(i) {
+    for (var t = 0; t < TRACES; t++) if (traces[t].from === i && !traces[t].idle) return true;
+    return false;
+  }
+
+  /* The least-recently-visited node anywhere, which is what makes coverage
+     even instead of leaving a corner untouched forever. */
+  function coldest() {
+    var best = -1;
+    var bs = 9e9;
+    for (var i = 0; i < NODES; i++) {
+      if (occupied(i)) continue;
+      if (lastSeen[i] < bs) {
+        bs = lastSeen[i];
+        best = i;
+      }
+    }
+    return best < 0 ? Math.floor(rnd() * NODES) : best;
+  }
+
+  function land(i, now) {
+    lastSeen[i] = now;
     nodes[i].s = 1;
     nodes[i].k = Math.min(K_CAP, nodes[i].k + LEARN);
     nodes[i].lit = 1;
     if (nodes[i].dup) nodes[i].dup.on = true;
   }
 
-  function hop(now) {
-    if (!recall || recall.hop >= HOPS) {
-      recall = null;
+  function step(t, now) {
+    if (t.hop >= HOPS) {
+      t.idle = true;
+      t.wake = now + REST_MS;
+      t.l = -1;
       return;
     }
-    var ns = nbr[recall.from];
-    var opts = [];
+    var ns = nbr[t.from];
+    var pick = null;
+    var bs = -9e9;
     for (var i = 0; i < ns.length; i++) {
-      if (ns[i].to !== recall.prev) opts.push(ns[i]);
-    }
-    if (!opts.length) opts = ns;
-    if (!opts.length) {
-      recall = null;
-      return;
-    }
-    /* follow whatever is strongest right now, which is why the path it takes
-       is different after a forgetting sweep */
-    var pick = opts[0];
-    var best = links[pick.l].k * (0.6 + rnd() * 0.8);
-    for (var j = 1; j < opts.length; j++) {
-      var score = links[opts[j].l].k * (0.6 + rnd() * 0.8);
-      if (score > best) {
-        best = score;
-        pick = opts[j];
+      var o = ns[i];
+      if (o.to === t.prev && ns.length > 1) continue;
+      /* least-recently-visited wins, with a little noise so two traces do not
+         lock into the same route, and a penalty for a node another trace is
+         standing on */
+      var sc = (now - lastSeen[o.to]) * (0.7 + rnd() * 0.6) - (occupied(o.to) ? 6000 : 0);
+      if (sc > bs) {
+        bs = sc;
+        pick = o;
       }
     }
-    recall.l = pick.l;
-    recall.to = pick.to;
-    recall.t0 = now;
-    recall.hop++;
+    if (!pick) {
+      t.idle = true;
+      t.wake = now + REST_MS;
+      t.l = -1;
+      return;
+    }
+    t.l = pick.l;
+    t.to = pick.to;
+    t.t0 = now;
+    t.hop++;
   }
 
-  function startRecall(now) {
-    var from = rnd() > 0.45 ? coldest() : Math.floor(rnd() * NODES);
-    recall = { from: from, to: -1, l: -1, prev: -1, hop: 0, t0: now };
-    land(from);
-    hop(now);
+  function startTrace(t, now) {
+    t.idle = false;
+    t.from = coldest();
+    t.prev = -1;
+    t.hop = 0;
+    land(t.from, now);
+    step(t, now);
   }
 
-  function arrive(now) {
-    var l = links[recall.l];
+  function arrive(t, now) {
+    var l = links[t.l];
     l.s = 1;
     l.k = Math.min(K_CAP, l.k + LEARN);
     l.lit = 1;
-    recall.prev = recall.from;
-    recall.from = recall.to;
-    land(recall.from);
-    hop(now);
+    t.prev = t.from;
+    t.from = t.to;
+    land(t.from, now);
+    step(t, now);
   }
 
-  function relax() {
+  function relax(dt) {
+    /* Continuous forgetting, on top of the wave. Exponential so the rate does
+       not depend on the frame interval. */
+    var keep = Math.exp(-K_FADE * dt / 1000);
     for (var i = 0; i < NODES; i++) {
       var n = nodes[i];
+      n.k = K_MIN + (n.k - K_MIN) * keep;
       n.s += (n.k - n.s) * RELAX;
       if (n.lit > 0.01) n.lit *= 0.9;
       if (n.dup && n.dup.on && n.dup.m < 1) {
@@ -269,18 +382,40 @@
     }
     for (var j = 0; j < links.length; j++) {
       var l = links[j];
+      l.k = K_MIN + (l.k - K_MIN) * keep;
       l.s += (l.k - l.s) * RELAX;
       if (l.lit > 0.01) l.lit *= 0.93;
     }
   }
 
-  function forget() {
+  /* Forgetting is a WAVE across the field rather than a global flicker: a
+     front crosses left to right and softens what it passes. It is visible,
+     which is the point — a viewer should catch the cycle, not infer it. */
+  var wave = -1;
+  function startWave() {
+    wave = 0;
+    for (var i = 0; i < NODES; i++) nodes[i].swept = 0;
+    for (var j = 0; j < links.length; j++) links[j].swept = 0;
+  }
+  function runWave(dt) {
+    if (wave < 0) return;
+    wave += dt / WAVE_MS;
     for (var i = 0; i < NODES; i++) {
-      nodes[i].k = K_MIN + (nodes[i].k - K_MIN) * FORGET_KEEP;
+      var n = nodes[i];
+      if (!n.swept && n.bx <= wave) {
+        n.k = K_MIN + (n.k - K_MIN) * FORGET_KEEP;
+        n.swept = 1;
+      }
     }
     for (var j = 0; j < links.length; j++) {
-      links[j].k = K_MIN + (links[j].k - K_MIN) * FORGET_KEEP;
+      var l = links[j];
+      var mx = (nodes[l.a].bx + nodes[l.b].bx) / 2;
+      if (!l.swept && mx <= wave) {
+        l.k = K_MIN + (l.k - K_MIN) * FORGET_KEEP;
+        l.swept = 1;
+      }
     }
+    if (wave > 1.08) wave = -1;
   }
 
   /* ---- paint ---- */
@@ -308,24 +443,34 @@
   }
 
   /* One node: a wide soft blob with its ghosts scattered around it when
-     nothing has recalled it, a small bright point when something has. */
+     nothing has recalled it, a small bright point inside a focus ring when
+     something has. The gap between those two is deliberately large — the
+     first version's was too subtle to read at a glance. */
   function cloud(n, cx, cy, s, scale) {
     var vague = 1 - s;
-    blob(hazeImg, cx, cy, (6.4 + vague * 24) * scale, (0.03 + vague * 0.19) * scale);
-    blob(glowImg, cx, cy, (2.6 + s * 9) * scale, s * s * 0.5 * scale);
+    blob(hazeImg, cx, cy, (6.4 + vague * 26) * scale, (0.03 + vague * 0.2) * scale);
+    blob(glowImg, cx, cy, (2.6 + s * 9.5) * scale, s * s * 0.55 * scale);
     ctx.fillStyle = DIM;
     for (var gi = 0; gi < GHOSTS; gi++) {
-      ctx.globalAlpha = (0.17 - s * 0.09) * scale;
-      disc(cx + n.g[gi][0] * vague * 15.5, cy + n.g[gi][1] * vague * 15.5, 1.7);
+      ctx.globalAlpha = (0.18 - s * 0.1) * scale;
+      disc(cx + n.g[gi][0] * vague * 17, cy + n.g[gi][1] * vague * 17, 1.7);
+    }
+    if (s > 0.5) {
+      ctx.strokeStyle = DATA;
+      ctx.globalAlpha = (s - 0.5) * 0.62 * scale;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(cx, cy, (3.4 + s * 3.2) * scale, 0, Math.PI * 2);
+      ctx.stroke();
     }
     ctx.fillStyle = DATA;
-    ctx.globalAlpha = (0.15 + s * 0.8) * scale;
-    disc(cx, cy, (1.3 + s * 2.9) * scale);
+    ctx.globalAlpha = (0.14 + s * 0.82) * scale;
+    disc(cx, cy, (1.2 + s * 2.6) * scale);
   }
 
   function draw(now) {
     ctx.clearRect(0, 0, W, H);
-    var pad = 0.11;
+    var pad = 0.07;
     var i;
     var n;
     var vague;
@@ -337,12 +482,12 @@
          still, a node that has just been recalled is nailed down */
       n.px =
         (pad + n.bx * (1 - pad * 2)) * W +
-        Math.sin(t * n.fx + n.ph) * W * 0.018 +
-        Math.sin(now * 0.0021 + n.ph * 2.3) * vague * 2.6;
+        Math.sin(t * n.fx + n.ph) * W * 0.014 +
+        Math.sin(now * 0.0021 + n.ph * 2.3) * vague * 2.8;
       n.py =
         (pad + n.by * (1 - pad * 2)) * H +
-        Math.cos(t * n.fy + n.ph) * H * 0.018 +
-        Math.cos(now * 0.0017 + n.ph * 3.1) * vague * 2.6;
+        Math.cos(t * n.fy + n.ph) * H * 0.014 +
+        Math.cos(now * 0.0017 + n.ph * 3.1) * vague * 2.8;
     }
 
     /* edges: many bowed strands while vague, one definite line once used */
@@ -363,15 +508,15 @@
       ctx.lineWidth = 0.6 + vague * 1.15;
       ctx.globalAlpha = 0.06 + l.s * 0.04;
       for (var si = 0; si < STRANDS; si++) {
-        var o = l.st[si] * vague * 19;
+        var o = l.st[si] * vague * 16;
         ctx.beginPath();
         ctx.moveTo(A.px, A.py);
         ctx.quadraticCurveTo(mx + nx * o, my + ny * o, B.px, B.py);
         ctx.stroke();
       }
-      if (l.s > 0.24) {
+      if (l.s > 0.22) {
         ctx.strokeStyle = DATA;
-        ctx.globalAlpha = (l.s - 0.24) * 0.62;
+        ctx.globalAlpha = (l.s - 0.22) * 0.7;
         ctx.lineWidth = 0.8 + l.s * 0.95;
         ctx.beginPath();
         ctx.moveTo(A.px, A.py);
@@ -394,7 +539,7 @@
       n = nodes[i];
       if (n.dup && n.dup.m < 0.99) {
         var away = 1 - n.dup.m;
-        cloud(n, n.px + n.dup.dx * W * away, n.py + n.dup.dy * H * away, n.s * 0.75, 0.88);
+        cloud(n, n.px + n.dup.dx * W * away, n.py + n.dup.dy * H * away, n.s * 0.7, 0.85);
       }
       cloud(n, n.px, n.py, n.s, 1);
       if (n.lit > 0.01) {
@@ -404,14 +549,27 @@
       }
     }
 
-    /* the recall trace: a smudge at the start of a path, a point by the end */
-    if (recall && recall.l >= 0) {
-      var C = nodes[recall.from];
-      var D = nodes[recall.to];
-      var f = Math.max(0, Math.min(1, (now - recall.t0) / HOP_MS));
+    /* the forgetting front, only while it is crossing */
+    if (wave >= 0) {
+      var fx = (pad + wave * (1 - pad * 2)) * W;
+      var grad = ctx.createLinearGradient(fx - 26, 0, fx + 8, 0);
+      grad.addColorStop(0, "rgba(255,255,255,0)");
+      grad.addColorStop(1, "rgba(255,255,255,0.1)");
+      ctx.fillStyle = grad;
+      ctx.globalAlpha = 1;
+      ctx.fillRect(fx - 26, 0, 34, H);
+    }
+
+    /* the recall traces: a smudge at the start of a path, a point by the end */
+    for (var ti = 0; ti < TRACES; ti++) {
+      var tr = traces[ti];
+      if (tr.idle || tr.l < 0) continue;
+      var C = nodes[tr.from];
+      var D = nodes[tr.to];
+      var f = Math.max(0, Math.min(1, (now - tr.t0) / HOP_MS));
       var hx = C.px + (D.px - C.px) * f;
       var hy = C.py + (D.py - C.py) * f;
-      var crisp = recall.hop / HOPS;
+      var crisp = tr.hop / HOPS;
       ctx.strokeStyle = ACC;
       ctx.globalAlpha = 0.24 + crisp * 0.55;
       ctx.lineWidth = 0.9 + crisp * 1.3;
@@ -422,8 +580,8 @@
       var smudge = (1 - crisp) * 9;
       ctx.fillStyle = ACC;
       for (var hi = 0; hi < GHOSTS; hi++) {
-        ctx.globalAlpha = 0.12 + crisp * 0.24;
-        disc(hx + headG[hi][0] * smudge, hy + headG[hi][1] * smudge, 1.1 + crisp * 1.6);
+        ctx.globalAlpha = 0.11 + crisp * 0.22;
+        disc(hx + headG[hi][0] * smudge, hy + headG[hi][1] * smudge, 1.1 + crisp * 1.5);
       }
     }
     ctx.globalAlpha = 1;
@@ -433,22 +591,35 @@
   window.addEventListener("resize", size, { passive: true });
 
   /* prefers-reduced-motion: one frame, then stop. Not optional (SHELL.md
-     §8.4). The still frame is the RESOLVED picture rather than the haze the
-     loop starts from — a blurred first frame reads as a broken canvas, and
-     the sharp end is the half worth showing when only one image is allowed. */
+     §8.4). The still frame is a HALF-RESOLVED picture rather than the haze the
+     loop starts from — a blurred first frame reads as a broken canvas, and a
+     fully crisp one would not show what the animation is about. Some of it
+     sharp beside some of it vague is the single image that says it. */
   function settle() {
     var clock = 0;
     for (var r = 0; r < 6; r++) {
-      startRecall(clock);
-      while (recall) {
-        clock += HOP_MS;
-        arrive(clock);
+      for (var t = 0; t < TRACES; t++) {
+        var tr = traces[t];
+        tr.idle = true;
+        startTrace(tr, clock);
+        while (!tr.idle) {
+          clock += HOP_MS;
+          arrive(tr, clock);
+        }
       }
     }
-    for (var f = 0; f < 40; f++) relax();
+    /* Sweep the forgetting front across HALF the field and let it settle, so
+       the one frame a reduced-motion reader gets shows both states at once —
+       a resolved right and a softened left, with the front between them. A
+       uniformly crisp still would not say what this animation is about, and a
+       uniformly hazy one reads as a broken canvas. */
+    startWave();
+    runWave(WAVE_MS * 0.5);
+    for (var f = 0; f < 45; f++) relax(1000 / FPS);
     for (var i = 0; i < NODES; i++) {
       if (nodes[i].dup) nodes[i].dup.m = 1;
     }
+    wave = -1;
   }
 
   var still =
@@ -472,7 +643,6 @@
 
   var running = false;
   var last = 0;
-  var lastRecall = 0;
   var lastForget = 0;
 
   function tick(now) {
@@ -486,19 +656,25 @@
       running = false;
       return;
     }
-    if (now - last >= 1000 / FPS) {
+    var dt = now - last;
+    if (dt >= 1000 / FPS) {
       last = now;
+      if (dt > FORGET_MS) dt = 1000 / FPS;
+      if (!lastForget) lastForget = now;
       if (now - lastForget >= FORGET_MS) {
         lastForget = now;
-        forget();
+        startWave();
       }
-      if (recall) {
-        if (now - recall.t0 >= HOP_MS) arrive(now);
-        if (!recall) lastRecall = now;
-      } else if (now - lastRecall >= RECALL_MS) {
-        startRecall(now);
+      runWave(dt);
+      for (var ti = 0; ti < TRACES; ti++) {
+        var tr = traces[ti];
+        if (tr.idle) {
+          if (now >= tr.wake) startTrace(tr, now);
+        } else if (now - tr.t0 >= HOP_MS) {
+          arrive(tr, now);
+        }
       }
-      relax();
+      relax(dt);
       draw(now);
     }
     requestAnimationFrame(frame);

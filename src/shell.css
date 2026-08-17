@@ -198,11 +198,18 @@ footer .links{display:flex;flex-wrap:wrap;gap:20px}
 @media(max-width:640px){.status>div{grid-template-columns:1fr;gap:6px}}
 /* Narrow: stack the header BEFORE the nav wraps, or the logo is left marooned
    beside the tail of a wrapped nav. SHELL.md r6 — the RULE is the shell's, the
-   NUMBER is this surface's and is measured, because r5's published 430px was
-   measured on a four-item nav and this one has five plus a button. Measured
-   2026-08-17: logo 114 + nav 364 + gap 16 + wrap padding 44 = 538px is where
-   the row layout gives out, so 560 stacks 22px before it. Recorded as
+   NUMBER is this surface's and has to be MEASURED, not computed. r5 published
+   430px, measured on a four-item nav.
+   This value moved once already, and the way it moved is the lesson: renaming
+   one nav item from "Demos" to "Correct us" widened the nav by 22px and pushed
+   the wrap point from 538 to 576, straight past the 560 that was set for it —
+   so between 561 and 575 the header sat unstacked with a two-row nav, which is
+   the exact defect the rule exists to prevent. The arithmetic estimate
+   (logo + items + gaps + padding) said 560 and was WRONG, because flex-wrap
+   distributes inside the nav's own allotted width. Bisected in Chrome instead,
+   2026-08-17: one row at 576, two rows at 575. 600 stacks 24px before it.
+   ANY CHANGE TO A NAV LABEL INVALIDATES THIS NUMBER. Recorded as
    nav_breakpoint_px in records/surface.json; launch-gate.mjs checks the two
    agree, so moving one without the other stops the build. */
-@media(max-width:560px){.top{flex-direction:column;align-items:flex-start;gap:14px}.top nav{gap:16px}}
+@media(max-width:600px){.top{flex-direction:column;align-items:flex-start;gap:14px}.top nav{gap:16px}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}

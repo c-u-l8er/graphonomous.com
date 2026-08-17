@@ -85,8 +85,9 @@ The shell (band, rung chip, status block, CTA/rung table, §8 animation) is
 specified in `ProjectAmp2/agents/SHELL.md`. This surface is built against
 revision **`shell-r7`**, recorded as `shell_revision` in `records/surface.json`,
 and the build refuses to emit against any other revision. Four shell values are the **surface's own** and are
-recorded rather than copied: `nav_breakpoint_px` (560, measured — r5's
-published 430 was measured on a four-item nav), `rung_witness` (which gate
+recorded rather than copied: `nav_breakpoint_px` (600, BISECTED in a browser —
+an arithmetic estimate got it wrong, and then a five-character nav-label
+change invalidated it; re-bisect after touching any nav label), `rung_witness` (which gate
 witnesses the claimed rung), `cited_specs` (empty; this page cites no §N in
 visible text), and `ink_box_headroom_px` — r7's second item, which the gate
 **cannot** check because it has no font engine, so it is a recorded

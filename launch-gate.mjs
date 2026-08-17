@@ -705,6 +705,21 @@ T("the artifact declares a focus-visible ring", /:focus-visible\s*\{/.test(css))
 T("the record names this surface's own nav breakpoint", Number.isInteger(SURFACE.nav_breakpoint_px), `${SURFACE.nav_breakpoint_px}px`);
 T("the stylesheet stacks .top at exactly that breakpoint",
   new RegExp(`@media\\(max-width:${SURFACE.nav_breakpoint_px}px\\)\\{\\.top\\{flex-direction:column`).test(css));
+/* The breakpoint is a function of the nav's LABELS and nothing else, and this
+   is not theoretical: renaming one item from "Demos" to "Correct us" during
+   this same pass widened the nav by 22px, moved the wrap point from 538 to
+   576, and left every width from 561 to 575 rendering an unstacked header
+   above a two-row nav — the defect the rule exists to prevent, reintroduced by
+   five characters. A gate with no font engine cannot re-measure, but it can
+   refuse to let the labels drift away from the measurement. */
+/* Scoped to the <nav> itself, not to .top: the logo anchor wraps a <span>, so
+   `<a[^>]*>([^<]*)</a>` never matched it and a slice(1) written to skip it
+   silently ate the first real label instead. */
+const NAVTOP = /<div class="top">[\s\S]*?(<nav>[\s\S]*?<\/nav>)/.exec(HTML);
+const navLabels = NAVTOP ? [...NAVTOP[1].matchAll(/<a[^>]*>([^<]*)<\/a>/g)].map((m) => decode(m[1]).trim()) : [];
+T("the header nav is the one the breakpoint was bisected against",
+  JSON.stringify(navLabels) === JSON.stringify(SURFACE.nav_labels_at_measure || []),
+  navLabels.join(" · ") + (JSON.stringify(navLabels) === JSON.stringify(SURFACE.nav_labels_at_measure || []) ? "" : "  <- RE-BISECT nav_breakpoint_px"));
 
 /* ---------- 15c. §N citations resolve (SHELL.md r5.3) ----------
    Cheap, and it catches a citation that drifted when a spec was rewritten.

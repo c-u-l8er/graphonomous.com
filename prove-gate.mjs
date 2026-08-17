@@ -68,8 +68,10 @@ const BREAKS = [
      "approved WITH evidence, reviewer and date"],
     ["a rung whose named witness has never been approved", "rebuild", (d) => editJSON(d, "records/surface.json", (j) => { j.rung_witness = "independent_use"; }),
      "is approved, with evidence, reviewer and date"],
-    ["the nav stacking breakpoint moved without the record", "rebuild", (d) => edit(d, "src/shell.css", "@media(max-width:560px){.top{flex-direction:column", "@media(max-width:430px){.top{flex-direction:column"),
+    ["the nav stacking breakpoint moved without the record", "rebuild", (d) => edit(d, "src/shell.css", "@media(max-width:600px){.top{flex-direction:column", "@media(max-width:430px){.top{flex-direction:column"),
      "stacks .top at exactly that breakpoint"],
+    ["a nav label changed without the breakpoint being re-measured", "gate", (d) => edit(d, "index.html", '<a href="#evidence">Evidence</a>', '<a href="#evidence">The evidence ledger</a>'),
+     "the one the breakpoint was bisected against"],
     ["a §N citation that points at nothing", "gate", (d) => edit(d, "index.html", "<h2>Five machines", "<h2>See §99. Five machines"),
      "§99 names the spec it cites"],
 

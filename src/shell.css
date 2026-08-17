@@ -3,7 +3,7 @@
    Everything between TOKENS-START and TOKENS-END is this site's own character
    and is meant to differ per surface. Everything after TOKENS-END is shared
    structure, copied from ~/Projects/GPSCoord/src/shell.css.
-   Documented in ProjectAmp2/agents/SHELL.md (revision shell-r7).
+   Documented in ProjectAmp2/agents/SHELL.md (revision shell-r9).
    ========================================================================== */
 /* TOKENS-START — Graphonomous: synapse magenta on ink */
 :root{
@@ -167,6 +167,24 @@ code{font-family:var(--mono);font-size:.92em;background:rgba(255,255,255,.05);pa
 .ctagroup+.ctagroup{margin-top:34px}
 .mt{margin-top:40px}
 .sm{font-size:var(--sm)}
+
+/* --- the correction form (SHELL.md r9) ---
+   Shape copied from computedriven.com, tokens are this surface's. The honeypot
+   is moved OFF-SCREEN rather than display:none — some bots skip anything a
+   stylesheet has explicitly hidden, which defeats the point of it. */
+.say{margin-top:26px;max-width:74ch}
+.say-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+.say-f{display:block;min-width:0}
+.say-f span{display:block;font-family:var(--mono);font-size:var(--xs);text-transform:uppercase;letter-spacing:.1em;color:var(--fg2);margin-bottom:7px}
+.say input[type=email],.say textarea{width:100%;background:var(--ink3);border:1px solid var(--line2);border-radius:var(--r);color:var(--fg);font:inherit;font-size:var(--sm);padding:11px 13px;resize:vertical}
+.say textarea{min-height:76px}
+.say input[type=email]::placeholder,.say textarea::placeholder{color:var(--fg3)}
+.say input[type=email]:hover,.say textarea:hover{border-color:var(--acc-line)}
+.say input[name=_gotcha]{position:absolute;left:-9999px;width:1px;height:1px;opacity:0}
+.say-act{display:flex;align-items:center;gap:14px;margin-top:16px;flex-wrap:wrap}
+.say-msg{margin:0;font-size:var(--sm);color:var(--fg2);min-height:1.4em}
+.say-msg.ok{color:var(--data)}
+.say-msg.bad{color:var(--warn)}
 
 /* --- footer --- */
 footer{border-top:1px solid var(--line);background:var(--ink2);margin-top:56px}

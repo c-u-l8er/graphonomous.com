@@ -24,6 +24,7 @@ import { ARTIFACTS, artifactHashes, buildId, inputHashes, readStamp } from "./st
 const DIR = path.dirname(fileURLToPath(import.meta.url));
 const HTML = readFileSync(new URL("./index.html", import.meta.url), "utf8");
 const ANIM = readFileSync(new URL("./memory.js", import.meta.url), "utf8");
+const SAYJS = readFileSync(new URL("./contact.js", import.meta.url), "utf8");
 const SURFACE = JSON.parse(readFileSync(new URL("./records/surface.json", import.meta.url), "utf8"));
 const WITNESS = JSON.parse(readFileSync(new URL("./records/witness.json", import.meta.url), "utf8"));
 const PKG = JSON.parse(readFileSync(new URL("./package.json", import.meta.url), "utf8"));
@@ -55,13 +56,24 @@ const decode = (s) =>
     String(s).replace(/&(#x?[0-9a-fA-F]+|\w+);/g, (m, e) =>
         e[0] === "#" ? String.fromCodePoint(parseInt(e[1] === "x" ? e.slice(2) : e.slice(1), e[1] === "x" ? 16 : 10)) : NAMED[e] ?? m
     );
-/* Visible text only: scripts, styles and attributes are not what a reader
-   reads, and a check that scans them produces noise instead of refusals. */
-const TEXT = decode(
-    HTML.replace(/<(script|style)[\s\S]*?<\/\1>/gi, " ")
-        .replace(/<!--[\s\S]*?-->/g, " ")
-        .replace(/<[^>]+>/g, " ")
-).replace(/\s+/g, " ");
+/* VISIBLE TEXT, AND THE ORDER OF THESE THREE PASSES IS THE POINT (SHELL.md
+   r8). `<[^>]+>` stops at the first `>`, so an HTML comment CONTAINING a `>`
+   is only half removed and its tail survives as "page text" — which would
+   feed the §8 constant check a number nobody published and refuse a good
+   build, or hide one that was. Comments come out FIRST, as their own pass,
+   then script and style bodies, then tags. Measured on this artifact before
+   the fix: one comment, no `>` inside it, and the extracted number set is
+   byte-identical under all three orderings — so nothing here was wrong yet.
+   It was one comment away from being wrong, and three checks read this. */
+function visibleText(html) {
+    return decode(
+        html
+            .replace(/<!--[\s\S]*?-->/g, " ")
+            .replace(/<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>/gi, " ")
+            .replace(/<[^>]+>/g, " ")
+    ).replace(/\s+/g, " ");
+}
+const TEXT = visibleText(HTML);
 
 /* Text outside the retraction paragraph, and text inside it. Naming a wrong
    value is what a retraction IS, so the one place a retracted string may
@@ -69,13 +81,13 @@ const TEXT = decode(
    is global, so a second retraction block cannot be used as a hiding place. */
 const RETRACT_RE = /<div class="retract" data-retraction>[\s\S]*?<\/div>/g;
 const RETRACT_BLOCKS = HTML.match(RETRACT_RE) || [];
-const TEXT_INSIDE = decode(RETRACT_BLOCKS.join(" ").replace(/<[^>]+>/g, " ")).replace(/\s+/g, " ");
-const TEXT_OUTSIDE = decode(
-    HTML.replace(RETRACT_RE, " ")
-        .replace(/<(script|style)[\s\S]*?<\/\1>/gi, " ")
-        .replace(/<!--[\s\S]*?-->/g, " ")
-        .replace(/<[^>]+>/g, " ")
-).replace(/\s+/g, " ");
+const TEXT_INSIDE = visibleText(RETRACT_BLOCKS.join(" "));
+const TEXT_OUTSIDE = visibleText(HTML.replace(RETRACT_RE, " "));
+/* Everything else in the artifact that is NOT visible text — markup,
+   attribute values, comments, the inline stylesheet. A retracted claim parked
+   in a comment is still on the page a maintainer reads, and a visible-text
+   check cannot see it. SHELL.md r8. */
+const RAW_OUTSIDE = decode(HTML.replace(RETRACT_RE, " "));
 
 /* Counting, not detecting. r6 hole 1 in one function. */
 function occurrences(haystack, needle) {
@@ -135,7 +147,7 @@ if (STAMP && STAMP.inputs && STAMP.artifacts) {
 T("release identity: package == record", PKG.version === SURFACE.version, `${PKG.version} / ${SURFACE.version}`);
 T("the stamp on the artifact names the release", HTML.includes(`v${SURFACE.version}`));
 T("the artifact records which shell revision it was built against",
-  HTML.includes(SURFACE.shell_revision) && SURFACE.shell_revision === "shell-r7", SURFACE.shell_revision);
+  HTML.includes(SURFACE.shell_revision) && SURFACE.shell_revision === "shell-r9", SURFACE.shell_revision);
 
 /* ---------- 2. the artifact is fully rendered ---------- */
 T("no unrendered {{TOKEN}} survived into the artifact", !/\{\{\w+\}\}/.test(HTML),
@@ -177,11 +189,32 @@ const BAND_CLAIM = {
 T("the band's claim matches the tier in the record",
   (BAND_CLAIM[SURFACE.tier] || (() => false))(), `tier ${SURFACE.tier}`);
 
-/* ---------- 5. no dead mailbox anywhere ---------- */
+/* ---------- 5. the correction channel is real, and it is not a mailbox ----------
+   SHELL.md r9. Travis ruled the Formspree endpoint on 2026-08-17, which closed
+   the [TRAVIS] flag this surface filed for having no endpoint of its own. The
+   shape matters as much as the URL: a real <form> with an action posts with
+   scripting off, a fetch bolted to a button does not, and this page's whole
+   content is checked to survive script removal. */
 T("no page advertises a mailto:", !/mailto:/i.test(HTML));
 T("no bare email address in the text", !/[\w.+-]+@[\w-]+\.[a-z]{2,}/i.test(TEXT));
 T("there is a live correction channel instead",
   HTML.includes(SURFACE.contact.url), SURFACE.contact.url);
+const FORM = /<form\b[^>]*class="say"[^>]*>[\s\S]*?<\/form>/.exec(HTML);
+T("the correction form is on the artifact", !!FORM);
+const formTag = FORM ? /<form\b[^>]*>/.exec(FORM[0])[0] : "";
+T("the form posts to the endpoint the record declares",
+  new RegExp(`action="${SURFACE.contact.endpoint.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}"`).test(formTag),
+  SURFACE.contact.endpoint);
+T("the form is a real POST, not a fetch bolted to a button",
+  /method="POST"/i.test(formTag) && !!FORM && /<button[^>]*type="submit"/.test(FORM[0]));
+T("the form carries the _gotcha honeypot", !!FORM && /name="_gotcha"/.test(FORM[0]));
+T("the reply paragraph is a polite live region",
+  !!FORM && /<p class="say-msg" role="status" aria-live="polite">/.test(FORM[0]));
+/* Success on a 2xx, or the form is lying. Checked by SHAPE — the success
+   branch has to be inside a block guarded by the response's own ok flag. */
+const okBlk = blockAfter(SAYJS, /\bif \(r\.ok\)\s*/);
+T("the inline reply prints success only inside a response-ok guard",
+  !!okBlk && /\bsay\("Sent/.test(okBlk.body) && !/\bsay\("Sent/.test(SAYJS.replace(okBlk.body, " ")));
 
 /* ---------- 6. the status block is complete ---------- */
 for (const row of ["Status", "Last verified", "Source", "Limit", "Next rung"]) {
@@ -244,12 +277,17 @@ for (const g of groups) {
    retraction as cover. */
 T("the retraction paragraph is on the artifact", RETRACT_BLOCKS.length === 1, `${RETRACT_BLOCKS.length} blocks`);
 for (const r of SURFACE.retracted) {
-    const cap = Number.isInteger(r.max_occurrences) ? r.max_occurrences : 1;
+    const min = Number.isInteger(r.min_occurrences) ? r.min_occurrences : 1;
+    const max = Number.isInteger(r.max_occurrences) ? r.max_occurrences : 1;
     const outside = occurrences(TEXT_OUTSIDE, r.string);
     const inside = occurrences(TEXT_INSIDE, r.string);
+    const hidden = occurrences(RAW_OUTSIDE, r.string);
     T(`retracted "${r.string}" appears nowhere outside its retraction`, outside === 0, `${outside} occurrences`);
-    T(`retracted "${r.string}" is quoted once inside it, not re-asserted`,
-      inside >= 1 && inside <= cap, `${inside} of at most ${cap}`);
+    T(`retracted "${r.string}" is quoted between ${min} and ${max} times inside it`,
+      inside >= min && inside <= max, `${inside}`);
+    /* SHELL.md r8: a comment or an attribute is not a hiding place. */
+    T(`retracted "${r.string}" is not hidden in markup, a comment or an attribute`,
+      hidden === 0, `${hidden} occurrences outside visible text`);
 }
 
 /* ---------- 10. every figure on the page has a witness ----------
@@ -358,6 +396,12 @@ T("no inline style= in the artifact", !/\sstyle="/.test(HTML),
 T("no inline event handlers in the artifact", !/\son(click|mouseover|mouseout|load)=/i.test(HTML));
 T("the content does not depend on JavaScript",
   !/<script(?![^>]*\bsrc=)/.test(HTML), "no inline script; only deferred external files");
+/* And prove it rather than infer it: strip every script tag and the visible
+   text must be identical, character for character. r9 made this load-bearing —
+   the correction form has to submit with scripting off. */
+const TEXT_NOJS = visibleText(HTML.replace(/<script[\s\S]*?<\/script>/gi, " ").replace(/<script[^>]*>/gi, " "));
+T("the page's visible text is unchanged with every script tag removed",
+  TEXT_NOJS === TEXT, `${TEXT.length} chars either way`);
 
 /* ---------- 14. contrast: no text token below 4.5:1 on its own surface ----------
    --fg3 shipped at .34 across the portfolio, which is 2.78:1 on the band — a
@@ -394,27 +438,37 @@ for (const surfaceTok of ["ink", "ink2", "ink3"]) {
 /* At 11px the AA floor is legible in a screenshot and not on a laptop, so the
    load-bearing 11px spans take --fg2 rather than --fg3. */
 T(".covers is not painted with --fg3 at 11px", /\.band \.covers\{color:var\(--fg2\)/.test(css));
+/* r9: off-screen rather than display:none — some bots skip anything a
+   stylesheet has explicitly hidden, which defeats the honeypot. */
+T("the _gotcha honeypot is moved off-screen, not display:none",
+  /\.say input\[name=_gotcha\]\{position:absolute;left:-9999px/.test(css) && !/\[name=_gotcha\]\{[^}]*display:none/.test(css));
 
-/* ---------- 14b. the colour an element actually COMPUTES, not the one it declares ----------
-   SHELL.md r7, and the reason it survived 38 deliberate breaks: check 14 above
-   compares DECLARED TOKENS against DECLARED SURFACES — all 18 pairs clear
-   4.5:1 — and says nothing about which declaration wins on a real element.
-   `.top nav a` is 0,2,1 and `.btn` is 0,1,0, so an unscoped nav rule takes the
-   header CTA's colour away from it and the button paints --fg2 on --acc at
-   1.70:1, while the identical button in the hero paints #2a0413 at 6.51:1.
-   Every token was fine. Every pair was fine. The button was unreadable.
+/* ---------- 14b. the colour an element PAINTS, not the one it declares ----------
+   SHELL.md r7 and r8, and the reason this defect survived 44 deliberate
+   breaks: check 14 above compares DECLARED TOKENS against DECLARED SURFACES —
+   all 18 pairs clear 4.5:1 — and says nothing about which declaration wins on
+   a real element. `.top nav a` is 0,2,1 and `.btn` is 0,1,0, so an unscoped
+   nav rule takes the header CTA's colour away from it and the button paints
+   --fg2 on --acc at 1.70:1, while the identical button in the hero paints
+   #2a0413 at 6.46:1. Every token was fine. Every pair was fine. The button was
+   unreadable, on nine surfaces.
 
-   So: build the element tree, resolve `color` and `background` through the
-   cascade the way a browser would — specificity, then source order, then
-   inheritance — and check the pair that actually lands.
+   So: build the element tree, parse the emitted stylesheet, and resolve
+   `color` and `background` the way a browser would — !important, then
+   specificity, then source order, then inheritance — at every breakpoint the
+   stylesheet itself declares and in both the resting and the hover state. A
+   translucent background is composited down to the first opaque one beneath
+   it, because a ratio taken against rgba() is not a ratio.
 
-   LIMITS, stated rather than implied. At-rule blocks are skipped, so this is
-   the base style at a wide viewport and not what a media query does to it.
-   `:hover` and `:focus-visible` rules are skipped, so this is the resting
-   state. Sibling combinators are not implemented and any rule using one is
-   skipped rather than guessed at. Background is the nearest ancestor that
-   declares a non-transparent one. It is a model of a browser, not a browser —
-   the numbers below were confirmed against getComputedStyle in Chrome. */
+   LIMITS, stated rather than implied. Conditions other than min/max-width are
+   not modelled and a block carrying one is skipped, so the reduced-motion
+   block is not evaluated (it declares no colour). Sibling combinators are not
+   implemented and a rule using one is skipped rather than guessed at.
+   `filter`, `opacity` and `mix-blend-mode` are not applied, so `.btn:hover`'s
+   brightness(1.1) is not modelled — it lightens the background, which can only
+   help here, but it is not proven to. Pseudo-elements never match. It is a
+   model of a browser, not a browser, and every verdict below was cross-checked
+   against getComputedStyle in Chrome. */
 const VOIDTAG = new Set(["meta", "link", "br", "hr", "img", "input", "source", "col", "area", "base", "embed", "param", "track", "wbr"]);
 function elementTree(html) {
     const body = html.slice(html.indexOf("<body")).replace(/<!--[\s\S]*?-->/g, " ");
@@ -435,133 +489,190 @@ function elementTree(html) {
     }
     return out;
 }
-function cssRules(src) {
-    const rules = [];
+/* @media blocks are DESCENDED INTO rather than skipped, and source order is
+   kept across the boundary, because a media rule later in the file beats an
+   equally specific one before it. */
+function cssRules(src, media, out, counter) {
     let i = 0;
     while (i < src.length) {
         const brace = src.indexOf("{", i);
         if (brace < 0) break;
-        const sel = src.slice(i, brace).trim();
-        if (sel.startsWith("@")) {
+        const head = src.slice(i, brace).trim();
+        if (head.startsWith("@")) {
             let depth = 0;
             let j = brace;
             for (; j < src.length; j++) {
                 if (src[j] === "{") depth++;
                 else if (src[j] === "}" && --depth === 0) break;
             }
+            if (/^@media/i.test(head)) cssRules(src.slice(brace + 1, j), head.replace(/^@media\s*/i, ""), out, counter);
             i = j + 1;
             continue;
         }
         const end = src.indexOf("}", brace);
-        for (const s of sel.split(",")) if (s.trim()) rules.push({ sel: s.trim(), decl: src.slice(brace + 1, end) });
+        const decl = src.slice(brace + 1, end);
+        for (const sel of head.split(",")) if (sel.trim()) out.push({ sel: sel.trim(), decl, media, order: counter.n++ });
         i = end + 1;
     }
-    return rules;
+    return out;
+}
+function mediaApplies(cond, w) {
+    const parts = cond.match(/\([^)]*\)/g) || [];
+    if (!parts.length) return false;
+    for (const p of parts) {
+        const m = /\(\s*(min|max)-width\s*:\s*(\d+)px\s*\)/.exec(p);
+        if (!m) return false;
+        if (m[1] === "min" ? w < +m[2] : w > +m[2]) return false;
+    }
+    return true;
 }
 function specificity(sel) {
     const b = (sel.match(/\.[\w-]+/g) || []).length +
         (sel.match(/\[[^\]]*\]/g) || []).length +
-        (sel.match(/:(?!:)[\w-]+/g) || []).filter((p) => p !== ":not").length;
+        (sel.match(/:(?!:)[\w-]+/g) || []).filter((x) => x !== ":not").length;
     const c = (sel.replace(/\.[\w-]+|\[[^\]]*\]|::?[\w-]+(\([^)]*\))?/g, " ").match(/[a-zA-Z][\w-]*/g) || []).length;
     return b * 1000 + c;
 }
-function matchCompound(node, comp) {
+const STATEFUL = new Set(["hover", "focus", "focus-visible", "active"]);
+function matchCompound(node, comp, state) {
     const nots = [...comp.matchAll(/:not\(([^)]*)\)/g)].map((m) => m[1]);
     const rest = comp.replace(/:not\([^)]*\)/g, "");
-    if (/:{1,2}[\w-]/.test(rest)) return false;
-    const tag = (/^([a-zA-Z][\w-]*)/.exec(rest) || [, ""])[1].toLowerCase();
+    if (/::/.test(rest)) return false;
+    for (const p of (rest.match(/:[\w-]+/g) || []).map((x) => x.slice(1))) {
+        if (!STATEFUL.has(p)) return false;
+        if (!state) return false;
+    }
+    const bare = rest.replace(/:[\w-]+/g, "");
+    const tag = (/^([a-zA-Z][\w-]*)/.exec(bare) || [, ""])[1].toLowerCase();
     if (tag && tag !== "*" && node.tag !== tag) return false;
-    for (const c of rest.match(/\.[\w-]+/g) || []) if (!node.cls.includes(c.slice(1))) return false;
-    for (const a of rest.match(/\[[^\]]*\]/g) || []) {
+    for (const c of bare.match(/\.[\w-]+/g) || []) if (!node.cls.includes(c.slice(1))) return false;
+    for (const a of bare.match(/\[[^\]]*\]/g) || []) {
         const [k, v] = a.slice(1, -1).split("=");
         if (!(k in node.at)) return false;
         if (v !== undefined && node.at[k] !== v.replace(/^["']|["']$/g, "")) return false;
     }
-    for (const n of nots) if (matchCompound(node, n)) return false;
+    for (const n of nots) if (matchCompound(node, n, state)) return false;
     return true;
 }
-function selMatches(node, sel) {
+/* State applies to the SUBJECT compound only: `.top nav a:hover` means the
+   link is hovered, not the nav. */
+function selMatches(node, sel, state) {
     if (/[+~]/.test(sel)) return false;
     const parts = sel.replace(/\s*>\s*/g, " > ").trim().split(/\s+/);
     const chain = node.chain.slice();
     let i = parts.length - 1;
-    if (!matchCompound(chain.pop(), parts[i--])) return false;
+    if (!matchCompound(chain.pop(), parts[i--], state)) return false;
     while (i >= 0) {
         if (parts[i] === ">") {
             i--;
             const parent = chain.pop();
-            if (!parent || !matchCompound(parent, parts[i])) return false;
+            if (!parent || !matchCompound(parent, parts[i], false)) return false;
             i--;
         } else {
             let ok = false;
-            while (chain.length) if (matchCompound(chain.pop(), parts[i])) { ok = true; break; }
+            while (chain.length) if (matchCompound(chain.pop(), parts[i], false)) { ok = true; break; }
             if (!ok) return false;
             i--;
         }
     }
     return true;
 }
-const RULES = cssRules(css);
-function declared(decl, prop) {
+const RULES = cssRules(css, null, [], { n: 0 });
+/* Every breakpoint the stylesheet itself declares, and one pixel either side
+   of it, so the check is derived from the CSS rather than from a guess about
+   which widths matter. */
+const WIDTHS = [...new Set([390, 1280, ...[...css.matchAll(/\(\s*(?:min|max)-width\s*:\s*(\d+)px\s*\)/g)]
+    .flatMap((m) => [+m[1] - 1, +m[1], +m[1] + 1])])].sort((a, b) => a - b);
+function declOf(decl, prop) {
     const re = prop === "color"
-        ? /(?:^|;)\s*color\s*:\s*([^;]+)/
-        : /(?:^|;)\s*background(?:-color)?\s*:\s*([^;]+)/;
+        ? /(?:^|;)\s*color\s*:\s*([^;]+)/i
+        : /(?:^|;)\s*background(?:-color)?\s*:\s*([^;]+)/i;
     const m = re.exec(decl);
-    return m ? m[1].trim() : null;
+    if (!m) return null;
+    let v = m[1].trim();
+    const important = /!important$/i.test(v);
+    return { value: important ? v.replace(/!important$/i, "").trim() : v, important };
 }
-function winner(node, prop) {
+const rank = (a, b) => a[0] - b[0] || a[1] - b[1] || a[2] - b[2];
+function winner(node, prop, w, state) {
     let best = null;
-    RULES.forEach((r, idx) => {
-        const v = declared(r.decl, prop);
-        if (v === null || !selMatches(node, r.sel)) return;
-        const sp = specificity(r.sel);
-        if (!best || sp > best.sp || (sp === best.sp && idx > best.idx)) best = { sp, idx, value: v, sel: r.sel };
-    });
+    for (const r of RULES) {
+        if (r.media !== null && !mediaApplies(r.media, w)) continue;
+        const d = declOf(r.decl, prop);
+        if (!d || !selMatches(node, r.sel, state)) continue;
+        const key = [d.important ? 1 : 0, specificity(r.sel), r.order];
+        if (!best || rank(key, best.key) > 0) best = { key, ...d, sel: r.sel };
+    }
     return best;
 }
 const resolveVar = (v) => (v && v.startsWith("var(") ? tok(v.slice(6, v.indexOf(")"))) : v);
-function computedColour(node) {
-    for (let i = node.chain.length - 1; i >= 0; i--) {
-        const w = winner(node.chain[i], "color");
-        if (w) return { raw: resolveVar(w.value), sel: w.sel, own: i === node.chain.length - 1 };
+function computedColour(node, w, state) {
+    const last = node.chain.length - 1;
+    for (let i = last; i >= 0; i--) {
+        const c = winner(node.chain[i], "color", w, state && i === last);
+        if (c) return { raw: resolveVar(c.value), sel: c.sel };
     }
-    return { raw: tok("fg"), sel: "(initial)", own: false };
+    return { raw: tok("fg"), sel: "(initial)" };
 }
-function computedBackground(node) {
-    for (let i = node.chain.length - 1; i >= 0; i--) {
-        const w = winner(node.chain[i], "background");
-        if (!w) continue;
-        const v = resolveVar(w.value);
-        if (v && v !== "transparent" && v !== "none") return { raw: v, sel: w.sel };
+function computedBackground(node, w, state) {
+    const last = node.chain.length - 1;
+    const layers = [];
+    for (let i = last; i >= 0; i--) {
+        const b = winner(node.chain[i], "background", w, state && i === last);
+        if (!b) continue;
+        const v = resolveVar(b.value);
+        const p = v && v !== "transparent" && v !== "none" ? parse(v) : null;
+        if (!p || p[3] <= 0) continue;
+        layers.push({ p, sel: b.sel });
+        if (p[3] >= 0.999) break;
     }
-    return { raw: tok("ink"), sel: "(body)" };
+    const base = parse(tok("ink"));
+    if (!layers.length || layers[layers.length - 1].p[3] < 0.999) layers.push({ p: base, sel: "(body)" });
+    let acc = layers[layers.length - 1].p.slice(0, 3);
+    for (let i = layers.length - 2; i >= 0; i--) {
+        const q = layers[i].p;
+        acc = [0, 1, 2].map((k) => q[k] * q[3] + acc[k] * (1 - q[3]));
+    }
+    return { rgb: acc, sel: layers[0].sel };
+}
+function ratioOn(fgC, bgRGB) {
+    const fg = parse(fgC);
+    if (!fg) return null;
+    const a = lum([0, 1, 2].map((i) => fg[i] * fg[3] + bgRGB[i] * (1 - fg[3]))) + 0.05;
+    const b = lum(bgRGB) + 0.05;
+    return Math.max(a, b) / Math.min(a, b);
 }
 
 const controls = elementTree(HTML).filter((n) => n.tag === "a" || n.tag === "button");
 T("the artifact has controls to resolve", controls.length > 0, `${controls.length} a/button elements`);
-let worstRatio = 99;
-let worstWhere = "";
+T("the check runs at every breakpoint the stylesheet declares, resting and hovered",
+  WIDTHS.length >= 4, `${WIDTHS.length} widths x 2 states x ${controls.length} controls = ${WIDTHS.length * 2 * controls.length} resolutions`);
+let worst = { r: 99, where: "" };
+const btnLost = [];
 for (const n of controls) {
-    const fgC = computedColour(n);
-    const bgC = computedBackground(n);
-    const r = ratio(fgC.raw, bgC.raw);
-    if (r !== null && r < worstRatio) {
-        worstRatio = r;
-        worstWhere = `${n.tag}${n.cls.length ? "." + n.cls.join(".") : ""} — ${fgC.sel} on ${bgC.sel}`;
+    const isBtn = n.cls.includes("btn");
+    for (const w of WIDTHS) {
+        for (const state of [false, true]) {
+            const fgC = computedColour(n, w, state);
+            const bgC = computedBackground(n, w, state);
+            const r = ratioOn(fgC.raw, bgC.rgb);
+            if (r !== null && r < worst.r) {
+                worst = { r, where: `${n.tag}.${n.cls.join(".")} at ${w}px${state ? " hovered" : ""} — ${fgC.sel} (${fgC.raw}) on ${bgC.sel}` };
+            }
+            if (isBtn && !/\.btn\b/.test(fgC.sel)) {
+                btnLost.push(`${w}px${state ? " hovered" : ""}: ${fgC.sel} = ${fgC.raw}`);
+            }
+        }
     }
 }
 T("every control's COMPUTED colour clears 4.5:1 on its computed background",
-  worstRatio >= 4.5, `worst ${worstRatio.toFixed(2)}:1 — ${worstWhere}`);
-
-/* The specific defect, named: a .btn that does not get its colour from a .btn
-   rule has lost it to something more specific, wherever it sits. */
+  worst.r >= 4.5, `worst ${worst.r.toFixed(2)}:1 — ${worst.where}`);
+/* The specific defect, named: a .btn whose colour is decided by a rule that is
+   not a .btn rule has lost it to something more specific, wherever it sits. */
 const btns = controls.filter((n) => n.cls.includes("btn"));
 T("the page has .btn controls to check", btns.length > 0, `${btns.length} buttons`);
-for (const n of btns) {
-    const w = computedColour(n);
-    const where = n.chain.map((a) => a.tag + (a.cls[0] ? "." + a.cls[0] : "")).slice(-3).join(" ");
-    T(`.btn keeps its own colour (${where})`, /\.btn\b/.test(w.sel), `wins: ${w.sel} = ${w.raw}`);
-}
+T("no .btn anywhere has its colour decided by a non-button rule",
+  btnLost.length === 0, btnLost.length ? `LOST: ${[...new Set(btnLost)].slice(0, 3).join(" | ")}` : "at every width, both states");
 
 /* ---------- 15. every interactive element can be seen to be interactive ----------
    .logo had no :hover rule at all on the reference surface, so hovering the

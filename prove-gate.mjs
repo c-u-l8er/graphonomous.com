@@ -26,6 +26,12 @@
               the gate must refuse for the reason the break was written for
      stale    nothing is rebuilt and nothing is re-stamped — these are the
               two breaks that exist to prove the freshness check itself
+     pass     a SOUNDNESS probe, and the only stage that inverts the verdict:
+              the mutation is one the gate must NOT object to, and the run
+              fails if it refuses. A check that refuses everything is not a
+              check, and the r8 text-extraction defect is exactly a false
+              refusal — a comment containing `>` half-surviving into "page
+              text" and colliding with an animation constant.
    ========================================================================== */
 import { mkdtempSync, cpSync, rmSync, readFileSync, writeFileSync } from "fs";
 import { execFileSync } from "child_process";
@@ -35,7 +41,7 @@ import { fileURLToPath } from "url";
 import { artifactHashes } from "./stamp.mjs";
 
 const SRC = path.dirname(fileURLToPath(import.meta.url));
-const COPY = ["build-site.mjs", "launch-gate.mjs", "stamp.mjs", "package.json", "index.html", "memory.js", "build-stamp.json"];
+const COPY = ["build-site.mjs", "launch-gate.mjs", "stamp.mjs", "package.json", "index.html", "memory.js", "contact.js", "build-stamp.json"];
 
 /* [name, stage, mutation, the check that must be the one to fire] */
 const BREAKS = [
@@ -97,7 +103,7 @@ const BREAKS = [
        retraction as cover. A check that asks "is the retraction present?"
        passes this. Counting does not. */
     ["a retracted claim re-asserted inside its own retraction", "gate", (d) => edit(d, "index.html", "A number can no longer be typed onto this site by hand.", "A number can no longer be typed onto this site by hand. On reflection it does run on macOS or Linux, so that one stands."),
-     "quoted once inside it, not re-asserted"],
+     "is quoted between 1 and 1 times inside it"],
     ["the retraction paragraph deleted while the claims stay off the page", "gate", (d) => edit(d, "index.html", '<div class="retract" data-retraction>', '<div class="retracted-not-really">'),
      "the retraction paragraph is on the artifact"],
 
@@ -140,7 +146,7 @@ const BREAKS = [
     /* SHELL.md r7, and the reason it needed a new KIND of check: every token
        and every declared pair is still fine here. Only the element is wrong. */
     ["the header CTA losing its colour to the nav rule (`:not(.btn)` dropped)", "gate", (d) => edit(d, "index.html", ".top nav a:not(.btn){color:var(--fg2)", ".top nav a{color:var(--fg2)"),
-     ".btn keeps its own colour"],
+     "colour decided by a non-button rule"],
     ["a .btn that keeps its own colour and still cannot be read on it", "gate", (d) => edit(d, "index.html", ".btn{display:inline-block;background:var(--acc);color:#2a0413", ".btn{display:inline-block;background:var(--acc);color:#e0709b"),
      "COMPUTED colour clears 4.5:1"],
     ["an interactive element with no :hover", "gate", (d) => edit(d, "index.html", ".logo:hover{color:var(--acc)}", ""),
@@ -153,6 +159,38 @@ const BREAKS = [
      "does not depend on JavaScript"],
     ["the amp-nav mount point dropped", "gate", (d) => edit(d, "index.html", '<amp-nav property="graphonomous">', "<div>"),
      "amp-nav mount point is intact"],
+
+    /* ---- SHELL.md r8 ---- */
+    /* A blocklisted claim parked in a comment is off the visible page and
+       still on it. Counting visible text alone cannot see this. */
+    ["a retracted claim hidden in an HTML comment", "gate", (d) => edit(d, "index.html", "</body>", "<!-- note: it does run on macOS or Linux, restore later --></body>"),
+     "not hidden in markup, a comment or an attribute"],
+    /* THE SOUNDNESS PROBE. `<[^>]+>` stops at the first `>`, so under the
+       tag-first ordering this comment leaves " ghosts, 16 nodes -->" behind as
+       page text, 16 is an animation constant, and the gate refuses a page that
+       published nothing. Comments come out first, so it must PASS. */
+    ["a comment containing `>` and an animation constant — the gate must NOT object", "pass", (d) => edit(d, "index.html", "</body>", "<!-- layout note: strands > ghosts, 16 nodes --></body>"),
+     ""],
+
+    /* ---- SHELL.md r9, the correction form ---- */
+    ["the correction form posting somewhere other than the declared endpoint", "gate", (d) => edit(d, "index.html", 'action="https://formspree.io/f/xaewoadr"', 'action="https://example.com/collect"'),
+     "posts to the endpoint the record declares"],
+    ["the _gotcha honeypot removed", "gate", (d) => edit(d, "index.html", ' name="_gotcha"', ' name="not-a-honeypot"'),
+     "carries the _gotcha honeypot"],
+    ["the honeypot hidden with display:none instead of off-screen", "gate", (d) => edit(d, "index.html", ".say input[name=_gotcha]{position:absolute;left:-9999px", ".say input[name=_gotcha]{display:none;left:-9999px"),
+     "moved off-screen, not display:none"],
+    ["the form turned into a fetch bolted to a button", "gate", (d) => edit(d, "index.html", 'method="POST" novalidate', 'novalidate'),
+     "a real POST, not a fetch bolted to a button"],
+    ["the reply paragraph losing its live region", "gate", (d) => edit(d, "index.html", '<p class="say-msg" role="status" aria-live="polite">', '<p class="say-msg">'),
+     "a polite live region"],
+    /* The failure this whole site is about, in its smallest form: a thank-you
+       printed before the endpoint has said anything. */
+    ["success printed without waiting for a 2xx", "gate", (d) => edit(d, "contact.js", "if (r.ok) {", "if (true) {"),
+     "success only inside a response-ok guard"],
+    ["a contact record the build will not write a form from", "build", (d) => editJSON(d, "records/surface.json", (j) => { j.contact.endpoint = "https://example.com/collect"; }),
+     "The correction form posts to a Formspree endpoint read from the record"],
+    ["an inline script smuggled in beside the form", "gate", (d) => edit(d, "index.html", '<script src="/contact.js" defer></script>', '<script>document.forms[0].onsubmit=null</script>'),
+     "does not depend on JavaScript"],
 ];
 
 function edit(dir, file, from, to) {
@@ -194,6 +232,7 @@ function run(dir, script) {
 }
 
 let refused = 0;
+let sound = 0;
 const allowed = [];
 const wrongReason = [];
 console.log(`proving the gate — ${BREAKS.length} deliberate breaks\n`);
@@ -206,9 +245,20 @@ for (const [name, stage, mutate, expect] of BREAKS) {
         cpSync(path.join(SRC, "src"), path.join(dir, "src"), { recursive: true });
 
         mutate(dir);
-        if (stage === "gate") restampArtifacts(dir);
+        if (stage === "gate" || stage === "pass") restampArtifacts(dir);
 
         let r;
+        if (stage === "pass") {
+            r = run(dir, "launch-gate.mjs");
+            if (r.refused) {
+                allowed.push(name + "  (FALSE REFUSAL — the gate objected to something it must not)");
+                console.log(`  FALSE    ${name}\n           the gate REFUSED a mutation it must not object to`);
+            } else {
+                sound++;
+                console.log(`  SOUND    ${name}\n           the gate passed, as it must`);
+            }
+            continue;
+        }
         if (stage === "build") {
             r = run(dir, "build-site.mjs");
         } else if (stage === "rebuild") {
@@ -242,7 +292,9 @@ for (const [name, stage, mutate, expect] of BREAKS) {
     }
 }
 
-console.log(`\n${refused} of ${BREAKS.length} deliberate breaks were refused by the check written for them`);
+const probes = BREAKS.filter((b) => b[1] === "pass").length;
+console.log(`\n${refused} of ${BREAKS.length - probes} deliberate breaks were refused by the check written for them`);
+console.log(`${sound} of ${probes} soundness probes passed, as they must — a check that refuses everything is not a check`);
 if (allowed.length) {
     console.log("NOT REFUSED AT ALL:");
     allowed.forEach((a) => console.log("  " + a));

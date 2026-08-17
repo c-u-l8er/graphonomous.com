@@ -39,9 +39,9 @@ if (pkg.version !== surface.version) {
         `release identity: package.json ${pkg.version} != records/surface.json ${surface.version}`
     );
 }
-if (surface.shell_revision !== "shell-r7") {
+if (surface.shell_revision !== "shell-r9") {
     throw new Error(
-        `BUILD REFUSED — records/surface.json declares shell_revision ${surface.shell_revision}; this build emits shell-r7 markup.`
+        `BUILD REFUSED — records/surface.json declares shell_revision ${surface.shell_revision}; this build emits shell-r9 markup.`
     );
 }
 /* The artifact names the sources it was generated from. A stale index.html —
@@ -268,6 +268,26 @@ function retraction() {
 <p>The fix is structural rather than careful. This page is generated: every figure on it is emitted from <code>records/witness.json</code>, each entry names the command that produced it, and <code>launch-gate.mjs</code> refuses to publish an artifact that reinstates any string above outside this paragraph. A number can no longer be typed onto this site by hand.</p></div>`;
 }
 
+/* The correction form. A REAL form — action + method, so it posts with
+   scripting off — and the endpoint comes out of the record, never typed here.
+   SHELL.md r9; shape copied from computedriven.com, which is the reference. */
+function say() {
+    const c = surface.contact;
+    if (c.kind !== "formspree" || !/^https:\/\/formspree\.io\/f\/\w+$/.test(c.endpoint || "")) {
+        throw new Error(
+            `BUILD REFUSED — records/surface.json.contact declares kind "${c.kind}" with endpoint "${c.endpoint}". The correction form posts to a Formspree endpoint read from the record; it is not typed into the template.`
+        );
+    }
+    return `<form class="say" action="${esc(c.endpoint)}" method="POST" novalidate>
+<div class="say-row">
+<label class="say-f"><span>Your email</span><input type="email" name="email" autocomplete="email" placeholder="so a reply can reach you" required></label>
+<label class="say-f"><span>Message</span><textarea name="message" rows="3" placeholder="a question, a correction, a number of ours you think is wrong" required></textarea></label>
+</div>
+<input type="text" name="_gotcha" tabindex="-1" autocomplete="off" aria-hidden="true">
+<div class="say-act"><button type="submit" class="btn">Send</button><p class="say-msg" role="status" aria-live="polite"></p></div>
+</form>`;
+}
+
 /* ==========================================================================
    EMIT
    ========================================================================== */
@@ -286,13 +306,16 @@ const CSS = read("./src/shell.css")
    the publication gate can read constants out of and compare against the page.
    NEWLINES ARE KEPT — joining JS lines the way the CSS is joined would be a
    semicolon-insertion bug waiting to happen. */
-const ANIM = read("./src/memory.js")
-    .replace(/\/\*[\s\S]*?\*\//g, "")
-    .replace(/^[ \t]*\/\/.*$/gm, "")
-    .replace(/^[ \t]+/gm, "")
-    .replace(/[ \t]+$/gm, "")
-    .replace(/\n{2,}/g, "\n")
-    .trim();
+const dense = (p) =>
+    read(p)
+        .replace(/\/\*[\s\S]*?\*\//g, "")
+        .replace(/^[ \t]*\/\/.*$/gm, "")
+        .replace(/^[ \t]+/gm, "")
+        .replace(/[ \t]+$/gm, "")
+        .replace(/\n{2,}/g, "\n")
+        .trim();
+const ANIM = dense("./src/memory.js");
+const SAYJS = dense("./src/contact.js");
 
 const YEAR = new Date(surface.verified_at).getUTCFullYear();
 
@@ -313,6 +336,8 @@ const landing = fill(read("./src/landing.html"), {
     STATUS: statusBlock(),
     GATES: gates(),
     RETRACTION: retraction(),
+    SAY: say(),
+    ISSUES: surface.contact.issues,
     CTA:
         cta("live_deployed", "published, and it downloads", [
             {
@@ -352,16 +377,19 @@ if (unused.length) {
 }
 
 const ANIM_OUT = ANIM + "\n";
+const SAY_OUT = SAYJS + "\n";
 writeFileSync(new URL("./index.html", import.meta.url), landing);
 writeFileSync(new URL("./memory.js", import.meta.url), ANIM_OUT);
+writeFileSync(new URL("./contact.js", import.meta.url), SAY_OUT);
 
 /* Last, and only if everything above succeeded: record what was emitted and
    what it was emitted from. If this line is never reached the stamp on disk
    still describes the PREVIOUS build, and the gate will refuse the artifact
    that survived. That is the whole point of it. */
-const stamp = writeStamp(DIR, { "index.html": landing, "memory.js": ANIM_OUT });
+const stamp = writeStamp(DIR, { "index.html": landing, "memory.js": ANIM_OUT, "contact.js": SAY_OUT });
 
 console.log(`figure gate: ${used.size} of ${Object.keys(witness.facts).length} witnessed facts printed, 0 hand-typed`);
 console.log(`build stamp: ${stamp.build_id} over ${Object.keys(stamp.inputs).length} source files`);
 console.log(`wrote index.html  ${landing.length.toLocaleString()} bytes  (was ${witness.routes.rows[0].bytes.toLocaleString()})`);
 console.log(`wrote memory.js   ${ANIM.length.toLocaleString()} bytes  (decoration; the page's content does not depend on it)`);
+console.log(`wrote contact.js  ${SAYJS.length.toLocaleString()} bytes  (upgrade only; the form posts without it)`);

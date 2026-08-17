@@ -2,7 +2,7 @@
   "schema": "computedriven-surface-v1",
   "_comment": "The frozen record this site is generated from. Nothing on a generated page may state a rung, a status or a count that is not here or in witness.json. build-site.mjs reads it; launch-gate.mjs refuses to publish when the artifact and this file disagree.",
 
-  "shell_revision": "shell-r7",
+  "shell_revision": "shell-r9",
   "version": "0.5.0",
   "origin": "https://graphonomous.com",
   "repo": "https://github.com/c-u-l8er/graphonomous",
@@ -90,9 +90,12 @@
   ],
 
   "contact": {
-    "kind": "github_issues",
-    "url": "https://github.com/c-u-l8er/graphonomous/issues",
-    "_comment": "Deliberately NOT a mailto: (Travis's call, 2026-08-11) and deliberately NOT toolboxhvac's Formspree endpoint. No Formspree endpoint exists for graphonomous.com; it needs its own or an explicit ruling to share one. Flagged [TRAVIS]."
+    "kind": "formspree",
+    "url": "#say",
+    "endpoint": "https://formspree.io/f/xaewoadr",
+    "issues": "https://github.com/c-u-l8er/graphonomous/issues",
+    "_comment": "RULED BY TRAVIS 2026-08-17, which closes the [TRAVIS] flag the previous pass filed: use the Formspree endpoint computedriven.com uses, and migrate the other sites to it too. Still deliberately NOT a mailto: (Travis's call, 2026-08-11) and the gate still refuses one. The endpoint is shared with computedriven.com by that ruling, not by assumption. SHELL.md r9.",
+    "_why_here_comment": "This surface publishes an install matrix in which three of four platforms 404 and a ledger in which nobody has installed the published package on a clean machine and spoken MCP to it. A reader reporting that the linux-x64 tarball did or did not work is the shortest path this domain has to the external rung — the one rung nobody here can award themselves — so the form says that next to itself rather than being a generic contact box."
   },
 
   "gates": {

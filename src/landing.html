@@ -13,7 +13,7 @@
 <div class="wrap">
 
 <div class="top"><a class="logo" href="/">graph<span>onomous</span></a>
-<nav><a href="#install">Install</a><a href="#loop">The loop</a><a href="#evidence">Evidence</a><a href="/demo/">Demos</a><a class="btn" href="{{REPO}}">Source</a></nav></div>
+<nav><a href="#install">Install</a><a href="#loop">The loop</a><a href="#evidence">Evidence</a><a href="#say">Correct us</a><a class="btn" href="{{REPO}}">Source</a></nav></div>
 
 <section class="hero">
 <div class="front">
@@ -73,6 +73,14 @@
 {{CTA}}
 </section>
 
+<section id="say">
+<div class="eyebrow">Tell us we are wrong</div>
+<h2>The correction channel, and the specific job it has here.</h2>
+<p class="lede">This page publishes an install table in which three of the four advertised platforms return 404, and a ledger in which nobody has yet installed the published package on a clean machine and spoken MCP to the result. <strong>A reader telling us the linux-x64 tarball did, or did not, work for them is the shortest path this domain has to the <code>external</code> rung</strong> &mdash; the one rung nobody here can award themselves. A result, a stack trace, or a figure on this page you think is wrong: same channel, all three welcome.</p>
+{{SAY}}
+<p class="lede sm">It is a real <code>&lt;form&gt;</code> with an <code>action</code> and <code>method="POST"</code>, so it submits with JavaScript disabled; <code>/contact.js</code> only upgrades it to an inline reply, and that reply prints <em>sent</em> only when the endpoint actually answers 2xx. A form that says thank-you on submit and drops the message is the exact failure this site is about. There is still no email address here, deliberately. Anything better filed as a bug goes to <a href="{{ISSUES}}">the issue tracker</a>.</p>
+</section>
+
 </div>
 <footer><div class="in">
 <div>&copy; {{YEAR}} Graphonomous&ensp;·&ensp;<a href="/">{{QUESTION}}</a></div>
@@ -81,4 +89,5 @@
 <p class="attrib"><span class="stamp">{{STAMP}}</span>&ensp;·&ensp;Decoration only: the graph above draws nothing that is measured and nothing that is claimed. Its node and link counts were chosen so that they are not any figure on this page, and the publication gate refuses the build if one of them ever becomes one. Every number here is emitted from <code>records/witness.json</code> at build time, and each entry in that file names the command that produced it. The whole content of this page renders with JavaScript disabled &mdash; two deferred external files, the portfolio nav and the animation, add nothing the content depends on. Corrections go to the issue tracker; there is no email address on this site, deliberately.</p>
 </footer>
 <script src="/memory.js" defer></script>
+<script src="/contact.js" defer></script>
 </body></html>

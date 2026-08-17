@@ -2,7 +2,7 @@
   "schema": "computedriven-surface-v1",
   "_comment": "The frozen record this site is generated from. Nothing on a generated page may state a rung, a status or a count that is not here or in witness.json. build-site.mjs reads it; launch-gate.mjs refuses to publish when the artifact and this file disagree.",
 
-  "shell_revision": "shell-r4",
+  "shell_revision": "shell-r7",
   "version": "0.5.0",
   "origin": "https://graphonomous.com",
   "repo": "https://github.com/c-u-l8er/graphonomous",
@@ -14,6 +14,18 @@
   "_tier_comment": "ampersand-nav/src/amp-nav.js records `graphonomous: { name: \"Graphonomous\", place: 2, layer: \"memory\", rung: \"live_deployed\" }`, and graphonomous.com IS in sync-nav.sh's target list (line 33). place 2 is inside the story, so this surface takes the STANDARD band with the layer sentence, not the tier-4 attribution variant reserved for place 4. Read, not assumed — SHELL.md §1.",
 
   "question": "Can a memory get sharper from being used?",
+
+  "rung_witness": "install_matrix",
+  "_rung_witness_comment": "SHELL.md r5.2. GPSCoord's rule \"any pending gate blocks live_deployed\" is too blunt: independent_use is pending FOREVER by construction, so no surface could ever advance. So the record names WHICH gate witnesses the rung it claims, and the others stay pending without blocking it. install_matrix is the right one here: it probed every release asset the installer can ask for and found the linux-x64 archive at 200, which is exactly what live_deployed claims and all it claims. test_suite is approved too, but it witnesses the TREE, not the deployment.",
+
+  "nav_breakpoint_px": 560,
+  "_nav_breakpoint_comment": "SHELL.md r6: the breakpoint belongs to the surface, not the shell. r5 published 430px, measured on a four-item nav. This nav is a logo plus five items. Measured 2026-08-17 in Chrome at 1280: logo 114px + nav items and gaps 364px + the .top gap 16px + the .wrap padding 44px = 538px, below which the nav wraps to two rows in row layout. .top stacks at 560, which is 22px ABOVE that, so it stacks BEFORE the nav wraps — which is the rule the shell actually fixes. Verified over 390/500/560/561/620/700/790/800/815/1000/1280/1600.",
+
+  "ink_box_headroom_px": { "h1": 9.5, "h2": 8.0, "h3": 9.2, ".logo": 11.2, ".lede": 11.1 },
+  "_ink_box_comment": "SHELL.md r7, second item: a line-height set against the em size can be smaller than the font's actual ink, and consecutive lines then overlap — agentromatic's Syne h1 overlapped by 11.8px and a descender collided with the cap-height beneath it. MEASURED here rather than assumed, 2026-08-17 in Chrome at 1280, by rendering each element's own text in its own computed font to a canvas and comparing actualBoundingBoxAscent+actualBoundingBoxDescent against the computed line box. Space Grotesk 600 at 57.6px inks 51.0px inside a 60.5px box. Every value above is headroom in pixels and every one is positive, so nothing here needed changing. Re-measured at 390/700/1280/1600 for the h1: +4.1 / +5.2 / +9.5 / +9.5. THE PUBLICATION GATE CANNOT CHECK THIS — it has no font engine and no browser — so it is a recorded measurement, not an enforced law, and it is said that way on purpose.",
+
+  "cited_specs": {},
+  "_cited_specs_comment": "SHELL.md r5.3: every §N in the page's VISIBLE text must resolve to a real heading in the spec it cites. This page cites none — every § on this surface is in a source comment, and comments are not text a reader reads. The map is empty and the gate reports 0 citations rather than passing silently; the day a citation is written, the record has to name the file it points into or the build stops.",
 
   "surface_rung": "live_deployed",
   "surface_rung_covers": "one artifact — one npm package and one binary — graphonomous@0.4.2, and the single linux-x64 archive its install downloads",

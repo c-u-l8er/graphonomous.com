@@ -3,7 +3,7 @@
    Everything between TOKENS-START and TOKENS-END is this site's own character
    and is meant to differ per surface. Everything after TOKENS-END is shared
    structure, copied from ~/Projects/GPSCoord/src/shell.css.
-   Documented in ProjectAmp2/agents/SHELL.md (revision shell-r4).
+   Documented in ProjectAmp2/agents/SHELL.md (revision shell-r7).
    ========================================================================== */
 /* TOKENS-START — Graphonomous: synapse magenta on ink */
 :root{
@@ -58,8 +58,13 @@ img,canvas,svg{max-width:100%}
 .logo span{color:var(--acc)}
 .logo:hover{color:var(--acc)}
 .top nav{display:flex;gap:22px;align-items:center;flex-wrap:wrap}
-.top nav a{color:var(--fg2);text-decoration:none;font-size:var(--sm);font-weight:500;white-space:nowrap}
-.top nav a:hover{color:var(--acc)}
+/* :not(.btn) IS LOAD-BEARING. `.top nav a` is 0,2,1 and `.btn` is 0,1,0, so
+   an unscoped nav rule WINS over the button's own colour and the header CTA
+   paints --fg2 on --acc — 1.70:1, while the identical button in the hero
+   paints #2a0413 at 6.51:1. It shipped on nine surfaces. Scope the nav rule;
+   never raise .btn, which would only move the collision. SHELL.md r7. */
+.top nav a:not(.btn){color:var(--fg2);text-decoration:none;font-size:var(--sm);font-weight:500;white-space:nowrap}
+.top nav a:not(.btn):hover{color:var(--acc)}
 .btn{display:inline-block;background:var(--acc);color:#2a0413;font-weight:700;border-radius:var(--r);padding:11px 20px;text-decoration:none;font-size:var(--sm)}
 .btn.ghost{background:transparent;color:var(--fg);border:1px solid var(--line2);font-weight:500}
 .btn:hover{filter:brightness(1.1)}
@@ -72,12 +77,12 @@ img,canvas,svg{max-width:100%}
    than hard-edged so the lede stays readable where they overlap. */
 .hero{position:relative;overflow:hidden}
 .hero .front{position:relative;z-index:1}
-.idanim{position:absolute;z-index:0;top:0;bottom:0;right:-34px;left:auto;width:min(46vw,450px);pointer-events:none;
-  -webkit-mask-image:radial-gradient(circle at 54% 50%,#000 42%,transparent 76%);
-  mask-image:radial-gradient(circle at 54% 50%,#000 42%,transparent 76%)}
+.idanim{position:absolute;z-index:0;top:0;bottom:0;right:-34px;left:auto;width:min(48vw,490px);pointer-events:none;
+  -webkit-mask-image:radial-gradient(circle at 54% 50%,#000 48%,transparent 84%);
+  mask-image:radial-gradient(circle at 54% 50%,#000 48%,transparent 84%)}
 .idanim canvas{display:block;width:100%;height:100%}
 @media(min-width:861px){.hero .lede{max-width:min(52ch,57%)}}
-@media(max-width:860px){.idanim{right:-28%;width:min(88vw,450px);opacity:.24}}
+@media(max-width:860px){.idanim{right:-28%;width:min(88vw,470px);opacity:.24}}
 
 /* --- sections --- */
 section{padding:56px 0;border-top:1px solid var(--line)}
@@ -173,7 +178,13 @@ footer .links{display:flex;flex-wrap:wrap;gap:20px}
 .attrib{max-width:var(--wrap);margin:0 auto;padding:0 22px 26px;font-size:var(--xs);color:var(--fg2);line-height:1.6}
 
 @media(max-width:640px){.status>div{grid-template-columns:1fr;gap:6px}}
-/* Narrow: the header wraps to two rows either way, so let it stack cleanly
-   rather than leaving the logo marooned beside the tail of a wrapped nav. */
+/* Narrow: stack the header BEFORE the nav wraps, or the logo is left marooned
+   beside the tail of a wrapped nav. SHELL.md r6 — the RULE is the shell's, the
+   NUMBER is this surface's and is measured, because r5's published 430px was
+   measured on a four-item nav and this one has five plus a button. Measured
+   2026-08-17: logo 114 + nav 364 + gap 16 + wrap padding 44 = 538px is where
+   the row layout gives out, so 560 stacks 22px before it. Recorded as
+   nav_breakpoint_px in records/surface.json; launch-gate.mjs checks the two
+   agree, so moving one without the other stops the build. */
 @media(max-width:560px){.top{flex-direction:column;align-items:flex-start;gap:14px}.top nav{gap:16px}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}

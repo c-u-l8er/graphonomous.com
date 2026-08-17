@@ -19,7 +19,11 @@
    today. Do not change that without confirming the Pages output directory.
    ========================================================================== */
 import { readFileSync, writeFileSync } from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
+import { buildId, inputHashes, writeStamp } from "./stamp.mjs";
 
+const DIR = path.dirname(fileURLToPath(import.meta.url));
 const read = (p) => readFileSync(new URL(p, import.meta.url), "utf8");
 const J = (p) => JSON.parse(read(p));
 
@@ -35,12 +39,16 @@ if (pkg.version !== surface.version) {
         `release identity: package.json ${pkg.version} != records/surface.json ${surface.version}`
     );
 }
-if (surface.shell_revision !== "shell-r4") {
+if (surface.shell_revision !== "shell-r7") {
     throw new Error(
-        `BUILD REFUSED — records/surface.json declares shell_revision ${surface.shell_revision}; this build emits shell-r4 markup.`
+        `BUILD REFUSED — records/surface.json declares shell_revision ${surface.shell_revision}; this build emits shell-r7 markup.`
     );
 }
-const STAMP = `GRAPHONOMOUS.COM v${surface.version} · SHELL ${surface.shell_revision} · RECORDS ${surface.verified_at}`;
+/* The artifact names the sources it was generated from. A stale index.html —
+   the one left behind when this file throws — carries the previous id, and
+   launch-gate.mjs refuses it. SHELL.md r6, hole 2. See stamp.mjs. */
+const BUILD = buildId(inputHashes(DIR));
+const STAMP = `GRAPHONOMOUS.COM v${surface.version} · SHELL ${surface.shell_revision} · RECORDS ${surface.verified_at} · BUILD ${BUILD}`;
 
 const esc = (s) =>
     String(s)
@@ -87,10 +95,23 @@ function rung(value) {
    which is a record read out of amp-nav, not a choice made here. amp-nav files
    graphonomous as place 2 with layer "memory", so this is the standard band
    WITH the layer sentence. A place-4 surface would get the attribution variant
-   instead; gpscoord shipped the wrong one of these for months. SHELL.md §1. */
+   instead; gpscoord shipped the wrong one of these for months. SHELL.md §1.
+
+   THERE ARE THREE VARIANTS, NOT TWO (SHELL.md r6). amp-nav's renderPlacement()
+   gives the layer sentence to place 1 and 2 only; place 3 renders "X is a
+   specification in the ComputeDriven world" plus a link to the real spec.
+   Writing a layer sentence on a place-3 surface puts the band in direct
+   contradiction with the nav rendered immediately beneath it. This record
+   names no spec URL, so rather than emit the wrong one of three, tier 3 is
+   refused with the reason. */
 function band() {
     if (![1, 2, 3, 4].includes(surface.tier)) {
         throw new Error(`BUILD REFUSED — records/surface.json declares no tier, so the band cannot know what it may claim.`);
+    }
+    if (surface.tier === 3) {
+        throw new Error(
+            `BUILD REFUSED — tier 3 is the specification variant of the band: amp-nav renders "${surface.surface} is a specification in the ${surface.parent} world" plus a link to the spec, NOT a layer sentence. records/surface.json names no spec URL, so that band cannot be written from this record. SHELL.md r6.`
+        );
     }
     const where =
         surface.tier === 4
@@ -330,9 +351,17 @@ if (unused.length) {
     );
 }
 
+const ANIM_OUT = ANIM + "\n";
 writeFileSync(new URL("./index.html", import.meta.url), landing);
-writeFileSync(new URL("./memory.js", import.meta.url), ANIM + "\n");
+writeFileSync(new URL("./memory.js", import.meta.url), ANIM_OUT);
+
+/* Last, and only if everything above succeeded: record what was emitted and
+   what it was emitted from. If this line is never reached the stamp on disk
+   still describes the PREVIOUS build, and the gate will refuse the artifact
+   that survived. That is the whole point of it. */
+const stamp = writeStamp(DIR, { "index.html": landing, "memory.js": ANIM_OUT });
 
 console.log(`figure gate: ${used.size} of ${Object.keys(witness.facts).length} witnessed facts printed, 0 hand-typed`);
+console.log(`build stamp: ${stamp.build_id} over ${Object.keys(stamp.inputs).length} source files`);
 console.log(`wrote index.html  ${landing.length.toLocaleString()} bytes  (was ${witness.routes.rows[0].bytes.toLocaleString()})`);
 console.log(`wrote memory.js   ${ANIM.length.toLocaleString()} bytes  (decoration; the page's content does not depend on it)`);

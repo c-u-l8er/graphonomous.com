@@ -1,25 +1,41 @@
 /* ==========================================================================
    The identifying animation — SHELL.md §8.
 
-   What it depicts: a memory consolidating. Edges strengthen when they are
-   used and weaken when they are not, a retrieval walk crosses the topology
-   along whatever is currently strongest, and the shape of the graph is
-   different a minute later than it was at load. That is the subject of this
-   site drawn rather than described.
+   WHAT IT DEPICTS: a memory getting sharper from being used.
 
-   IT RENDERS NO DATA AND ASSERTS NOTHING. It takes no input from the
-   document and writes nothing back into it: no textContent, no dataset, no
-   custom event, no global. Delete the <script> tag that loads this file and
-   every figure, chip, status row and word on the page is still there.
+   Everything starts vague. A node is not a dot, it is a soft blob with a
+   scatter of ghost points around where the dot would be, and it drifts,
+   because an unrecalled memory is a region rather than a fact. An edge is not
+   a line, it is a smear of bowed strands. Then a recall trace walks the
+   graph, and WHAT IT CROSSES RESOLVES: the blob contracts, the ghosts collapse
+   onto one another until they read as a single definite point, the drift
+   stops, the strands of a crossed edge converge into one line — and a
+   near-duplicate node the trace lands on merges into its twin, which is what
+   consolidation does to two nodes that turn out to be the same thing. The
+   trace itself starts as a smudge and arrives as a point.
+
+   Between recalls it relaxes: not back to where it started, but down to a
+   floor that use has raised. A forgetting sweep pulls every floor down again
+   on its own clock, so nothing here is ever permanently sharp, and the next
+   recall re-sharpens whatever it happens to cross. Sharpness is therefore not
+   a property of the graph, it is a property of which parts of it are being
+   used — which is the question in this page's h1, drawn rather than argued.
+
+   IT RENDERS NO DATA AND ASSERTS NOTHING. It takes no input from the document
+   and writes nothing back into it: no text, no markup, no attribute, no
+   custom event, no global. The two gradient sprites below are built on
+   detached canvases that are never inserted anywhere. Delete the script tag
+   that loads this file and every figure, chip, status row and word on the
+   page is still there.
 
    The counts below are DELIBERATELY NOT the counts this site publishes.
-   Graphonomous stores 6 node types and 17 edge types; this picture has 13
-   nodes and 23 links, which are not any figure on the page and are not
-   anything measured. gpscoord.com shipped a canvas animation whose
-   `for (let i = 0; i < 12; i++)` was published beside it as "12 Active
-   Pathfinders" — a decoration's loop bound sold as a live user metric, for
-   months. The publication gate now reads the constants out of this file and
-   refuses the build if any of them appears as a number in the page's text.
+   Graphonomous stores 6 node types and 17 edge types; this picture has 16
+   nodes and 26 links, which are not any figure on the page and are not
+   anything measured. gpscoord.com shipped a canvas animation whose loop bound
+   was published beside it as a live count of user-facing pathfinders — a
+   decoration's constant sold as a metric, for months. The publication gate
+   reads every constant out of this file and refuses the build if one of them
+   appears as a standalone number in the page's text.
    ========================================================================== */
 (function () {
   var el = document.querySelector("[data-identity-animation]");
@@ -27,13 +43,27 @@
   var ctx = el.getContext("2d");
   if (!ctx) return;
 
-  /* ---- IDENTITY-COUNTS: read by launch-gate.mjs. Not data. ---- */
-  var NODES = 13;
-  var LINKS = 23;
+  /* ---- IDENTITY-COUNTS: read by launch-gate.mjs. Not data, not measured. ---- */
+  var NODES = 16;
+  var LINKS = 26;
+  var GHOSTS = 8;
+  var STRANDS = 3;
+  var CLUSTERS = 3;
+  var HOPS = 11;
   var FPS = 24;
-  var CONSOLIDATE_MS = 2400;
-  var WALK_MS = 5200;
-  var WALK_HOPS = 9;
+  var HOP_MS = 235;
+  var RECALL_MS = 2100;
+  var FORGET_MS = 12000;
+
+  /* How memory behaves here, as five numbers. K is the floor a thing relaxes
+     to, S is where it is right now. Use raises K, the sweep lowers it, and
+     K never reaches 1, because something that could not decay would not be a
+     memory. */
+  var K_MIN = 0.06;
+  var K_CAP = 0.92;
+  var LEARN = 0.31;
+  var RELAX = 0.055;
+  var FORGET_KEEP = 0.68;
 
   var ACC = "#ff5c9d";
   var DATA = "#5ad1c8";
@@ -43,93 +73,217 @@
      here is sampled, timed or counted from anything real. */
   var seed = 20260817;
   function rnd() {
-    seed = (seed * 1103515245 + 12345) % 2147483648;
-    return seed / 2147483648;
+    seed = (Math.imul(seed, 1664525) + 1013904223) | 0;
+    return (seed >>> 0) / 4294967296;
+  }
+
+  /* A soft round sprite, drawn once and scaled thereafter: fill flat, then
+     carve the falloff out of it. This is how a genuinely soft edge is made
+     without canvas filters, which Safari only learned recently. */
+  function sprite(color) {
+    var c = document.createElement("canvas");
+    var sz = 64;
+    c.width = sz;
+    c.height = sz;
+    var g = c.getContext("2d");
+    g.fillStyle = color;
+    g.fillRect(0, 0, sz, sz);
+    g.globalCompositeOperation = "destination-out";
+    var rg = g.createRadialGradient(sz / 2, sz / 2, 0, sz / 2, sz / 2, sz / 2);
+    rg.addColorStop(0, "rgba(0,0,0,0)");
+    rg.addColorStop(0.38, "rgba(0,0,0,0.42)");
+    rg.addColorStop(0.72, "rgba(0,0,0,0.86)");
+    rg.addColorStop(1, "rgba(0,0,0,1)");
+    g.fillStyle = rg;
+    g.fillRect(0, 0, sz, sz);
+    return c;
+  }
+  var hazeImg = sprite(DIM);
+  var glowImg = sprite(DATA);
+
+  /* ---- the graph: neighbourhoods, not a constellation ---- */
+  var hub = [];
+  for (var c = 0; c < CLUSTERS; c++) {
+    var ha = (c / CLUSTERS) * Math.PI * 2 - 0.95;
+    hub.push([0.5 + Math.cos(ha) * 0.235, 0.5 + Math.sin(ha) * 0.255]);
   }
 
   var nodes = [];
   for (var i = 0; i < NODES; i++) {
-    var t = (i / NODES) * Math.PI * 2;
-    var ring = i % 3 === 0 ? 0.24 : 0.42;
+    var h = hub[i % CLUSTERS];
+    var g = [];
+    for (var gi = 0; gi < GHOSTS; gi++) {
+      var ga = rnd() * Math.PI * 2;
+      var gr = 0.36 + rnd() * 0.64;
+      g.push([Math.cos(ga) * gr, Math.sin(ga) * gr]);
+    }
     nodes.push({
-      bx: 0.5 + Math.cos(t) * ring * (0.7 + rnd() * 0.6),
-      by: 0.5 + Math.sin(t) * ring * (0.7 + rnd() * 0.6),
+      c: i % CLUSTERS,
+      bx: h[0] + (rnd() - 0.5) * 0.36,
+      by: h[1] + (rnd() - 0.5) * 0.4,
       px: 0,
       py: 0,
-      fx: 0.3 + rnd() * 0.7,
-      fy: 0.3 + rnd() * 0.7,
+      fx: 0.3 + rnd() * 0.6,
+      fy: 0.3 + rnd() * 0.6,
       ph: rnd() * Math.PI * 2,
-      w: 0.3 + rnd() * 0.5,
+      g: g,
+      s: K_MIN,
+      k: K_MIN,
+      dup: null,
       lit: 0
     });
   }
 
+  /* Near-duplicates. A few nodes carry a second, almost-identical copy of
+     themselves; landing a recall on one starts the merge. */
+  for (var d = 0; d < NODES; d += 3) {
+    var da = rnd() * Math.PI * 2;
+    nodes[d].dup = { dx: Math.cos(da) * 0.045, dy: Math.sin(da) * 0.045, m: 0, on: false };
+  }
+
   var links = [];
   var seen = {};
-  while (links.length < LINKS) {
-    var a = Math.floor(rnd() * NODES);
-    var b = Math.floor(rnd() * NODES);
-    if (a === b) continue;
+  function addLink(a, b) {
+    if (a === b) return;
     var key = Math.min(a, b) + ":" + Math.max(a, b);
-    if (seen[key]) continue;
+    if (seen[key]) return;
     seen[key] = 1;
-    links.push({ a: a, b: b, w: 0.15 + rnd() * 0.75, lit: 0 });
-  }
-
-  var neighbours = nodes.map(function () {
-    return [];
-  });
-  links.forEach(function (l, idx) {
-    neighbours[l.a].push({ to: l.b, l: idx });
-    neighbours[l.b].push({ to: l.a, l: idx });
-  });
-
-  /* Consolidation: some edges are strengthened, some are let go. The cursor
-     walks the link list so the same edge is not always the one that gains. */
-  var cursor = 0;
-  function consolidate() {
-    for (var k = 0; k < 3; k++) {
-      var up = links[(cursor + k) % LINKS];
-      up.w = Math.min(1, up.w + 0.26);
-      var down = links[(cursor + LINKS / 2 + k) % LINKS | 0];
-      down.w = Math.max(0.06, down.w - 0.2);
+    var st = [];
+    for (var si = 0; si < STRANDS; si++) {
+      st.push((si - (STRANDS - 1) / 2) * 0.9 + (rnd() - 0.5) * 0.6);
     }
-    cursor = (cursor + 3) % LINKS;
-    for (var n = 0; n < NODES; n++) nodes[n].w = 0.2;
-    links.forEach(function (l) {
-      nodes[l.a].w += l.w * 0.14;
-      nodes[l.b].w += l.w * 0.14;
-    });
+    links.push({ a: a, b: b, st: st, s: K_MIN, k: K_MIN, lit: 0 });
   }
-  consolidate();
+  /* A ring through each neighbourhood first, so nothing is ever stranded,
+     then fill with whatever the generator offers, biased against bridges —
+     dense inside a neighbourhood and sparse between them. */
+  for (var cc = 0; cc < CLUSTERS; cc++) {
+    var mem = [];
+    for (var mi = 0; mi < NODES; mi++) {
+      if (nodes[mi].c === cc) mem.push(mi);
+    }
+    for (var mj = 0; mj < mem.length; mj++) {
+      addLink(mem[mj], mem[(mj + 1) % mem.length]);
+    }
+  }
+  var tries = 0;
+  while (links.length < LINKS && tries++ < 900) {
+    var x = Math.floor(rnd() * NODES);
+    var y = Math.floor(rnd() * NODES);
+    if (nodes[x].c !== nodes[y].c && rnd() > 0.36) continue;
+    addLink(x, y);
+  }
 
-  /* Retrieval: a walk that follows whatever is strongest right now, which is
-     why the path it takes changes after a consolidation. */
-  var walkAt = -1;
-  var walkLeft = 0;
-  function walk() {
-    walkAt = Math.floor(rnd() * NODES);
-    walkLeft = WALK_HOPS;
-    nodes[walkAt].lit = 1;
+  var nbr = [];
+  for (var q = 0; q < NODES; q++) nbr.push([]);
+  for (var li = 0; li < links.length; li++) {
+    nbr[links[li].a].push({ to: links[li].b, l: li });
+    nbr[links[li].b].push({ to: links[li].a, l: li });
   }
-  function step() {
-    if (walkLeft <= 0 || walkAt < 0) return;
-    var ns = neighbours[walkAt];
-    if (!ns.length) {
-      walkLeft = 0;
+
+  var headG = [];
+  for (var hg = 0; hg < GHOSTS; hg++) {
+    var hga = rnd() * Math.PI * 2;
+    headG.push([Math.cos(hga) * (0.4 + rnd() * 0.6), Math.sin(hga) * (0.4 + rnd() * 0.6)]);
+  }
+
+  /* ---- recall: the only thing in here that sharpens anything ---- */
+  var recall = null;
+  var visits = [];
+  for (var vi = 0; vi < NODES; vi++) visits.push(0);
+
+  function coldest() {
+    var best = 0;
+    for (var i = 1; i < NODES; i++) {
+      if (visits[i] < visits[best]) best = i;
+    }
+    return best;
+  }
+
+  function land(i) {
+    visits[i]++;
+    nodes[i].s = 1;
+    nodes[i].k = Math.min(K_CAP, nodes[i].k + LEARN);
+    nodes[i].lit = 1;
+    if (nodes[i].dup) nodes[i].dup.on = true;
+  }
+
+  function hop(now) {
+    if (!recall || recall.hop >= HOPS) {
+      recall = null;
       return;
     }
-    var best = ns[0];
-    for (var i2 = 1; i2 < ns.length; i2++) {
-      if (links[ns[i2].l].w * (0.65 + rnd() * 0.7) > links[best.l].w) best = ns[i2];
+    var ns = nbr[recall.from];
+    var opts = [];
+    for (var i = 0; i < ns.length; i++) {
+      if (ns[i].to !== recall.prev) opts.push(ns[i]);
     }
-    links[best.l].lit = 1;
-    links[best.l].w = Math.min(1, links[best.l].w + 0.05);
-    walkAt = best.to;
-    nodes[walkAt].lit = 1;
-    walkLeft--;
+    if (!opts.length) opts = ns;
+    if (!opts.length) {
+      recall = null;
+      return;
+    }
+    /* follow whatever is strongest right now, which is why the path it takes
+       is different after a forgetting sweep */
+    var pick = opts[0];
+    var best = links[pick.l].k * (0.6 + rnd() * 0.8);
+    for (var j = 1; j < opts.length; j++) {
+      var score = links[opts[j].l].k * (0.6 + rnd() * 0.8);
+      if (score > best) {
+        best = score;
+        pick = opts[j];
+      }
+    }
+    recall.l = pick.l;
+    recall.to = pick.to;
+    recall.t0 = now;
+    recall.hop++;
   }
 
+  function startRecall(now) {
+    var from = rnd() > 0.45 ? coldest() : Math.floor(rnd() * NODES);
+    recall = { from: from, to: -1, l: -1, prev: -1, hop: 0, t0: now };
+    land(from);
+    hop(now);
+  }
+
+  function arrive(now) {
+    var l = links[recall.l];
+    l.s = 1;
+    l.k = Math.min(K_CAP, l.k + LEARN);
+    l.lit = 1;
+    recall.prev = recall.from;
+    recall.from = recall.to;
+    land(recall.from);
+    hop(now);
+  }
+
+  function relax() {
+    for (var i = 0; i < NODES; i++) {
+      var n = nodes[i];
+      n.s += (n.k - n.s) * RELAX;
+      if (n.lit > 0.01) n.lit *= 0.9;
+      if (n.dup && n.dup.on && n.dup.m < 1) {
+        n.dup.m = Math.min(1, n.dup.m + (1 - n.dup.m) * 0.06 + 0.003);
+      }
+    }
+    for (var j = 0; j < links.length; j++) {
+      var l = links[j];
+      l.s += (l.k - l.s) * RELAX;
+      if (l.lit > 0.01) l.lit *= 0.93;
+    }
+  }
+
+  function forget() {
+    for (var i = 0; i < NODES; i++) {
+      nodes[i].k = K_MIN + (nodes[i].k - K_MIN) * FORGET_KEEP;
+    }
+    for (var j = 0; j < links.length; j++) {
+      links[j].k = K_MIN + (links[j].k - K_MIN) * FORGET_KEEP;
+    }
+  }
+
+  /* ---- paint ---- */
   var W = 0;
   var H = 0;
   function size() {
@@ -141,52 +295,135 @@
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   }
 
+  function blob(img, x, y, r, a) {
+    if (a <= 0.004 || r <= 0.2) return;
+    ctx.globalAlpha = a;
+    ctx.drawImage(img, x - r, y - r, r * 2, r * 2);
+  }
+
+  function disc(x, y, r) {
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  /* One node: a wide soft blob with its ghosts scattered around it when
+     nothing has recalled it, a small bright point when something has. */
+  function cloud(n, cx, cy, s, scale) {
+    var vague = 1 - s;
+    blob(hazeImg, cx, cy, (6.4 + vague * 24) * scale, (0.03 + vague * 0.19) * scale);
+    blob(glowImg, cx, cy, (2.6 + s * 9) * scale, s * s * 0.5 * scale);
+    ctx.fillStyle = DIM;
+    for (var gi = 0; gi < GHOSTS; gi++) {
+      ctx.globalAlpha = (0.17 - s * 0.09) * scale;
+      disc(cx + n.g[gi][0] * vague * 15.5, cy + n.g[gi][1] * vague * 15.5, 1.7);
+    }
+    ctx.fillStyle = DATA;
+    ctx.globalAlpha = (0.15 + s * 0.8) * scale;
+    disc(cx, cy, (1.3 + s * 2.9) * scale);
+  }
+
   function draw(now) {
     ctx.clearRect(0, 0, W, H);
-    var pad = 0.12;
-    for (var i3 = 0; i3 < NODES; i3++) {
-      var n = nodes[i3];
-      var d = now / 3600;
-      n.px = (pad + n.bx * (1 - pad * 2)) * W + Math.sin(d * n.fx + n.ph) * W * 0.022;
-      n.py = (pad + n.by * (1 - pad * 2)) * H + Math.cos(d * n.fy + n.ph) * H * 0.022;
+    var pad = 0.11;
+    var i;
+    var n;
+    var vague;
+    for (i = 0; i < NODES; i++) {
+      n = nodes[i];
+      var t = now / 3600;
+      vague = 1 - n.s;
+      /* the drift is uncertainty: a node nobody has recalled will not sit
+         still, a node that has just been recalled is nailed down */
+      n.px =
+        (pad + n.bx * (1 - pad * 2)) * W +
+        Math.sin(t * n.fx + n.ph) * W * 0.018 +
+        Math.sin(now * 0.0021 + n.ph * 2.3) * vague * 2.6;
+      n.py =
+        (pad + n.by * (1 - pad * 2)) * H +
+        Math.cos(t * n.fy + n.ph) * H * 0.018 +
+        Math.cos(now * 0.0017 + n.ph * 3.1) * vague * 2.6;
     }
 
+    /* edges: many bowed strands while vague, one definite line once used */
     ctx.lineCap = "round";
-    for (var j = 0; j < LINKS; j++) {
+    for (var j = 0; j < links.length; j++) {
       var l = links[j];
       var A = nodes[l.a];
       var B = nodes[l.b];
-      ctx.beginPath();
-      ctx.moveTo(A.px, A.py);
-      ctx.lineTo(B.px, B.py);
-      ctx.lineWidth = 0.4 + l.w * 1.9;
-      ctx.globalAlpha = 0.09 + l.w * 0.3;
+      vague = 1 - l.s;
+      var mx = (A.px + B.px) / 2;
+      var my = (A.py + B.py) / 2;
+      var dx = B.px - A.px;
+      var dy = B.py - A.py;
+      var len = Math.sqrt(dx * dx + dy * dy) || 1;
+      var nx = -dy / len;
+      var ny = dx / len;
       ctx.strokeStyle = DIM;
-      ctx.stroke();
-      if (l.lit > 0.01) {
-        ctx.globalAlpha = l.lit * 0.85;
-        ctx.strokeStyle = ACC;
-        ctx.lineWidth = 0.7 + l.w * 2.1;
+      ctx.lineWidth = 0.6 + vague * 1.15;
+      ctx.globalAlpha = 0.06 + l.s * 0.04;
+      for (var si = 0; si < STRANDS; si++) {
+        var o = l.st[si] * vague * 19;
+        ctx.beginPath();
+        ctx.moveTo(A.px, A.py);
+        ctx.quadraticCurveTo(mx + nx * o, my + ny * o, B.px, B.py);
         ctx.stroke();
-        l.lit *= 0.955;
+      }
+      if (l.s > 0.24) {
+        ctx.strokeStyle = DATA;
+        ctx.globalAlpha = (l.s - 0.24) * 0.62;
+        ctx.lineWidth = 0.8 + l.s * 0.95;
+        ctx.beginPath();
+        ctx.moveTo(A.px, A.py);
+        ctx.lineTo(B.px, B.py);
+        ctx.stroke();
+      }
+      if (l.lit > 0.01) {
+        ctx.strokeStyle = ACC;
+        ctx.globalAlpha = l.lit * 0.8;
+        ctx.lineWidth = 0.9 + l.s * 1.2;
+        ctx.beginPath();
+        ctx.moveTo(A.px, A.py);
+        ctx.lineTo(B.px, B.py);
+        ctx.stroke();
       }
     }
 
-    for (var m = 0; m < NODES; m++) {
-      var p = nodes[m];
-      var r = 1.6 + p.w * 3.4;
-      ctx.globalAlpha = 0.22 + p.w * 0.26;
-      ctx.fillStyle = DATA;
-      ctx.beginPath();
-      ctx.arc(p.px, p.py, r, 0, Math.PI * 2);
-      ctx.fill();
-      if (p.lit > 0.01) {
-        ctx.globalAlpha = p.lit * 0.9;
+    /* nodes: a scatter that collapses into a point, and twins that merge */
+    for (i = 0; i < NODES; i++) {
+      n = nodes[i];
+      if (n.dup && n.dup.m < 0.99) {
+        var away = 1 - n.dup.m;
+        cloud(n, n.px + n.dup.dx * W * away, n.py + n.dup.dy * H * away, n.s * 0.75, 0.88);
+      }
+      cloud(n, n.px, n.py, n.s, 1);
+      if (n.lit > 0.01) {
         ctx.fillStyle = ACC;
-        ctx.beginPath();
-        ctx.arc(p.px, p.py, r + 1.4, 0, Math.PI * 2);
-        ctx.fill();
-        p.lit *= 0.94;
+        ctx.globalAlpha = n.lit * 0.9;
+        disc(n.px, n.py, 1.6 + n.s * 2.6);
+      }
+    }
+
+    /* the recall trace: a smudge at the start of a path, a point by the end */
+    if (recall && recall.l >= 0) {
+      var C = nodes[recall.from];
+      var D = nodes[recall.to];
+      var f = Math.max(0, Math.min(1, (now - recall.t0) / HOP_MS));
+      var hx = C.px + (D.px - C.px) * f;
+      var hy = C.py + (D.py - C.py) * f;
+      var crisp = recall.hop / HOPS;
+      ctx.strokeStyle = ACC;
+      ctx.globalAlpha = 0.24 + crisp * 0.55;
+      ctx.lineWidth = 0.9 + crisp * 1.3;
+      ctx.beginPath();
+      ctx.moveTo(C.px, C.py);
+      ctx.lineTo(hx, hy);
+      ctx.stroke();
+      var smudge = (1 - crisp) * 9;
+      ctx.fillStyle = ACC;
+      for (var hi = 0; hi < GHOSTS; hi++) {
+        ctx.globalAlpha = 0.12 + crisp * 0.24;
+        disc(hx + headG[hi][0] * smudge, hy + headG[hi][1] * smudge, 1.1 + crisp * 1.6);
       }
     }
     ctx.globalAlpha = 1;
@@ -195,10 +432,29 @@
   size();
   window.addEventListener("resize", size, { passive: true });
 
-  /* prefers-reduced-motion: one frame, then stop. Not optional (SHELL.md §8.4). */
+  /* prefers-reduced-motion: one frame, then stop. Not optional (SHELL.md
+     §8.4). The still frame is the RESOLVED picture rather than the haze the
+     loop starts from — a blurred first frame reads as a broken canvas, and
+     the sharp end is the half worth showing when only one image is allowed. */
+  function settle() {
+    var clock = 0;
+    for (var r = 0; r < 6; r++) {
+      startRecall(clock);
+      while (recall) {
+        clock += HOP_MS;
+        arrive(clock);
+      }
+    }
+    for (var f = 0; f < 40; f++) relax();
+    for (var i = 0; i < NODES; i++) {
+      if (nodes[i].dup) nodes[i].dup.m = 1;
+    }
+  }
+
   var still =
     window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   if (still) {
+    settle();
     draw(0);
     return;
   }
@@ -216,9 +472,8 @@
 
   var running = false;
   var last = 0;
-  var lastCon = 0;
-  var lastWalk = 0;
-  var lastStep = 0;
+  var lastRecall = 0;
+  var lastForget = 0;
 
   function tick(now) {
     if (running) return;
@@ -233,18 +488,17 @@
     }
     if (now - last >= 1000 / FPS) {
       last = now;
-      if (now - lastCon >= CONSOLIDATE_MS) {
-        lastCon = now;
-        consolidate();
+      if (now - lastForget >= FORGET_MS) {
+        lastForget = now;
+        forget();
       }
-      if (now - lastWalk >= WALK_MS) {
-        lastWalk = now;
-        walk();
+      if (recall) {
+        if (now - recall.t0 >= HOP_MS) arrive(now);
+        if (!recall) lastRecall = now;
+      } else if (now - lastRecall >= RECALL_MS) {
+        startRecall(now);
       }
-      if (walkLeft > 0 && now - lastStep >= 190) {
-        lastStep = now;
-        step();
-      }
+      relax();
       draw(now);
     }
     requestAnimationFrame(frame);

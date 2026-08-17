@@ -5,10 +5,13 @@ interface live in `../graphonomous/`.
 
 ## Read `CLAUDE.md` in this directory first
 
-**The landing page is generated.** `index.html` and `memory.js` at the repo root
-are artifacts of `build-site.mjs`; editing either directly is silently reverted
-by the next build. Edit `src/` and `records/` instead. This directory carried
-"static site with no build process" until 2026-08-16 and it is no longer true.
+**The landing page is generated.** `index.html`, `memory.js` and
+`build-stamp.json` at the repo root are artifacts of `build-site.mjs`; editing
+any of them directly is silently reverted by the next build — and the gate now
+refuses an artifact that was edited after its build, so a hand edit does not
+even reach the next build. Edit `src/` and `records/` instead. This directory
+carried "static site with no build process" until 2026-08-16 and it is no
+longer true.
 
 ## For agents looking for the product
 
@@ -22,8 +25,9 @@ Do not look for tools or specs here. Use the codebase instead:
 ## Before publishing anything from here
 
 ```
-npm run test:launch   # build + re-derive + publication gate
-node prove-gate.mjs   # 29 deliberate breaks, all must be refused
+npm run test:launch   # build + re-derive + publication gate (130 checks)
+node prove-gate.mjs   # 44 deliberate breaks; each must be refused BY THE CHECK
+                      # written for it, not merely refused
 ```
 
 No claim on the landing page may be typed by hand. Add it to

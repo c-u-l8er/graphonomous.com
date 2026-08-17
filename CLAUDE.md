@@ -53,14 +53,14 @@ in the present tense — the suite reports 577 and the machine modules declare 3
 three of the four release assets return 404.
 
 `launch-gate.mjs` reads the **artifact**, not the source, and refuses on any of
-144 checks. `records/surface.json.retracted` is a blocklist bounded by
-`min_occurrences`/`max_occurrences` (both default 1): a removed claim may
-appear **exactly once**, inside the retraction paragraph that quotes it, and
-**nowhere** in markup, an attribute or a comment. Merely asking "is the
-retraction still there?" let a page keep its retraction *and* re-assert the
-sentence somewhere else.
+162 checks. `records/surface.json.retracted` is a blocklist: a removed claim
+may appear **exactly once**, inside the retraction paragraph that quotes it,
+and **nowhere** in markup, an attribute or a comment. **The bound is a
+constant in `launch-gate.mjs`, not a record field** — a record may lower the
+ceiling or raise the floor, never the reverse, because a bound the author can
+edit is not a bound (SHELL.md r10).
 
-Four things the gate does that are easy to undo by accident:
+Five things the gate does that are easy to undo by accident:
 
 - **It proves the artifact came from this build** (`stamp.mjs`). If
   `build-site.mjs` throws, the previous `index.html` is still on disk; before
@@ -75,6 +75,12 @@ Four things the gate does that are easy to undo by accident:
   4.5:1 says nothing about which declaration wins on a real element; `.top nav
   a` (0,2,1) beat `.btn` (0,1,0) and the header CTA painted `--fg2` on `--acc`
   at 1.70:1 on nine surfaces.
+- **It refuses to let a record grade its own homework.** A retraction ceiling,
+  a `min`/`max`, a review gate's `evidence` — anywhere both sides of a
+  comparison are the author's, the constant lives in the gate and the evidence
+  has to resolve to something `check.mjs` re-derives. Where no anchor exists
+  at all (`nav_breakpoint_px`, `ink_box_headroom_px`) the check says so in its
+  own output rather than implying more than it has.
 - **The order of the three text-extraction passes is load-bearing.**
   `<[^>]+>` stops at the first `>`, so a comment containing one is only half
   removed and its tail becomes "page text". Comments come out FIRST, as their
@@ -83,9 +89,14 @@ Four things the gate does that are easy to undo by accident:
 
 The shell (band, rung chip, status block, CTA/rung table, §8 animation) is
 specified in `ProjectAmp2/agents/SHELL.md`. This surface is built against
-revision **`shell-r7`**, recorded as `shell_revision` in `records/surface.json`,
-and the build refuses to emit against any other revision. Four shell values are the **surface's own** and are
-recorded rather than copied: `nav_breakpoint_px` (600, BISECTED in a browser —
+revision **`shell-r10`**, recorded as `shell_revision` in `records/surface.json`,
+and the build refuses to emit against any other revision. **`launch-gate.mjs`
+checks that this sentence and the record agree** — this line said `shell-r7`
+while the record said `shell-r9`, which is the same drift the whole surface is
+built to prevent, sitting in the file every agent reads first.
+
+Four shell values are the **surface's own** and are recorded rather than
+copied: `nav_breakpoint_px` (600, BISECTED in a browser —
 an arithmetic estimate got it wrong, and then a five-character nav-label
 change invalidated it; re-bisect after touching any nav label), `rung_witness` (which gate
 witnesses the claimed rung), `cited_specs` (empty; this page cites no §N in

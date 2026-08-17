@@ -41,7 +41,7 @@ import { fileURLToPath } from "url";
 import { artifactHashes } from "./stamp.mjs";
 
 const SRC = path.dirname(fileURLToPath(import.meta.url));
-const COPY = ["build-site.mjs", "launch-gate.mjs", "stamp.mjs", "package.json", "index.html", "memory.js", "contact.js", "build-stamp.json"];
+const COPY = ["build-site.mjs", "launch-gate.mjs", "stamp.mjs", "package.json", "index.html", "memory.js", "contact.js", "build-stamp.json", "CLAUDE.md"];
 
 /* [name, stage, mutation, the check that must be the one to fire] */
 const BREAKS = [
@@ -61,6 +61,10 @@ const BREAKS = [
      "declares shell_revision"],
     /* SHELL.md r6: there are THREE band variants, and a place-3 surface given
        a layer sentence contradicts the nav rendered directly beneath it. */
+    /* Measured, not hypothesised: this line really did drift to r7 while the
+       record said r9, in the file every agent reads before touching anything. */
+    ["the revision in CLAUDE.md drifting away from the record", "gate", (d) => edit(d, "CLAUDE.md", "revision **`shell-r10`**", "revision **`shell-r7`**"),
+     "CLAUDE.md names the same shell revision"],
     ["a place-3 surface handed the layer sentence", "build", (d) => editJSON(d, "records/surface.json", (j) => { j.tier = 3; }),
      "tier 3 is the specification variant"],
 
@@ -100,12 +104,28 @@ const BREAKS = [
     /* ---- the retraction, both halves of SHELL.md r6 hole 1 ---- */
     ["a retracted claim reinstated elsewhere on the page", "gate", (d) => edit(d, "index.html", "<h2>The suite is green", "<h2>Runs on macOS or Linux. The suite is green"),
      'appears nowhere outside its retraction'],
-    /* THE HOLE. The retraction stays, is still quoted, still names every
+    /* r6 HOLE 1. The retraction stays, is still quoted, still names every
        string — and the claim is re-asserted INSIDE it, wearing its own
        retraction as cover. A check that asks "is the retraction present?"
        passes this. Counting does not. */
     ["a retracted claim re-asserted inside its own retraction", "gate", (d) => edit(d, "index.html", "A number can no longer be typed onto this site by hand.", "A number can no longer be typed onto this site by hand. On reflection it does run on macOS or Linux, so that one stands."),
      "is quoted between 1 and 1 times inside it"],
+    /* THE AGENTELIC ATTACK, exactly as it happened there: the sentence
+       appended THREE times, the claim on the artifact FOUR times, and that
+       gate reported 0 refusals because it bounded by `onPage === inBlock`. */
+    ["the agentelic attack — the sentence appended three times inside the retraction", "gate", (d) => edit(d, "index.html", "A number can no longer be typed onto this site by hand.", "A number can no longer be typed onto this site by hand. It does run on macOS or Linux. It does run on macOS or Linux. It does run on macOS or Linux."),
+     "is quoted between 1 and 1 times inside it"],
+    /* r10, AND THE REASON IT IS A RULE. The bound was a number, but the number
+       lived in a record the same edit could touch. Measured before the fix:
+       four occurrences plus `max_occurrences: 4` PASSED this gate. */
+    ["a retraction ceiling raised by the very record it bounds", "rebuild", (d) => editJSON(d, "records/surface.json", (j) => { j.retracted[4].max_occurrences = 4; }),
+     "does not raise its own ceiling"],
+    ["a retraction floor lowered so the claim can vanish from its own retraction", "rebuild", (d) => editJSON(d, "records/surface.json", (j) => { j.retracted[4].min_occurrences = 0; }),
+     "does not lower its own floor"],
+    /* Same shape, different field: "approved WITH evidence" used to accept any
+       non-empty string, so a reviewer could approve themselves in prose. */
+    ["a review gate approved on evidence that resolves to nothing", "rebuild", (d) => editJSON(d, "records/surface.json", (j) => { j.gates.test_suite.evidence = "we checked it, it was fine"; }),
+     "evidence resolves to something re-derivable"],
     ["the retraction paragraph deleted while the claims stay off the page", "gate", (d) => edit(d, "index.html", '<div class="retract" data-retraction>', '<div class="retracted-not-really">'),
      "the retraction paragraph is on the artifact"],
 

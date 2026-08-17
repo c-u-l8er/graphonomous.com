@@ -25,8 +25,8 @@ Do not look for tools or specs here. Use the codebase instead:
 ## Before publishing anything from here
 
 ```
-npm run test:launch   # build + re-derive + publication gate (144 checks)
-node prove-gate.mjs   # 53 deliberate breaks, each of which must be refused BY
+npm run test:launch   # build + re-derive + publication gate (163 checks)
+node prove-gate.mjs   # 59 deliberate breaks, each of which must be refused BY
                       # THE CHECK written for it, plus 1 soundness probe the
                       # gate must NOT object to
 ```

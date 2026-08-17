@@ -147,7 +147,20 @@ if (STAMP && STAMP.inputs && STAMP.artifacts) {
 T("release identity: package == record", PKG.version === SURFACE.version, `${PKG.version} / ${SURFACE.version}`);
 T("the stamp on the artifact names the release", HTML.includes(`v${SURFACE.version}`));
 T("the artifact records which shell revision it was built against",
-  HTML.includes(SURFACE.shell_revision) && SURFACE.shell_revision === "shell-r9", SURFACE.shell_revision);
+  HTML.includes(SURFACE.shell_revision) && SURFACE.shell_revision === "shell-r10", SURFACE.shell_revision);
+
+/* This file is not a build input and not an artifact — it is the first thing
+   an agent reads, which is exactly why its revision string drifted to r7
+   while the record said r9. Prose nobody checks is prose that goes stale. */
+let AGENTDOC = "";
+try {
+    AGENTDOC = readFileSync(new URL("./CLAUDE.md", import.meta.url), "utf8");
+} catch {
+    /* left empty on purpose: a missing CLAUDE.md fails the check below */
+}
+const docRev = (/revision \*\*`(shell-r\d+)`\*\*/.exec(AGENTDOC) || [, "none"])[1];
+T("CLAUDE.md names the same shell revision the record declares",
+  docRev === SURFACE.shell_revision, `CLAUDE.md says ${docRev}, record says ${SURFACE.shell_revision}`);
 
 /* ---------- 2. the artifact is fully rendered ---------- */
 T("no unrendered {{TOKEN}} survived into the artifact", !/\{\{\w+\}\}/.test(HTML),
@@ -225,11 +238,22 @@ T("LIMIT is load-bearing, not a disclaimer",
   SURFACE.status.limit.length > 160 && /\bnot\b/i.test(SURFACE.status.limit));
 
 /* ---------- 7. the review ledger cannot lie ---------- */
+/* r10 audit of this file's own checks: "approved WITH evidence" tested only
+   that the field was non-empty, so "we checked it" passed. Both sides of that
+   are the author's. Evidence now has to RESOLVE — to a key check.mjs
+   re-derives against the world, or to an off-site URL somebody else serves. */
+function evidenceResolves(e) {
+    if (typeof e !== "string" || !e.trim()) return false;
+    if (/^https:\/\/\S+$/.test(e)) return true;
+    const m = /^records\/witness\.json#([\w.]+)$/.exec(e);
+    return !!m && (m[1] in WITNESS.facts || m[1] in WITNESS);
+}
 for (const [k, g] of Object.entries(SURFACE.gates)) {
     if (k.startsWith("_")) continue;
     T(`gate ${k} declares a legal status`, ["pending", "approved"].includes(g.status), g.status);
     if (g.status === "approved") {
         T(`gate ${k} approved WITH evidence, reviewer and date`, !!(g.evidence && g.reviewer && g.date));
+        T(`gate ${k}'s evidence resolves to something re-derivable`, evidenceResolves(g.evidence), g.evidence);
     }
 }
 /* SHELL.md r5.2 — the record names WHICH gate witnesses the rung it claims.
@@ -241,6 +265,8 @@ const witnessGate = SURFACE.gates[SURFACE.rung_witness];
 T("the record names the gate that witnesses its rung", !!witnessGate && !SURFACE.rung_witness.startsWith("_"), SURFACE.rung_witness);
 T(`the witnessing gate "${SURFACE.rung_witness}" is approved, with evidence, reviewer and date`,
   !!witnessGate && witnessGate.status === "approved" && !!(witnessGate.evidence && witnessGate.reviewer && witnessGate.date));
+T(`the witnessing gate's evidence resolves to something re-derivable`,
+  !!witnessGate && evidenceResolves(witnessGate.evidence), witnessGate ? witnessGate.evidence : "-");
 T("the witnessing gate is published on the artifact, not just in the record",
   !!witnessGate && decode(HTML).includes(witnessGate.label));
 
@@ -266,19 +292,44 @@ for (const g of groups) {
 }
 
 /* ---------- 9. claims that were retracted may not come back ----------
-   SHELL.md r6, hole 1, inherited from the GPSCoord reference. The first
-   version of this check asked "does the retraction still name it?" and
-   stopped, which let a page keep its retraction AND re-assert the retracted
-   sentence somewhere else — the quotation was doing double duty as an alibi.
-   So: COUNT the occurrences and bound them in both directions. Outside the
-   retraction, zero. Inside it, at least one (or the retraction does not name
-   what it retracts) and at most `max_occurrences`, default 1 — a second
-   occurrence inside the retraction is a re-assertion wearing its own
-   retraction as cover. */
+   THREE VERSIONS OF THIS CHECK HAVE NOW BEEN DEFECTIVE, and the third is the
+   general lesson.
+
+   v1 (r6 hole 1) asked "does the retraction still name it?" and stopped, so a
+   page could keep its retraction AND re-assert the sentence elsewhere — the
+   quotation doing double duty as an alibi.
+
+   v2 counted, but the natural counting form is `onPage === inBlock`, which
+   permits UNLIMITED repetition inside the retraction. agentelic.com appended
+   the sentence three times, put the retracted claim on the artifact four
+   times, and its gate reported 0 refusals. This gate never had that form —
+   measured 2026-08-17, the four-occurrence attack REFUSES here — but that was
+   luck of drafting, not design.
+
+   v3, this one, is where the real rule lives. SHELL.md r10: A CHECK WHOSE TWO
+   SIDES ARE BOTH UNDER THE AUTHOR'S CONTROL IS NOT A CHECK. Bounding by
+   `max_occurrences` looks like a number but is a record field, so the same
+   edit that repeats the sentence can raise the ceiling that forbids it.
+   Measured here before fixing it: with max_occurrences set to 4 and the
+   sentence present four times, this check PASSED.
+
+   So the ceiling is a constant in THIS FILE. A record may lower it, never
+   raise it, and a record that tries is refused by name. The floor works the
+   same way in the opposite direction: min may be raised, never dropped below
+   1, or a retraction could quietly stop naming what it retracts while
+   `outside === 0` went on passing. */
+const RETRACTION_MAX = 1;
+const RETRACTION_MIN = 1;
 T("the retraction paragraph is on the artifact", RETRACT_BLOCKS.length === 1, `${RETRACT_BLOCKS.length} blocks`);
 for (const r of SURFACE.retracted) {
-    const min = Number.isInteger(r.min_occurrences) ? r.min_occurrences : 1;
-    const max = Number.isInteger(r.max_occurrences) ? r.max_occurrences : 1;
+    const wantMax = Number.isInteger(r.max_occurrences) ? r.max_occurrences : RETRACTION_MAX;
+    const wantMin = Number.isInteger(r.min_occurrences) ? r.min_occurrences : RETRACTION_MIN;
+    T(`the record does not raise its own ceiling for "${r.string}"`,
+      wantMax <= RETRACTION_MAX, `record asks ${wantMax}, this gate allows at most ${RETRACTION_MAX}`);
+    T(`the record does not lower its own floor for "${r.string}"`,
+      wantMin >= RETRACTION_MIN, `record asks ${wantMin}, this gate requires at least ${RETRACTION_MIN}`);
+    const max = Math.min(wantMax, RETRACTION_MAX);
+    const min = Math.max(wantMin, RETRACTION_MIN);
     const outside = occurrences(TEXT_OUTSIDE, r.string);
     const inside = occurrences(TEXT_INSIDE, r.string);
     const hidden = occurrences(RAW_OUTSIDE, r.string);
@@ -717,9 +768,12 @@ T("the stylesheet stacks .top at exactly that breakpoint",
    silently ate the first real label instead. */
 const NAVTOP = /<div class="top">[\s\S]*?(<nav>[\s\S]*?<\/nav>)/.exec(HTML);
 const navLabels = NAVTOP ? [...NAVTOP[1].matchAll(/<a[^>]*>([^<]*)<\/a>/g)].map((m) => decode(m[1]).trim()) : [];
+const navMatches = JSON.stringify(navLabels) === JSON.stringify(SURFACE.nav_labels_at_measure || []);
 T("the header nav is the one the breakpoint was bisected against",
-  JSON.stringify(navLabels) === JSON.stringify(SURFACE.nav_labels_at_measure || []),
-  navLabels.join(" · ") + (JSON.stringify(navLabels) === JSON.stringify(SURFACE.nav_labels_at_measure || []) ? "" : "  <- RE-BISECT nav_breakpoint_px"));
+  navMatches,
+  navMatches
+      ? navLabels.join(" · ") + "  (r10: BOTH SIDES ARE THE AUTHOR'S — this forces a conscious edit, it does not verify the measurement; a gate with no font engine cannot)"
+      : navLabels.join(" · ") + "  <- RE-BISECT nav_breakpoint_px");
 
 /* ---------- 15c. §N citations resolve (SHELL.md r5.3) ----------
    Cheap, and it catches a citation that drifted when a spec was rewritten.

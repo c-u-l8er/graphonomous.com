@@ -39,9 +39,9 @@ if (pkg.version !== surface.version) {
         `release identity: package.json ${pkg.version} != records/surface.json ${surface.version}`
     );
 }
-if (surface.shell_revision !== "shell-r9") {
+if (surface.shell_revision !== "shell-r10") {
     throw new Error(
-        `BUILD REFUSED — records/surface.json declares shell_revision ${surface.shell_revision}; this build emits shell-r9 markup.`
+        `BUILD REFUSED — records/surface.json declares shell_revision ${surface.shell_revision}; this build emits shell-r10 markup.`
     );
 }
 /* The artifact names the sources it was generated from. A stale index.html —

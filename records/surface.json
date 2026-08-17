@@ -2,7 +2,7 @@
   "schema": "computedriven-surface-v1",
   "_comment": "The frozen record this site is generated from. Nothing on a generated page may state a rung, a status or a count that is not here or in witness.json. build-site.mjs reads it; launch-gate.mjs refuses to publish when the artifact and this file disagree.",
 
-  "shell_revision": "shell-r9",
+  "shell_revision": "shell-r10",
   "version": "0.5.0",
   "origin": "https://graphonomous.com",
   "repo": "https://github.com/c-u-l8er/graphonomous",

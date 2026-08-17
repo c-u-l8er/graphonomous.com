@@ -3,7 +3,7 @@
    Everything between TOKENS-START and TOKENS-END is this site's own character
    and is meant to differ per surface. Everything after TOKENS-END is shared
    structure, copied from ~/Projects/GPSCoord/src/shell.css.
-   Documented in ProjectAmp2/agents/SHELL.md (revision shell-r9).
+   Documented in ProjectAmp2/agents/SHELL.md (revision shell-r10).
    ========================================================================== */
 /* TOKENS-START — Graphonomous: synapse magenta on ink */
 :root{

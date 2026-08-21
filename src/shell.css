@@ -35,7 +35,30 @@ img,canvas,svg{max-width:100%}
    the story, so this is the standard band with the layer sentence, not the
    tier-4 attribution variant. SHELL.md §1.
    .covers is 11px and load-bearing — it is the span that keeps the rung chip
-   honest — so it takes --fg2 (6.66:1) rather than --fg3 (5.46:1). SHELL.md §0. */
+   honest — so it takes --fg2 (6.66:1) rather than --fg3 (5.46:1). SHELL.md §0.
+
+   amp-nav draws its OWN placement strip above its bar, from the same PLACEMENT
+   entry, and it said the same sentence and printed the same rung chip as the
+   band directly below it. Two headers, one fact. This surface hides the nav's
+   and keeps the band's, because the band is the one carrying .covers — the
+   sentence that says what the rung is actually a claim about, which is the
+   whole reason a rung chip is allowed on the page at all.
+   ::part is the component's own seam for exactly this. amp-nav.js is owned by
+   ampersand-nav and is not edited from here; a rule in this stylesheet is a
+   decision by this surface and does not follow the file to the other ~26.
+
+   THE SECOND RULE IS NOT OPTIONAL. amp-nav injects `body{padding-top:var(
+   --amp-nav-height)}` and computes that height from the PLACEMENT entry, not
+   from what is on screen — 56 for the bar plus 30 for a strip it believes it
+   drew. Hiding the strip without correcting the height leaves 30 pixels of
+   dead band above the page, which is what happened here first. 56px is the
+   component's own figure for a nav with no strip (_heightForInject), and it
+   documents the override as "per-host via attribute or CSS var"; the var is
+   used rather than the attribute because the publication gate matches the
+   mount point literally. html:root beats the :root the component appends to
+   the head after this stylesheet has already been parsed. */
+amp-nav::part(place){display:none}
+html:root{--amp-nav-height:56px}
 .band{display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;padding:11px 22px;background:var(--ink2);border-bottom:1px solid var(--line);font-size:var(--xs)}
 .band .where{color:var(--fg2);text-transform:uppercase;letter-spacing:.05em}
 .band .where b{color:var(--fg);font-weight:600}

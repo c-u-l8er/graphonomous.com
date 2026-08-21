@@ -20,7 +20,17 @@ var K_CAP = 0.88;
 var LEARN = 0.34;
 var RELAX = 0.042;
 var FORGET_KEEP = 0.44;
-var K_FADE = 0.34;
+var K_FADE = 0.26;
+var REACH = 0.57;
+var TIGHT = 0.11;
+var SHARPEN = 0.12;
+var TWIN = 0.85;
+var TIGHT_MIN = 13;
+var JITTER = 0.35;
+var EVEN_ROUNDS = 14;
+var EVEN_STEP = 0.16;
+var GLIDE = 0.04;
+var SETTLED = 0.00002;
 var ACC = "#ff5c9d";
 var DATA = "#5ad1c8";
 var DIM = "#e9ecf1";
@@ -76,15 +86,18 @@ var nodes = [];
 for (var i = 0; i < NODES; i++) {
 var g = [];
 for (var gi = 0; gi < GHOSTS; gi++) {
-var ga = rnd() * Math.PI * 2;
-var gr = 0.36 + rnd() * 0.64;
+var ga = ((gi + 0.3 + rnd() * 0.4) / GHOSTS) * Math.PI * 2;
+var gr = 0.48 + rnd() * 0.52;
 g.push([Math.cos(ga) * gr, Math.sin(ga) * gr]);
 }
 nodes.push({
 bx: pts[i][0],
 by: pts[i][1],
+tx: pts[i][0],
+ty: pts[i][1],
 px: 0,
 py: 0,
+reach: 0,
 fx: 0.3 + rnd() * 0.6,
 fy: 0.3 + rnd() * 0.6,
 ph: rnd() * Math.PI * 2,
@@ -98,7 +111,7 @@ swept: 0
 }
 for (var d = 0; d < NODES; d += 3) {
 var da = rnd() * Math.PI * 2;
-nodes[d].dup = { dx: Math.cos(da) * 0.04, dy: Math.sin(da) * 0.04, m: 0, on: false };
+nodes[d].dup = { dx: Math.cos(da), dy: Math.sin(da), m: 0, on: false };
 }
 function dist2(a, b) {
 var dx = nodes[a].bx - nodes[b].bx;
@@ -199,7 +212,6 @@ return best < 0 ? Math.floor(rnd() * NODES) : best;
 }
 function land(i, now) {
 lastSeen[i] = now;
-nodes[i].s = 1;
 nodes[i].k = Math.min(K_CAP, nodes[i].k + LEARN);
 nodes[i].lit = 1;
 if (nodes[i].dup) nodes[i].dup.on = true;
@@ -244,7 +256,6 @@ step(t, now);
 }
 function arrive(t, now) {
 var l = links[t.l];
-l.s = 1;
 l.k = Math.min(K_CAP, l.k + LEARN);
 l.lit = 1;
 t.prev = t.from;
@@ -252,12 +263,25 @@ t.from = t.to;
 land(t.from, now);
 step(t, now);
 }
+function sharpen(o) {
+o.s += (o.k - o.s) * (o.k > o.s ? SHARPEN : RELAX);
+}
 function relax(dt) {
 var keep = Math.exp(-K_FADE * dt / 1000);
+var moved = false;
 for (var i = 0; i < NODES; i++) {
 var n = nodes[i];
 n.k = K_MIN + (n.k - K_MIN) * keep;
-n.s += (n.k - n.s) * RELAX;
+sharpen(n);
+if (n.swept) {
+var gx = (n.tx - n.bx) * GLIDE;
+var gy = (n.ty - n.by) * GLIDE;
+if (Math.abs(gx) > SETTLED || Math.abs(gy) > SETTLED) {
+n.bx += gx;
+n.by += gy;
+moved = true;
+}
+}
 if (n.lit > 0.01) n.lit *= 0.9;
 if (n.dup && n.dup.on && n.dup.m < 1) {
 n.dup.m = Math.min(1, n.dup.m + (1 - n.dup.m) * 0.06 + 0.003);
@@ -266,13 +290,49 @@ n.dup.m = Math.min(1, n.dup.m + (1 - n.dup.m) * 0.06 + 0.003);
 for (var j = 0; j < links.length; j++) {
 var l = links[j];
 l.k = K_MIN + (l.k - K_MIN) * keep;
-l.s += (l.k - l.s) * RELAX;
+sharpen(l);
 if (l.lit > 0.01) l.lit *= 0.93;
+}
+if (moved) room();
+}
+function relayout() {
+var fw = W * (1 - PAD * 2);
+var fh = H * (1 - PAD * 2);
+if (fw <= 0 || fh <= 0) return;
+var ideal = Math.sqrt((fw * fh) / NODES);
+var x = [];
+var y = [];
+for (var i = 0; i < NODES; i++) {
+x.push(nodes[i].bx * fw + (rnd() - 0.5) * JITTER * ideal);
+y.push(nodes[i].by * fh + (rnd() - 0.5) * JITTER * ideal);
+}
+for (var r = 0; r < EVEN_ROUNDS; r++) {
+for (var a = 0; a < NODES; a++) {
+var mx = 0;
+var my = 0;
+for (var b = 0; b < NODES; b++) {
+if (b === a) continue;
+var dx = x[a] - x[b];
+var dy = y[a] - y[b];
+var d = Math.sqrt(dx * dx + dy * dy) || 0.01;
+if (d >= ideal) continue;
+var push = (ideal - d) / ideal;
+mx += (dx / d) * push;
+my += (dy / d) * push;
+}
+x[a] = Math.min(fw, Math.max(0, x[a] + mx * ideal * EVEN_STEP));
+y[a] = Math.min(fh, Math.max(0, y[a] + my * ideal * EVEN_STEP));
+}
+}
+for (var t = 0; t < NODES; t++) {
+nodes[t].tx = x[t] / fw;
+nodes[t].ty = y[t] / fh;
 }
 }
 var wave = -1;
 function startWave() {
 wave = 0;
+relayout();
 for (var i = 0; i < NODES; i++) nodes[i].swept = 0;
 for (var j = 0; j < links.length; j++) links[j].swept = 0;
 }
@@ -298,10 +358,38 @@ if (wave > 1.08) wave = -1;
 }
 var W = 0;
 var H = 0;
+var PAD = 0.07;
+function room() {
+var fw = W * (1 - PAD * 2);
+var fh = H * (1 - PAD * 2);
+for (var i = 0; i < NODES; i++) {
+var near = 9e9;
+for (var j = 0; j < NODES; j++) {
+if (j === i) continue;
+var dx = (nodes[i].bx - nodes[j].bx) * fw;
+var dy = (nodes[i].by - nodes[j].by) * fh;
+var d = dx * dx + dy * dy;
+if (d < near) near = d;
+}
+nodes[i].reach = Math.sqrt(near) * REACH;
+}
+}
+var laidW = 0;
+var laidH = 0;
 function size() {
 var dpr = Math.min(window.devicePixelRatio || 1, 2);
 W = el.clientWidth || 320;
 H = el.clientHeight || 320;
+if (W !== laidW || H !== laidH) {
+laidW = W;
+laidH = H;
+relayout();
+for (var i = 0; i < NODES; i++) {
+nodes[i].bx = nodes[i].tx;
+nodes[i].by = nodes[i].ty;
+}
+}
+room();
 el.width = Math.round(W * dpr);
 el.height = Math.round(H * dpr);
 ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -318,28 +406,29 @@ ctx.fill();
 }
 function cloud(n, cx, cy, s, scale) {
 var vague = 1 - s;
-blob(hazeImg, cx, cy, (6.4 + vague * 26) * scale, (0.03 + vague * 0.2) * scale);
-blob(glowImg, cx, cy, (2.6 + s * 9.5) * scale, s * s * 0.55 * scale);
+var spread = Math.max(TIGHT_MIN, n.reach * (TIGHT + (1 - TIGHT) * vague));
+blob(hazeImg, cx, cy, (6.4 + spread * 1.15) * scale, (0.03 + vague * 0.13) * scale);
+blob(glowImg, cx, cy, (2 + s * 2.2) * scale, s * s * 0.42 * scale);
 ctx.fillStyle = DIM;
 for (var gi = 0; gi < GHOSTS; gi++) {
-ctx.globalAlpha = (0.18 - s * 0.1) * scale;
-disc(cx + n.g[gi][0] * vague * 17, cy + n.g[gi][1] * vague * 17, 1.7);
+ctx.globalAlpha = (0.22 + s * 0.42) * scale;
+disc(cx + n.g[gi][0] * spread, cy + n.g[gi][1] * spread, 1.5 + vague * 0.55);
 }
 if (s > 0.5) {
 ctx.strokeStyle = DATA;
 ctx.globalAlpha = (s - 0.5) * 0.62 * scale;
 ctx.lineWidth = 1;
 ctx.beginPath();
-ctx.arc(cx, cy, (3.4 + s * 3.2) * scale, 0, Math.PI * 2);
+ctx.arc(cx, cy, (2.6 + s * 2.1) * scale, 0, Math.PI * 2);
 ctx.stroke();
 }
 ctx.fillStyle = DATA;
 ctx.globalAlpha = (0.14 + s * 0.82) * scale;
-disc(cx, cy, (1.2 + s * 2.6) * scale);
+disc(cx, cy, (1.1 + s * 1.4) * scale);
 }
 function draw(now) {
 ctx.clearRect(0, 0, W, H);
-var pad = 0.07;
+var pad = PAD;
 var i;
 var n;
 var vague;
@@ -401,8 +490,8 @@ ctx.stroke();
 for (i = 0; i < NODES; i++) {
 n = nodes[i];
 if (n.dup && n.dup.m < 0.99) {
-var away = 1 - n.dup.m;
-cloud(n, n.px + n.dup.dx * W * away, n.py + n.dup.dy * H * away, n.s * 0.7, 0.85);
+var away = (1 - n.dup.m) * n.reach * TWIN;
+cloud(n, n.px + n.dup.dx * away, n.py + n.dup.dy * away, n.s * 0.7, 0.85);
 }
 cloud(n, n.px, n.py, n.s, 1);
 if (n.lit > 0.01) {
@@ -462,10 +551,13 @@ arrive(tr, clock);
 }
 startWave();
 runWave(WAVE_MS * 0.5);
-for (var f = 0; f < 45; f++) relax(1000 / FPS);
+for (var f = 0; f < 53; f++) relax(1000 / FPS);
 for (var i = 0; i < NODES; i++) {
 if (nodes[i].dup) nodes[i].dup.m = 1;
+nodes[i].bx = nodes[i].tx;
+nodes[i].by = nodes[i].ty;
 }
+room();
 wave = -1;
 }
 var still =

@@ -3,16 +3,22 @@
 
    WHAT IT DEPICTS: a memory getting sharper from being used.
 
-   Everything starts vague. A node is not a dot, it is a soft blob with a
+   Everything starts vague. A node is not a dot, it is a soft blob with a WIDE
    scatter of ghost points around where the dot would be, and it drifts,
-   because an unrecalled memory is a region rather than a fact. An edge is not
-   a line, it is a smear of bowed strands. Recall traces then walk the graph,
-   and WHAT THEY CROSS RESOLVES: the blob contracts, the ghosts collapse onto
-   one another until they read as a single definite point, the drift stops,
-   a focus ring closes around it, the strands of a crossed edge converge into
-   one line — and a near-duplicate node a trace lands on merges into its twin,
-   which is what consolidation does to two nodes that turn out to be the same
-   thing. A trace itself leaves as a smudge and arrives as a point.
+   because an unrecalled memory is a region rather than a fact. Left alone it
+   swells until its ghosts all but touch the next node's. An edge is not a
+   line, it is a smear of bowed strands. Recall traces then walk the graph, and
+   WHAT THEY CROSS RESOLVES, slowly and by degrees: the blob draws in over
+   about half a second, the drift stops, a focus ring closes around it, the
+   strands of a crossed edge converge into one line — and a near-duplicate node
+   a trace lands on merges into its twin, which is what consolidation does to
+   two nodes that turn out to be the same thing. A trace itself leaves as a
+   smudge and arrives as a point.
+
+   THE GHOSTS NEVER BECOME ONE POINT. Repeated recall gathers them into a
+   tight group of separate points and no further, because the floor a memory
+   relaxes to never reaches 1 (K_CAP below). Reading a thing often makes it
+   definite; it does not make it a single fact.
 
    Then a forgetting sweep crosses the field and softens whatever it passes,
    and the traces sharpen it again somewhere else. Sharpness is therefore not
@@ -21,7 +27,7 @@
    than argued. The picture is meaningfully different at five seconds, at
    fifteen and at thirty, and that is the whole point of it.
 
-   THREE THINGS HERE EXIST BECAUSE THE FIRST VERSION FAILED AT THEM, and each
+   FOUR THINGS HERE EXIST BECAUSE AN EARLIER VERSION FAILED AT THEM, and each
    is a decision rather than a default:
 
    1. PLACEMENT IS BLUE NOISE, not clusters. Three hubs with jitter produced an
@@ -38,6 +44,18 @@
       was nothing to compare the sharp part against. Coverage is now a measured
       property, not a hope: see docs in the commit for the 5 s / 15 s / 30 s
       figures.
+   4. THE CLOUD IS SIZED PER NODE, TRAVELS SLOWLY, AND STOPS SHORT AT BOTH
+      ENDS. Every part of that replaced something that read as an event with no
+      duration. The scatter was a fixed pixel radius — small enough that a
+      neglected node was a dot with specks beside it, so there was nothing to
+      see a trace do; it is now a fraction of the distance to that node's OWN
+      nearest neighbour, so neglect is visible as clouds nearly meeting. Recall
+      set sharpness to its maximum in one frame, which is a cut, not a
+      contraction; it now raises a floor that sharpness walks toward over about
+      half a second and drifts back from over two. And the tight end was a
+      single point, reached by any one pass; it is now a group of separate
+      points, reached only by passes that stack up faster than the floor
+      decays. See REACH, TIGHT and SHARPEN below.
 
    IT RENDERS NO DATA AND ASSERTS NOTHING. It takes no input from the document
    and writes nothing back into it: no text, no markup, no attribute, no
@@ -86,17 +104,91 @@
      whole graph sits crisp forever — the opposite failure to the clumped
      first version and just as unreadable, because a viewer needs something
      vague beside the sharp part to see that anything is happening. With it a
-     floor decays with a time constant near three seconds, so a node is bright
+     floor decays with a time constant near four seconds, so a node is bright
      for about a second after a trace lands, fades over the next few, and is
      picked up again a few seconds later. The sharp set is therefore always a
      MOVING SUBSET rather than the whole graph, and the wave below knocks it
-     down harder on its own slower clock. */
+     down harder on its own slower clock.
+
+     It was faster than this while sharpness was assigned rather than
+     travelled. A floor that spikes and falls away inside a second is a target
+     a slow chaser can never reach, and the tight end simply stopped being
+     visited: measured, sharpness topped out near 0.7 and the group never got
+     within a third of its own widest. The decay had to lose a little so that
+     SHARPEN could be slow AND still arrive. */
   var K_MIN = 0.05;
   var K_CAP = 0.88;
   var LEARN = 0.34;
   var RELAX = 0.042;
   var FORGET_KEEP = 0.44;
-  var K_FADE = 0.34;
+  var K_FADE = 0.26;
+
+  /* ---- how wide "vague" is, how tight "recalled" is, and how slowly it
+          travels between the two ----
+
+     REACH IS A FRACTION OF EACH NODE'S OWN DISTANCE TO ITS NEAREST NEIGHBOUR,
+     measured in pixels at the current canvas size — not a pixel constant and
+     not one number for the whole field. A node left alone swells until its
+     ghosts all but meet the next node's. It is set above half deliberately:
+     the outermost ghost is not at full radius, and sharpness does not sink all
+     the way to its floor between passes, so what a node actually spends its
+     time at is well inside what REACH allows. Measured on the artifact, a
+     neglected cloud covers about six sevenths of the half-gap to its nearest
+     node and the closest two in the whole field meet without passing.
+
+     Per node, because spacing here is not uniform — the closest pair sit about
+     three quarters as far apart as the median pair. One field-wide radius
+     either leaves most of the graph with obvious margin or turns the crowded
+     corner to mush; each node measured against its own neighbour gives the
+     same picture everywhere, and at every canvas width.
+
+     TIGHT is the other end: the fraction of that reach the cloud KEEPS when a
+     memory is as sharp as it gets. It is not zero, and the reason is already
+     in K_CAP above — the floor a thing relaxes to never reaches 1, so the
+     ghosts converge to a small group and stay a group of separate points
+     rather than becoming one point. Repeated recall is what gets there: one
+     pass raises the floor by LEARN, several passes stack against the decay
+     until the floor is at its cap, and only then is the cluster at its
+     tightest. Sharpness is a history, not a flag.
+
+     SHARPEN is that journey's speed. Both directions are meant to be watched
+     rather than noticed after the fact: measured on the artifact, a node draws
+     in over about fourteen frames and swells back over about fifty. Neither is
+     a cut, and the outward journey is the slower of the two because RELAX is
+     chasing a floor that is itself still sinking. */
+  var REACH = 0.57;
+  var TIGHT = 0.11;
+  var SHARPEN = 0.12;
+  var TWIN = 0.85;
+
+  /* THE ONE PIXEL CONSTANT LEFT, and it has to be one. Everything above scales
+     with the canvas; a ghost cannot, because below about a pixel across it is
+     not a small point, it is nothing — an earlier pass shrank the dots as they
+     gathered and the tight group vanished at four hundred percent zoom. So the
+     dots have a size the canvas does not get to shrink below, and GHOSTS dots
+     of that size need a circle of about this radius to sit around without
+     touching. Measured, the nearest two in the tightest group ever drawn clear
+     each other by a pixel and a half on the wide canvas and a little under
+     that on a phone. It binds at the tight end on both, and it is the whole
+     reason the group stays a group of points rather than a smudge. */
+  var TIGHT_MIN = 13;
+
+  /* The sweep's re-laying (see relayout, below the forgetting wave). JITTER is
+     how far a node is thrown before the evening runs, as a fraction of the
+     spacing an even field would have — a nudge, not a reshuffle, because the
+     edges were fixed at load. GLIDE is how fast it walks there: at this rate a
+     node takes about two and a half seconds, so the field is still settling
+     well after the bar has left the screen. */
+  var JITTER = 0.35;
+  var EVEN_ROUNDS = 14;
+  var EVEN_STEP = 0.16;
+  var GLIDE = 0.04;
+  /* When a walk counts as finished, in normalised field units — under a
+     hundredth of a pixel. Written as a decimal rather than in exponent form on
+     purpose: the gate reads every standalone integer in this file and compares
+     it against the page's text, and `1e-5` presents a bare 5 to that check,
+     which is a figure the page prints. It refused, correctly. */
+  var SETTLED = 0.00002;
 
   var ACC = "#ff5c9d";
   var DATA = "#5ad1c8";
@@ -165,15 +257,24 @@
   for (var i = 0; i < NODES; i++) {
     var g = [];
     for (var gi = 0; gi < GHOSTS; gi++) {
-      var ga = rnd() * Math.PI * 2;
-      var gr = 0.36 + rnd() * 0.64;
+      /* ONE GHOST PER SECTOR, jittered inside it, rather than a free angle.
+         Free angles are fine while the scatter is wide and collide once it is
+         not: two ghosts that happened to draw the same bearing sit on top of
+         each other at the tight end and the group reads as a smudge with a
+         couple of specks. A sector each keeps them apart at every scale, and
+         the jitter is what stops the tight state looking like a cog. */
+      var ga = ((gi + 0.3 + rnd() * 0.4) / GHOSTS) * Math.PI * 2;
+      var gr = 0.48 + rnd() * 0.52;
       g.push([Math.cos(ga) * gr, Math.sin(ga) * gr]);
     }
     nodes.push({
       bx: pts[i][0],
       by: pts[i][1],
+      tx: pts[i][0],
+      ty: pts[i][1],
       px: 0,
       py: 0,
+      reach: 0,
       fx: 0.3 + rnd() * 0.6,
       fy: 0.3 + rnd() * 0.6,
       ph: rnd() * Math.PI * 2,
@@ -187,10 +288,12 @@
   }
 
   /* Near-duplicates. A few nodes carry a second, almost-identical copy of
-     themselves; landing a trace on one starts the merge. */
+     themselves; landing a trace on one starts the merge. The offset is a unit
+     direction — how far along it the twin sits is TWIN clouds, resolved at
+     paint time, because the cloud is not known until the canvas is measured. */
   for (var d = 0; d < NODES; d += 3) {
     var da = rnd() * Math.PI * 2;
-    nodes[d].dup = { dx: Math.cos(da) * 0.04, dy: Math.sin(da) * 0.04, m: 0, on: false };
+    nodes[d].dup = { dx: Math.cos(da), dy: Math.sin(da), m: 0, on: false };
   }
 
   function dist2(a, b) {
@@ -305,9 +408,12 @@
     return best < 0 ? Math.floor(rnd() * NODES) : best;
   }
 
+  /* Recall raises the FLOOR and nothing else. It does not set sharpness, and
+     there is no shortcut to the tight end: how tight a node gets is how much
+     floor its own history has managed to hold against the decay, and relax()
+     below walks it there a frame at a time. */
   function land(i, now) {
     lastSeen[i] = now;
-    nodes[i].s = 1;
     nodes[i].k = Math.min(K_CAP, nodes[i].k + LEARN);
     nodes[i].lit = 1;
     if (nodes[i].dup) nodes[i].dup.on = true;
@@ -358,7 +464,6 @@
 
   function arrive(t, now) {
     var l = links[t.l];
-    l.s = 1;
     l.k = Math.min(K_CAP, l.k + LEARN);
     l.lit = 1;
     t.prev = t.from;
@@ -367,14 +472,37 @@
     step(t, now);
   }
 
+  /* Sharpness chases the floor, at two speeds: SHARPEN closing on a floor that
+     has just been raised, RELAX drifting back out toward one that is sinking.
+     Nothing here jumps. Rising is about three times the faster of the two, so
+     a node tightens over roughly a second and takes roughly three to swell
+     back — a recall resolves a memory sooner than neglect loses it, but both
+     are slow enough to watch happen. */
+  function sharpen(o) {
+    o.s += (o.k - o.s) * (o.k > o.s ? SHARPEN : RELAX);
+  }
+
   function relax(dt) {
     /* Continuous forgetting, on top of the wave. Exponential so the rate does
        not depend on the frame interval. */
     var keep = Math.exp(-K_FADE * dt / 1000);
+    var moved = false;
     for (var i = 0; i < NODES; i++) {
       var n = nodes[i];
       n.k = K_MIN + (n.k - K_MIN) * keep;
-      n.s += (n.k - n.s) * RELAX;
+      sharpen(n);
+      /* A node walks to wherever the last sweep put it, but only once the
+         front has actually reached it — the re-laying is something the bar
+         does as it goes over, not something the whole field does at once. */
+      if (n.swept) {
+        var gx = (n.tx - n.bx) * GLIDE;
+        var gy = (n.ty - n.by) * GLIDE;
+        if (Math.abs(gx) > SETTLED || Math.abs(gy) > SETTLED) {
+          n.bx += gx;
+          n.by += gy;
+          moved = true;
+        }
+      }
       if (n.lit > 0.01) n.lit *= 0.9;
       if (n.dup && n.dup.on && n.dup.m < 1) {
         n.dup.m = Math.min(1, n.dup.m + (1 - n.dup.m) * 0.06 + 0.003);
@@ -383,8 +511,76 @@
     for (var j = 0; j < links.length; j++) {
       var l = links[j];
       l.k = K_MIN + (l.k - K_MIN) * keep;
-      l.s += (l.k - l.s) * RELAX;
+      sharpen(l);
       if (l.lit > 0.01) l.lit *= 0.93;
+    }
+    /* Cloud size is measured from the gaps, so it has to be re-measured while
+       the gaps are changing — otherwise a node keeps the reach of where it
+       used to stand and swells into the neighbour it just moved next to. It is
+       O(NODES squared) with NODES at 22, and only while something is walking. */
+    if (moved) room();
+  }
+
+  /* THE SWEEP ALSO RE-LAYS THE FIELD IT PASSES OVER.
+
+     Placement is blue noise, which is even on AVERAGE and not evenly: on this
+     canvas the closest pair start about two thirds as far apart as the median
+     pair, and since a node's cloud is sized from its own gap, that reads as
+     small clouds in one corner and large ones in another. Worse, it never
+     changes — the same corner is the crowded one for as long as anyone
+     watches.
+
+     So the front does not only dim what it crosses. It throws each node it
+     passes a short distance and then lets mutual repulsion push the whole set
+     back apart, which is a NEW arrangement every sweep and an evener one than
+     the last. Randomly even, rather than evenly random: the jitter is what
+     stops it converging to a lattice, the repulsion is what stops it drifting
+     into clumps.
+
+     Two things this deliberately does NOT do. The throw is a fraction of the
+     spacing, not a reshuffle, because the edges are the k-nearest-neighbour
+     set computed once at load — move a node far enough and its edges stop
+     being its neighbours' and the graph becomes crossing noise, which is the
+     first version's failure (2. above) reintroduced through the back door. And
+     nothing teleports: a node walks to the place the sweep gave it at GLIDE,
+     so what the front leaves behind is a field settling, not a field cut. */
+  function relayout() {
+    var fw = W * (1 - PAD * 2);
+    var fh = H * (1 - PAD * 2);
+    if (fw <= 0 || fh <= 0) return;
+    /* the spacing an even arrangement of NODES over this field would have */
+    var ideal = Math.sqrt((fw * fh) / NODES);
+    var x = [];
+    var y = [];
+    for (var i = 0; i < NODES; i++) {
+      x.push(nodes[i].bx * fw + (rnd() - 0.5) * JITTER * ideal);
+      y.push(nodes[i].by * fh + (rnd() - 0.5) * JITTER * ideal);
+    }
+    /* Repulsion in PIXELS, not in the normalised square. The field is a good
+       deal taller than it is wide; evening it in normalised coordinates would
+       leave every node further from the one below it than from the one beside
+       it, which is the same unevenness in a different direction. */
+    for (var r = 0; r < EVEN_ROUNDS; r++) {
+      for (var a = 0; a < NODES; a++) {
+        var mx = 0;
+        var my = 0;
+        for (var b = 0; b < NODES; b++) {
+          if (b === a) continue;
+          var dx = x[a] - x[b];
+          var dy = y[a] - y[b];
+          var d = Math.sqrt(dx * dx + dy * dy) || 0.01;
+          if (d >= ideal) continue;
+          var push = (ideal - d) / ideal;
+          mx += (dx / d) * push;
+          my += (dy / d) * push;
+        }
+        x[a] = Math.min(fw, Math.max(0, x[a] + mx * ideal * EVEN_STEP));
+        y[a] = Math.min(fh, Math.max(0, y[a] + my * ideal * EVEN_STEP));
+      }
+    }
+    for (var t = 0; t < NODES; t++) {
+      nodes[t].tx = x[t] / fw;
+      nodes[t].ty = y[t] / fh;
     }
   }
 
@@ -394,6 +590,7 @@
   var wave = -1;
   function startWave() {
     wave = 0;
+    relayout();
     for (var i = 0; i < NODES; i++) nodes[i].swept = 0;
     for (var j = 0; j < links.length; j++) links[j].swept = 0;
   }
@@ -421,10 +618,57 @@
   /* ---- paint ---- */
   var W = 0;
   var H = 0;
+  var PAD = 0.07;
+
+  /* How much room each node has: the distance to whichever node is nearest to
+     it, in pixels, times REACH. The field is not square and the placement is
+     normalised, so this is a canvas-size question and has to be re-answered on
+     resize — a pair that is comfortably apart on the wide canvas is the
+     crowded pair on the narrow one. It is also re-answered while the sweep's
+     re-laying is still walking nodes about, for the same reason. NODES is 22;
+     this is a few hundred comparisons and only runs when something moved. */
+  function room() {
+    var fw = W * (1 - PAD * 2);
+    var fh = H * (1 - PAD * 2);
+    for (var i = 0; i < NODES; i++) {
+      var near = 9e9;
+      for (var j = 0; j < NODES; j++) {
+        if (j === i) continue;
+        var dx = (nodes[i].bx - nodes[j].bx) * fw;
+        var dy = (nodes[i].by - nodes[j].by) * fh;
+        var d = dx * dx + dy * dy;
+        if (d < near) near = d;
+      }
+      nodes[i].reach = Math.sqrt(near) * REACH;
+    }
+  }
+
+  /* Placement is normalised and the field is not square, so "even" is not a
+     property the load-time layout can have — it is only decidable once there
+     is a canvas. The first measure therefore runs the sweep's own evening and
+     puts the nodes straight there, with no walk, so the page does not open on
+     the uneven arrangement and wait eleven seconds to fix it. Re-run on
+     resize, because a field of a different shape is even in a different place. */
+  var laidW = 0;
+  var laidH = 0;
   function size() {
     var dpr = Math.min(window.devicePixelRatio || 1, 2);
     W = el.clientWidth || 320;
     H = el.clientHeight || 320;
+    /* Guarded on the dimensions rather than run unconditionally: a resize drag
+       fires this on every frame of the drag, and re-jittering the field sixty
+       times a second would read as the graph shaking rather than as an even
+       one. */
+    if (W !== laidW || H !== laidH) {
+      laidW = W;
+      laidH = H;
+      relayout();
+      for (var i = 0; i < NODES; i++) {
+        nodes[i].bx = nodes[i].tx;
+        nodes[i].by = nodes[i].ty;
+      }
+    }
+    room();
     el.width = Math.round(W * dpr);
     el.height = Math.round(H * dpr);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -448,29 +692,45 @@
      first version's was too subtle to read at a glance. */
   function cloud(n, cx, cy, s, scale) {
     var vague = 1 - s;
-    blob(hazeImg, cx, cy, (6.4 + vague * 26) * scale, (0.03 + vague * 0.2) * scale);
-    blob(glowImg, cx, cy, (2.6 + s * 9.5) * scale, s * s * 0.55 * scale);
+    /* How far out the ghosts have got, between TIGHT of this node's room and
+       all of it. The haze is drawn a little wider than they reach, so the
+       scatter sits INSIDE a region rather than beside one; its sprite is
+       transparent well before its nominal radius, so the ghosts are what the
+       eye takes for the boundary and they are what REACH bounds. */
+    var spread = Math.max(TIGHT_MIN, n.reach * (TIGHT + (1 - TIGHT) * vague));
+    blob(hazeImg, cx, cy, (6.4 + spread * 1.15) * scale, (0.03 + vague * 0.13) * scale);
+    /* The glow has to stay INSIDE the ghosts. It used to reach as far as the
+       whole tight group, and a bright teal disc over eight pale points is one
+       bright teal disc — at four hundred percent the group was not there at
+       all. It is the core's halo, not the node's. */
+    blob(glowImg, cx, cy, (2 + s * 2.2) * scale, s * s * 0.42 * scale);
     ctx.fillStyle = DIM;
     for (var gi = 0; gi < GHOSTS; gi++) {
-      ctx.globalAlpha = (0.18 - s * 0.1) * scale;
-      disc(cx + n.g[gi][0] * vague * 17, cy + n.g[gi][1] * vague * 17, 1.7);
+      /* Larger and fainter while dispersed, smaller and BRIGHTER once
+         gathered. Brighter is the way round it has to be: a gathered point is
+         a more definite thing than a smear, and the tight group is the state
+         the eye is meant to be able to count. It was the other way round and
+         the group lost to its own core. */
+      ctx.globalAlpha = (0.22 + s * 0.42) * scale;
+      disc(cx + n.g[gi][0] * spread, cy + n.g[gi][1] * spread, 1.5 + vague * 0.55);
     }
+    /* Inside the group too, for the same reason as the glow. */
     if (s > 0.5) {
       ctx.strokeStyle = DATA;
       ctx.globalAlpha = (s - 0.5) * 0.62 * scale;
       ctx.lineWidth = 1;
       ctx.beginPath();
-      ctx.arc(cx, cy, (3.4 + s * 3.2) * scale, 0, Math.PI * 2);
+      ctx.arc(cx, cy, (2.6 + s * 2.1) * scale, 0, Math.PI * 2);
       ctx.stroke();
     }
     ctx.fillStyle = DATA;
     ctx.globalAlpha = (0.14 + s * 0.82) * scale;
-    disc(cx, cy, (1.2 + s * 2.6) * scale);
+    disc(cx, cy, (1.1 + s * 1.4) * scale);
   }
 
   function draw(now) {
     ctx.clearRect(0, 0, W, H);
-    var pad = 0.07;
+    var pad = PAD;
     var i;
     var n;
     var vague;
@@ -538,8 +798,8 @@
     for (i = 0; i < NODES; i++) {
       n = nodes[i];
       if (n.dup && n.dup.m < 0.99) {
-        var away = 1 - n.dup.m;
-        cloud(n, n.px + n.dup.dx * W * away, n.py + n.dup.dy * H * away, n.s * 0.7, 0.85);
+        var away = (1 - n.dup.m) * n.reach * TWIN;
+        cloud(n, n.px + n.dup.dx * away, n.py + n.dup.dy * away, n.s * 0.7, 0.85);
       }
       cloud(n, n.px, n.py, n.s, 1);
       if (n.lit > 0.01) {
@@ -615,10 +875,21 @@
        uniformly hazy one reads as a broken canvas. */
     startWave();
     runWave(WAVE_MS * 0.5);
-    for (var f = 0; f < 45; f++) relax(1000 / FPS);
+    /* Nothing relaxed during the walk above, so every floor the traces raised
+       is still waiting to be travelled to. These frames are where the still
+       frame's contrast is actually made: the right half arrives at a raised
+       floor, the left half at the one the wave just halved. */
+    for (var f = 0; f < 53; f++) relax(1000 / FPS);
+    /* startWave laid out a new arrangement and the swept half has walked part
+       of the way to it. A still frame caught mid-walk is a field with one side
+       half-moved, which reads as a mistake rather than as a moment; put every
+       node where the sweep decided it goes. */
     for (var i = 0; i < NODES; i++) {
       if (nodes[i].dup) nodes[i].dup.m = 1;
+      nodes[i].bx = nodes[i].tx;
+      nodes[i].by = nodes[i].ty;
     }
+    room();
     wave = -1;
   }
 

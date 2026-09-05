@@ -1,21 +1,21 @@
 {
   "_comment": "Written by build-site.mjs. launch-gate.mjs refuses if any input has changed since, if an artifact does not hash to what was emitted, or if index.html does not carry this build_id. See stamp.mjs.",
-  "build_id": "ba1240c823a40",
+  "build_id": "b6a951f6b4313",
   "built_at": "2026-09-05",
   "inputs": {
     "build-site.mjs": "ea36b4a232ac08dc6c38fc2e934b9effcfbc0031a1480173e108be4f440cdc36",
     "package.json": "6be50da95fd302673315ca0e639801552ce15fc85d9aaf611258d4611195fec2",
-    "records/surface.json": "d62bc92a36ae66c24736eb37046ced63c100ae5f7c160480264133ff7a20e426",
+    "records/surface.json": "9ef843e8486c48e180a1a6afef610e3d4f10b67885c1a4d82cd8548c7791a004",
     "records/witness.json": "dfc4a72df0874e89a40c41c4e018078d5a43f2b1a1ced6797db183722add193a",
     "src/contact.js": "9f4bd32e82a639a24d060e529a1077d58531f73590ce14d67509fb4360b3a9c5",
     "src/inspect.js": "962e6798bf9c17176890cb317f969ace338c828752be0f3e30a695234fe8c8e8",
-    "src/landing.html": "13c5998ebbb31a59f66bd5464840cbe58871a6960561c72fd9184af56886e603",
+    "src/landing.html": "1ed303a4a67972aa87c1ef51961d483361e58101801e4e7e1e6ff66b5ae14fe9",
     "src/memory.js": "87361be0845b14ab782226091278559ce5898dea23f48152c72761e072afe080",
     "src/shell.css": "98114fffc2c151af258e4fc7e5d3a8cfc7258a671660b1287946f0a0e0e926b4",
     "stamp.mjs": "85210cefa992e279211f94fe342454446c88168258d22a5821a3e6011e983195"
   },
   "artifacts": {
-    "index.html": "89d518ddc4bd907f7286fa1d1ce587ca4a6d32bfa6ebb486d797c349b5fbee75",
+    "index.html": "6cbab0d26bf4d8d179df6a6b5ed633ad493091a43f83de89bffbede7ba168e45",
     "memory.js": "8eeb5f76cc697c710075579582d8a7fd2340e43fb2b62fb669fa42d841ed9cac",
     "contact.js": "0e677758d8ed4606d889c53b7534e2bf4e01ad8e65442394f98c4870b3b61e15",
     "inspect.js": "a4afd0900ad048419eef94e2626420de0854f3add6d5d4f82e912f4a55ed9e41"

@@ -53,7 +53,7 @@
       "n": "01",
       "title": "Pin",
       "q": "Which bytes?",
-      "what": "A snapshot names every repository it reads by commit, tree and blob — [[pinned_sources]] of them for the largest one, Super (CD) at [[super_pin]] among them. A blob that has moved is refused, never re-read.",
+      "what": "A snapshot names every repository it reads by commit, tree and blob — [[pinned_sources]] of them for the largest one, Super (CD) at [[super_pin]] among them. A blob that has moved is refused, never re-read. Reading Super's evidence is the first half of a loop whose second half — Super carrying Graphonomous as every agent's memory — is designed and not built.",
       "tool": "g0 snapshot",
       "refusal": "SOURCE_MOVED",
       "art": "root"

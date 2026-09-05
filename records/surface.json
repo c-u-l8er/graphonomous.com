@@ -2,7 +2,7 @@
   "schema": "computedriven-surface-v1",
   "_comment": "The frozen record this site is generated from. Nothing on a generated page may state a rung, a status or a count that is not here or in witness.json. build-site.mjs reads it; launch-gate.mjs refuses to publish when the artifact and this file disagree.",
   "shell_revision": "shell-r10",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "origin": "https://graphonomous.com",
   "repo": "https://github.com/c-u-l8er/graphonomous",
   "surface": "Graphonomous",
@@ -10,11 +10,11 @@
   "parent": "ComputeDriven",
   "tier": 2,
   "_tier_comment": "ampersand-nav/src/amp-nav.js records `graphonomous: { name: \"Graphonomous\", place: 2, layer: \"memory\", rung: \"live_deployed\" }`, and graphonomous.com IS in sync-nav.sh's target list (line 33). place 2 is inside the story, so this surface takes the STANDARD band with the layer sentence, not the tier-4 attribution variant reserved for place 4. Read, not assumed — SHELL.md §1.",
-  "question": "Can what a system understands be made queryable, falsifiable and provenance-linked?",
+  "question": "Can a system carry an honest model of what it understands?",
   "rung_witness": "test_suite",
   "_rung_witness_comment": "SHELL.md r5.2. The rung is in_tree: the lane exists, is tested, and nothing from it has been published. test_suite witnesses exactly that — the suite was run to completion on this machine against the pinned sibling registries — and it claims nothing about deployment, which is right, because there is none.",
-  "nav_breakpoint_px": 580,
-  "_nav_breakpoint_comment": "SHELL.md r6/r11: the breakpoint belongs to the surface and is BISECTED, never computed. RE-BISECTED 2026-09-05 in Chromium (agent-browser set viewport, the stacking rule overridden in the page so the unstacked nav could be measured) after the header nav was rewritten to Pipeline · Worlds · Evidence · Correct us · Source: the unstacked nav is two rows at 551px and one row from 552px, so the header stacks at 580px, 28px before the wrap. The previous nav (Install · The loop · Evidence · Correct us · Source) wrapped at 576 and stacked at 600. ANY CHANGE TO A NAV LABEL INVALIDATES THIS NUMBER AND IT MUST BE RE-BISECTED — the gate binds the labels to this record and stops the build when they differ.",
+  "nav_breakpoint_px": 720,
+  "_nav_breakpoint_comment": "SHELL.md r6/r11: the breakpoint belongs to the surface and is BISECTED, never computed. RE-BISECTED 2026-09-05 (second time that day) in Chromium via agent-browser set viewport, with the stacking rule overridden in the page so the unstacked nav could be measured by link centres: with the six-item nav (What it is · How it works · Worlds · Evidence · Correct us · Source) the unstacked nav is two rows at 688px and one row from 689px, so the header stacks at 720px, 31px before the wrap. Earlier the same day the five-item nav wrapped at 552 and stacked at 580; the original nav wrapped at 576 and stacked at 600. ANY CHANGE TO A NAV LABEL INVALIDATES THIS NUMBER AND IT MUST BE RE-BISECTED — the gate binds the labels to this record and stops the build when they differ.",
   "ink_box_headroom_px": {
     "h1": 9.5,
     "h2": 8.0,
@@ -24,7 +24,8 @@
   },
   "_ink_box_comment": "SHELL.md r7, second item: a line-height set against the em size can be smaller than the font's actual ink, and consecutive lines then overlap — agentromatic's Syne h1 overlapped by 11.8px and a descender collided with the cap-height beneath it. MEASURED here rather than assumed, 2026-08-17 in Chrome at 1280, by rendering each element's own text in its own computed font to a canvas and comparing actualBoundingBoxAscent+actualBoundingBoxDescent against the computed line box. Space Grotesk 600 at 57.6px inks 51.0px inside a 60.5px box. Every value above is headroom in pixels and every one is positive, so nothing here needed changing. Re-measured at 390/700/1280/1600 for the h1: +4.1 / +5.2 / +9.5 / +9.5. THE PUBLICATION GATE CANNOT CHECK THIS — it has no font engine and no browser — so it is a recorded measurement, not an enforced law, and it is said that way on purpose.",
   "nav_labels_at_measure": [
-    "Pipeline",
+    "What it is",
+    "How it works",
     "Worlds",
     "Evidence",
     "Correct us",
@@ -36,10 +37,10 @@
   "surface_rung": "in_tree",
   "surface_rung_covers": "the graphonomous/v2 lane in the repository — its adapters, projector, WRL world builder and TRVM certificate, its sealed projections, and its test suite run on this machine. Nothing from it has been published anywhere",
   "verified_at": "2026-09-05",
-  "definition": "Graphonomous is the persistent semantic/evidence graph that makes what a system understands queryable, falsifiable, provenance-linked and reducible.",
-  "boundary": "It is a derived projection over registries that already hold the truth. It may derive, relate, rank, challenge, detect inconsistency and propose. It never promotes evidence: that stays with the owning registry, factory or adjudication.",
+  "definition": "Graphonomous is an autonomous semantic/evidence graph that continuously constructs, tests, relates and explains a model of what a system understands.",
+  "boundary": "It is downstream of authority by design. It observes, relates, derives, diagnoses, ranks and proposes; the registry, factory or adjudication that owns a fact decides whether a proposal becomes canonical. It never silently decides truth and never becomes another authority.",
   "status": {
-    "statement": "The lane at v2/ in the repository passes [[tests_pass]] of [[tests_total]] tests, with [[tests_skipped]] skipped by design, and seals [[worlds_sealed]] projections as WallRiderLang worlds, each with a TRVM certificate that re-verifies from its own directory. Nothing from it is in any published package.",
+    "statement": "The lane at v2/ in the repository passes [[tests_pass]] of [[tests_total]] tests, with [[tests_skipped]] skipped by design; it seals [[worlds_sealed]] projections as WallRiderLang worlds, derives [[derived_facts]] facts under [[rules]] rules on the largest of them, and finds cross-registry inconsistencies with [[consistency_rules]] rules. Nothing from it is in any published package.",
     "source": "npm run test:full-tree in graphonomous/v2 at the commit witness.json names, against sibling checkouts pinned by commit; g0 verify, verify-eval, check-cert and consistency over every shipped projection in the same run. Every figure on this page is emitted from records/witness.json, and check.mjs re-derives each derivable one from the lane and from WRL's own module.",
     "limit": "Everything above was run on one machine, by the people who wrote it, against registries they also maintain. Nothing here establishes that anyone else has reproduced the [[tests_total]] tests, that the graph is useful rather than merely sound, or that a reader can install anything — there is no published artifact, and the package under this name on the npm registry is an earlier engine this page does not describe. The demo on this domain was generated from the same tree and is not independent evidence."
   },
@@ -149,6 +150,10 @@
     {
       "string": "five loop-phase machines",
       "why": "The earlier engine's architecture, printed as the page's central claim. Not a claim about what this page describes."
+    },
+    {
+      "string": "Can what a system understands be made queryable, falsifiable and provenance-linked?",
+      "why": "The question this page asked for one day in September 2026, between the memory-engine page and this one. It was true and too narrow: it described the graph's properties and said nothing about the graph carrying a model of the system, or evolving it."
     }
   ],
   "contact": {
@@ -196,5 +201,203 @@
   },
   "demo": "/demo/wrl-programming/",
   "readme_path": "/tree/main/v2",
-  "profiles_url": "https://wrl.traaviis.com/reference#profiles"
+  "profiles_url": "https://wrl.traaviis.com/reference#profiles",
+  "stack": {
+    "_comment": "The stack in one sentence per part. Pressable on the page; the sentences are the record's, the links are the surfaces' own.",
+    "parent": {
+      "id": "computedriven",
+      "label": "ComputeDriven",
+      "line": "the world these three run in: an operating system whose backup is the user's machine, and the compute surface above it",
+      "href": "https://computedriven.com"
+    },
+    "parts": [
+      {
+        "id": "wrl",
+        "label": "WRL",
+        "verbs": "expression · description · semantics",
+        "line": "WallRiderLang describes understanding. A world is a content-addressed description; a vocabulary is a profile row; meaning is a hash.",
+        "href": "https://wrl.traaviis.com"
+      },
+      {
+        "id": "trvm",
+        "label": "TRVM",
+        "verbs": "reduction · execution · derivation",
+        "line": "TRVM reduces and derives understanding. It is the execution and reduction engine, and it mints the certificates Graphonomous carries.",
+        "href": "https://trvm.traaviis.com"
+      },
+      {
+        "id": "graphonomous",
+        "label": "Graphonomous",
+        "verbs": "understanding · evidence · discovery · explanation · evolution",
+        "line": "Graphonomous stores, connects, explores, tests and evolves understanding: the semantic self-model of a ComputeDriven system, read from the registries that hold its truth.",
+        "href": "/"
+      }
+    ],
+    "around": {
+      "id": "super",
+      "label": "Super (CD)",
+      "line": "Super is the operating environment around all of this — the surface that lets humans and artificial beings actually use it. Its blueprint gives every agent a memory that survives an engine swap, and Graphonomous is what is meant to fill that slot. Today Graphonomous reads Super's evidence at a pinned commit; the rest is designed and not built.",
+      "href": "https://super.computedriven.com"
+    }
+  },
+  "shape": {
+    "_comment": "Compiler-shaped, but the thing compiled is understanding. Rows align: a compiler stage on the left, the Graphonomous stage on the right, and whether the right-hand one exists.",
+    "rows": [
+      {
+        "compiler": "source",
+        "ours": "authoritative system state",
+        "status": "built"
+      },
+      {
+        "compiler": "parse",
+        "ours": "deterministic adapters",
+        "status": "built"
+      },
+      {
+        "compiler": "IR",
+        "ours": "normalized evidence → semantic projection",
+        "status": "built"
+      },
+      {
+        "compiler": "analysis",
+        "ours": "dependency · consistency · reduction analysis",
+        "status": "built"
+      },
+      {
+        "compiler": "optimization",
+        "ours": "candidate explanations, laws, counterexamples",
+        "status": "designed"
+      },
+      {
+        "compiler": "lowering",
+        "ours": "proposals and derived representations",
+        "status": "designed"
+      },
+      {
+        "compiler": "machine representation",
+        "ours": "the owning registry admits, or refuses",
+        "status": "boundary"
+      }
+    ],
+    "input": "what the system currently knows · where that knowledge came from · what depends on what · what contradicts what · what observations support it · what would falsify it · what simpler explanation could replace it"
+  },
+  "loop": {
+    "_comment": "The understanding loop the lane is heading toward, one stage per entry, each marked by what exists in the tree today. built = TESTED in handoff/STATUS.md; designed = in the brief or the decision log and not yet code.",
+    "stages": [
+      {
+        "id": "observe",
+        "label": "observation",
+        "status": "built",
+        "what": "adapters read [[pinned_sources]] pinned repositories and emit records"
+      },
+      {
+        "id": "evidence",
+        "label": "evidence",
+        "status": "built",
+        "what": "every claim carries its assertion, its registry and a source location; provenance lives on the assertion, never in the value"
+      },
+      {
+        "id": "structure",
+        "label": "semantic structure",
+        "status": "built",
+        "what": "the projection root, and the WRL-sealed world with kernel-minted ids"
+      },
+      {
+        "id": "dependency",
+        "label": "dependency",
+        "status": "built",
+        "what": "[[rules]] rules derive [[derived_facts]] facts over the largest world's records, with an independent checker that shares no logic with the evaluator"
+      },
+      {
+        "id": "contradiction",
+        "label": "contradiction",
+        "status": "built",
+        "what": "[[consistency_rules]] cross-registry rules find what two normalized sources disagree about; [[consistency_rejected]] candidate rules reduced to zero and were not implemented"
+      },
+      {
+        "id": "hypothesis",
+        "label": "hypothesis",
+        "status": "designed",
+        "what": "a candidate law or explanation, proposed by the graph and owned by nobody until admitted"
+      },
+      {
+        "id": "counterexample",
+        "label": "counterexample",
+        "status": "designed",
+        "what": "the observation that would falsify a hypothesis, named before it is looked for"
+      },
+      {
+        "id": "experiment",
+        "label": "experiment",
+        "status": "designed",
+        "what": "the invariant factory runs it; receipts come back; the graph re-imports what was admitted"
+      },
+      {
+        "id": "reduction",
+        "label": "reduction",
+        "status": "designed",
+        "what": "the smallest explanatory structure that preserves the observations: what a compiler calls optimization, a database normalization, a prover derivation and a scientist a theory"
+      }
+    ]
+  },
+  "overlap": {
+    "_comment": "Positioning, not a measurement: how much Graphonomous overlaps with an existing category (dots out of five, an opinion) and why it goes past it. Rendered under a dashed tag for exactly that reason.",
+    "rows": [
+      {
+        "concept": "Database",
+        "dots": 5,
+        "beyond": "relationships are semantic and evidential rather than stored records"
+      },
+      {
+        "concept": "Graph database",
+        "dots": 5,
+        "beyond": "the graph's own structure evolves through analysis"
+      },
+      {
+        "concept": "Compiler",
+        "dots": 4,
+        "beyond": "its input can be the state and knowledge of an entire running system"
+      },
+      {
+        "concept": "Static analyzer",
+        "dots": 5,
+        "beyond": "analysis spans registries, invariants, evidence and provenance"
+      },
+      {
+        "concept": "Knowledge graph",
+        "dots": 5,
+        "beyond": "claims can be falsified, reduced, superseded and experimented on"
+      },
+      {
+        "concept": "Theorem prover",
+        "dots": 3,
+        "beyond": "evidence and law reduction starts approaching this territory"
+      },
+      {
+        "concept": "Observability system",
+        "dots": 5,
+        "beyond": "it observes semantics rather than logs and metrics"
+      },
+      {
+        "concept": "Interpreter",
+        "dots": 2,
+        "beyond": "actual execution stays elsewhere, in TRVM"
+      },
+      {
+        "concept": "Build system",
+        "dots": 3,
+        "beyond": "dependency and derivation relationships resemble builds"
+      },
+      {
+        "concept": "Scientific notebook",
+        "dots": 4,
+        "beyond": "experiments, counterexamples, evidence and provenance matter"
+      },
+      {
+        "concept": "World model",
+        "dots": 4,
+        "beyond": "increasingly yes, and particularly a model of the system itself"
+      }
+    ]
+  }
 }

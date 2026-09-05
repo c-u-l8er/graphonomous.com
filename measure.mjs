@@ -12,7 +12,7 @@
 import { readFileSync, writeFileSync, existsSync } from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
-import { deriveLane, deriveWrl, world, git, LARGEST, PROFILE } from "./derive.mjs";
+import { deriveLane, deriveLaneModules, deriveWrl, world, git, LARGEST, PROFILE } from "./derive.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const P = path.join(HERE, "records", "witness.json");
@@ -24,6 +24,7 @@ if (!existsSync(path.join(ENGINE, "v2")) || !existsSync(path.join(WRL, "relation
 }
 const lane = deriveLane(ENGINE);
 const wrl = await deriveWrl(WRL);
+const mods = await deriveLaneModules(ENGINE);
 const today = new Date().toISOString().slice(0, 10);
 
 const CMD = {
@@ -40,6 +41,11 @@ const CMD = {
     roles: `node -e \"import('../WRL/relation-v2.js').then(V=>console.log(Object.keys(V.V2_PROFILES['${PROFILE}'].roles).length))\"`,
     kinds: `node -e \"import('../WRL/relation-v2.js').then(V=>console.log(Object.keys(V.V2_PROFILES['${PROFILE}'].endpoints).length))\"`,
     pairs: `node -e \"import('../WRL/relation-v2.js').then(V=>console.log(Object.values(V.V2_PROFILES['${PROFILE}'].endpoints).reduce((n,p)=>n+p.length,0)))\"`,
+    rules: "node -e \"console.log(require('../graphonomous/v2/rules/g0.rules.json').rules.length)\"",
+    derived_facts: `node -e \"console.log(require('../graphonomous/v2/projections/${LARGEST}/derived/manifest.json').count)\"`,
+    consistency_rules: "node -e \"import('../graphonomous/v2/lib/consistency.mjs').then(m=>console.log(m.RULES.length))\"",
+    consistency_rejected: "node -e \"import('../graphonomous/v2/lib/consistency.mjs').then(m=>console.log(m.REJECTED.length))\"",
+    acceptance_questions: "node -e \"import('../graphonomous/v2/lib/acceptance.mjs').then(m=>console.log(m.QUESTIONS.length))\"",
 };
 const LABEL = {
     worlds_sealed: "Projections sealed as WRL worlds", pinned_sources: "Repositories the largest snapshot pins",
@@ -48,8 +54,12 @@ const LABEL = {
     super_pin: "Super (CD) commit the snapshot pins", profile_rows: "Rows in WRL's profile table",
     static_rows: "Static rows, all declared by Graphonomous", roles: `Roles ${PROFILE} declares`,
     kinds: `Relation kinds ${PROFILE} declares`, pairs: `Endpoint pairs ${PROFILE} admits`,
+    rules: "Rules in the derivation ruleset",
+    derived_facts: `Facts derived from them on ${LARGEST}`, consistency_rules: "Cross-registry consistency rules accepted",
+    consistency_rejected: "Candidate rules reduced to zero against the data and not implemented",
+    acceptance_questions: "Acceptance questions answered by traversal, never by prose",
 };
-for (const [id, value] of Object.entries({ ...lane.facts, ...wrl.facts })) {
+for (const [id, value] of Object.entries({ ...lane.facts, ...wrl.facts, ...mods.facts })) {
     w.facts[id] = { value, label: LABEL[id], command: CMD[id], derivable: id };
 }
 const testsArg = process.argv.indexOf("--tests");
@@ -72,4 +82,4 @@ w.engine_commit = lane.engine_commit;
 w.wrl_commit = wrl.wrl_commit;
 w.site_commit_at_measure = git(HERE, "rev-parse", "HEAD");
 writeFileSync(P, JSON.stringify(w, null, 2) + "\n");
-console.log(`measured ${Object.keys(lane.facts).length + Object.keys(wrl.facts).length} facts, ${lane.worlds.length} worlds, ${lane.faults.length} fault codes, ${lane.sources.length} sources, ${wrl.refusals.length} refusals at graphonomous ${lane.engine_commit.slice(0, 7)} / WRL ${wrl.wrl_commit.slice(0, 7)}`);
+console.log(`measured ${Object.keys(lane.facts).length + Object.keys(wrl.facts).length + Object.keys(mods.facts).length} facts, ${lane.worlds.length} worlds, ${lane.faults.length} fault codes, ${lane.sources.length} sources, ${wrl.refusals.length} refusals at graphonomous ${lane.engine_commit.slice(0, 7)} / WRL ${wrl.wrl_commit.slice(0, 7)}`);

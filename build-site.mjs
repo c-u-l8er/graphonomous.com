@@ -112,6 +112,7 @@ function plate() {
         [f("pinned_sources"), "Repositories pinned"],
         [f("nodes"), "Nodes, largest world"],
         [f("relations"), "Relations, largest world"],
+        [f("derived_facts"), "Facts derived, largest world"],
     ];
     return `<div class="grid plate">${cells.map(([n, l]) => `<div><div class="n">${esc(n)}</div><div class="l">${esc(l)}</div></div>`).join("")}</div>`;
 }
@@ -182,6 +183,40 @@ function sources() {
     return `<div class="srcs">${rows.map((r) => `<div class="src${r.namespace === "super" ? " hi" : ""}" data-source="${esc(r.namespace)}"><div class="ns">${esc(r.namespace)}</div><div class="cm">${esc(r.commit)}</div><div class="fl">${r.files} file${r.files === 1 ? "" : "s"} pinned by blob</div>${why[r.namespace] ? `<div class="why">${esc(why[r.namespace])}</div>` : ""}</div>`).join("")}</div>`;
 }
 
+/* The stack: one pressable block per part, the parent above, Super around. */
+function stack() {
+    const k = surface.stack;
+    const blk = (p, cls) => `<button class="sblk ${cls}" type="button" data-s="${p.id}" aria-pressed="false"><span class="sl">${esc(p.label)}</span>${p.verbs ? `<span class="sv">${esc(p.verbs)}</span>` : ""}</button>`;
+    const panel = (p) => `<div data-s="${p.id}"><p>${esc(p.line)}</p><a href="${esc(p.href)}"${p.href.startsWith("http") ? ' target="_blank" rel="noopener"' : ""}>${esc(p.label)} &rarr;</a></div>`;
+    return `<div class="stackd"><div class="srow top">${blk(k.parent, "parent")}</div><div class="srow parts">${k.parts.map((p) => blk(p, p.id === "graphonomous" ? "me" : "")).join("")}</div><div class="srow around">${blk(k.around, "around")}</div></div>` +
+        `<div class="spanels">${[k.parent, ...k.parts, k.around].map(panel).join("")}</div>`;
+}
+
+/* Compiler-shaped: two rails, row by row, with the right rail marked by what exists. */
+function shape() {
+    const st = { built: ["tag ok", "built"], designed: ["tag", "designed"], boundary: ["tag", "not ours"] };
+    return `<div class="rails"><div class="rail"><div class="rh">a compiler</div>${surface.shape.rows.map((r) => `<div class="rr"><span>${esc(r.compiler)}</span></div>`).join("")}</div>` +
+        `<div class="rail ours"><div class="rh">Graphonomous</div>${surface.shape.rows.map((r) => `<div class="rr"><span>${esc(r.ours)}</span><span class="${st[r.status][0]} mini">${st[r.status][1]}</span></div>`).join("")}</div></div>` +
+        `<p class="lede sm">What is being compiled is not source. It is ${esc(surface.shape.input)}.</p>`;
+}
+
+/* The understanding loop: a ring of stages, each marked built or designed. */
+function loop() {
+    const n = surface.loop.stages.length;
+    const nodes = surface.loop.stages.map((st, i) => {
+        const a = (i / n) * Math.PI * 2 - Math.PI / 2;
+        const x = (50 + 40 * Math.cos(a)).toFixed(1), y = (50 + 40 * Math.sin(a)).toFixed(1);
+        return `<g class="ln ${st.status}"><circle cx="${x}" cy="${y}" r="3.2"/><text x="${x}" y="${y}" dy="${Math.sin(a) > 0.3 ? "7.5" : Math.sin(a) < -0.3 ? "-5" : "1.2"}" dx="${Math.cos(a) > 0.3 ? "5" : Math.cos(a) < -0.3 ? "-5" : "0"}" text-anchor="${Math.cos(a) > 0.3 ? "start" : Math.cos(a) < -0.3 ? "end" : "middle"}">${esc(st.label)}</text></g>`;
+    }).join("");
+    const ring = `<svg class="ring" viewBox="-24 -10 148 120" aria-hidden="true"><circle class="orbit" cx="50" cy="50" r="40"/>${nodes}</svg>`;
+    const list = `<div class="lstages">${surface.loop.stages.map((st) => `<div class="ls ${st.status}"><span class="${st.status === "built" ? "tag ok" : "tag"} mini">${st.status}</span><b>${esc(st.label)}</b><span>${esc(fig(st.what))}</span></div>`).join("")}</div>`;
+    return `<div class="loopwrap">${ring}${list}</div>`;
+}
+
+function overlap() {
+    return `<div class="tag">positioning, not a measurement</div><div class="ovl">${surface.overlap.rows.map((r) => `<div class="ov"><span class="oc">${esc(r.concept)}</span><span class="od d${r.dots}" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span><span class="ob">${esc(r.beyond)}</span></div>`).join("")}</div>`;
+}
+
 function gates() {
     return `<dl class="status">${Object.entries(surface.gates).filter(([k]) => !k.startsWith("_")).map(([, g]) => {
         const tag = g.status === "approved" ? "tag ok" : "tag";
@@ -233,9 +268,10 @@ const landing = fill(read("./src/landing.html"), {
     QUESTION: esc(surface.question), YEAR: String(YEAR),
     DEFINITION: esc(surface.definition), BOUNDARY: esc(surface.boundary),
     DEMO: surface.demo, README_URL: surface.repo + surface.readme_path, PROFILES_URL: surface.profiles_url,
-    PLATE: plate(), PIPELINE: pipeline(), WORLDS: worlds(), FAULTS: faults(), REFUSALS: refusals(), SOURCES: sources(),
+    PLATE: plate(), PIPELINE: pipeline(), STACK: stack(), SHAPE: shape(), LOOP: loop(), OVERLAP: overlap(), WORLDS: worlds(), FAULTS: faults(), REFUSALS: refusals(), SOURCES: sources(),
     FINDINGS: esc(f("findings")), FAULTS_N: esc(f("faults")), ADAPTERS: esc(f("adapters")), SUPER_PIN: esc(f("super_pin")),
     ROLES: esc(f("roles")), KINDS: esc(f("kinds")), PAIRS: esc(f("pairs")), WORLDS_N: esc(f("worlds_sealed")),
+    ACCEPTANCE: esc(f("acceptance_questions")),
     STATUS: statusBlock(), GATES: gates(), RETRACTION: retraction(), SAY: say(), ISSUES: surface.contact.issues,
     CTA: cta("in_tree", "in the tree, tested, unpublished", [
         { verb: "Inspect the source", href: surface.repo + surface.readme_path,

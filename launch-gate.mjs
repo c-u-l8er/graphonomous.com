@@ -386,7 +386,7 @@ T("the page states how many tests pass",
 /* ---------- 12. §8 — the identifying animation ---------- */
 T("the landing page carries a data-identity-animation element", /data-identity-animation/.test(HTML));
 T("the animation is above the fold, before any section boundary",
-  HTML.indexOf("data-identity-animation") < HTML.indexOf('<section id="pipeline"'));
+  HTML.indexOf("data-identity-animation") < HTML.indexOf('<section id="what"'));
 /* THE GUARDS ARE CHECKED BY SHAPE, NOT BY SUBSTRING. The first draft of the
    hidden-tab check was `/document\.hidden/.test(ANIM)`, and a deliberate break
    sailed straight through it: the identifier also appears in the

@@ -1,6 +1,6 @@
 {
   "name": "graphonomous-com",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "private": true,
   "type": "module",
   "description": "graphonomous.com \u2014 generated from frozen records, with a publication gate that reads the artifact and refuses. Zero runtime dependencies, zero build dependencies.",

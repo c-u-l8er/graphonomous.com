@@ -18,7 +18,7 @@
 import { readFileSync, existsSync } from "fs";
 import { fileURLToPath } from "url";
 import path from "path";
-import { deriveLane, deriveWrl } from "./derive.mjs";
+import { deriveLane, deriveLaneModules, deriveWrl } from "./derive.mjs";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const witness = JSON.parse(readFileSync(path.join(HERE, "records/witness.json"), "utf8"));
@@ -47,6 +47,11 @@ if (!lane) {
     T("sources table", lane.sources, witness.sources.rows);
     T("the lane commit the record names", lane.engine_commit, witness.engine_commit);
 }
+
+/* ---------- 1b. the lane's own modules ---------- */
+const mods = await deriveLaneModules(ENGINE);
+if (!mods) S("consistency_rules / consistency_rejected / acceptance_questions", `no lib/ at ${ENGINE}/v2`);
+else for (const [id, v] of Object.entries(mods.facts)) T(id, v, F(id));
 
 /* ---------- 2. WRL: the profile table, and the six refusals run again ---------- */
 console.log(`wrl:  ${WRL}`);

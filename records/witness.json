@@ -6,7 +6,7 @@
   "engine_path": "../graphonomous",
   "wrl_commit": "083ae6ba1a779f0ef95d4888be7aa2cffe0dc729",
   "wrl_path": "../WRL",
-  "site_commit_at_measure": "d6ef499b023220b2a0b7ea742852af4714a3fcc8",
+  "site_commit_at_measure": "5baac8155f4a5d3c103d0570005f00bb83d71fa1",
   "facts": {
     "tests_total": {
       "value": "183",
@@ -105,6 +105,36 @@
       "label": "Endpoint pairs graphonomous.semantic.v2 admits",
       "command": "node -e \"import('../WRL/relation-v2.js').then(V=>console.log(Object.values(V.V2_PROFILES['graphonomous.semantic.v2'].endpoints).reduce((n,p)=>n+p.length,0)))\"",
       "derivable": "pairs"
+    },
+    "rules": {
+      "value": "16",
+      "label": "Rules in the derivation ruleset",
+      "command": "node -e \"console.log(require('../graphonomous/v2/rules/g0.rules.json').rules.length)\"",
+      "derivable": "rules"
+    },
+    "derived_facts": {
+      "value": "1422",
+      "label": "Facts derived from them on tri",
+      "command": "node -e \"console.log(require('../graphonomous/v2/projections/tri/derived/manifest.json').count)\"",
+      "derivable": "derived_facts"
+    },
+    "consistency_rules": {
+      "value": "5",
+      "label": "Cross-registry consistency rules accepted",
+      "command": "node -e \"import('../graphonomous/v2/lib/consistency.mjs').then(m=>console.log(m.RULES.length))\"",
+      "derivable": "consistency_rules"
+    },
+    "consistency_rejected": {
+      "value": "3",
+      "label": "Candidate rules reduced to zero against the data and not implemented",
+      "command": "node -e \"import('../graphonomous/v2/lib/consistency.mjs').then(m=>console.log(m.REJECTED.length))\"",
+      "derivable": "consistency_rejected"
+    },
+    "acceptance_questions": {
+      "value": "7",
+      "label": "Acceptance questions answered by traversal, never by prose",
+      "command": "node -e \"import('../graphonomous/v2/lib/acceptance.mjs').then(m=>console.log(m.QUESTIONS.length))\"",
+      "derivable": "acceptance_questions"
     }
   },
   "routes": {

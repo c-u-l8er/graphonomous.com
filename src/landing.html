@@ -1,6 +1,6 @@
 <!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Can what a system understands be made queryable, falsifiable and provenance-linked? — Graphonomous</title>
-<meta name="description" content="Graphonomous is a derived semantic/evidence graph over the registries that hold a system's truth — ComputeDriven, TRVM, the invariant factory and Super (CD) — read at pinned commits, sealed as a WallRiderLang world under a profile Graphonomous declares as data, and certified through TRVM. Every number here is generated from a frozen record and re-derived from the tree.">
+<title>Can a system carry an honest model of what it understands? — Graphonomous</title>
+<meta name="description" content="Graphonomous is an autonomous semantic/evidence graph that continuously constructs, tests, relates and explains a model of what a system understands — the semantic self-model of a ComputeDriven system. WRL describes understanding, TRVM reduces it, Graphonomous stores, connects, explores, tests and evolves it. Every number here is generated from a frozen record and re-derived from the tree.">
 <meta name="falsifiable-question" content="{{QUESTION}}">
 <link rel="canonical" href="{{ORIGIN}}/">
 <meta name="theme-color" content="#07090e">
@@ -13,14 +13,14 @@
 <div class="wrap">
 
 <div class="top"><a class="logo" href="/">graph<span>onomous</span></a>
-<nav><a href="#pipeline">Pipeline</a><a href="#worlds">Worlds</a><a href="#evidence">Evidence</a><a href="#say">Correct us</a><a class="btn" href="{{REPO}}">Source</a></nav></div>
+<nav><a href="#what">What it is</a><a href="#pipeline">How it works</a><a href="#worlds">Worlds</a><a href="#evidence">Evidence</a><a href="#say">Correct us</a><a class="btn" href="{{REPO}}">Source</a></nav></div>
 
 <section class="hero">
 <div class="front">
 <div class="eyebrow">The question this site exists to answer</div>
-<h1>Can what a system understands be made <em>queryable, falsifiable and provenance-linked?</em></h1>
-<p class="lede">{{DEFINITION}} It reads the registries that already hold the stack&rsquo;s truth &mdash; ComputeDriven, TRVM, the invariant factory, and Super&nbsp;(CD) &mdash; at pinned commits, projects them into content-addressed records, <strong>seals the result as a WallRiderLang world</strong> under a vocabulary it declares as data, and certifies the projection through TRVM. Every id is minted by the kernel that owns it. Nothing in it is a model&rsquo;s opinion. Whether the graph earns its keep is the open question; what is settled is that it seals, verifies, and can be read.</p>
-<p><a class="btn" href="#pipeline">How it works</a>&nbsp;&nbsp;<a class="btn ghost" href="{{DEMO}}">Programmed with WRL</a>&nbsp;&nbsp;<a class="btn ghost" href="#evidence">What is actually proven</a></p>
+<h1>Can a system carry an honest model of <em>what it understands?</em></h1>
+<p class="lede">{{DEFINITION}} Not a database, though it stores; not a compiler, though it has compiler-shaped machinery inside it; not an interpreter, because execution lives elsewhere. It is the <strong>semantic self-model of a ComputeDriven system</strong>: read from the registries that hold the system&rsquo;s truth at pinned commits, sealed as a WallRiderLang world under a vocabulary it declares as data, certified through TRVM, and held downstream of every authority it reads. What it believes, why, what contradicts it, what depends on it, and what would prove it wrong &mdash; that is the model, and the model is meant to get simpler as it learns.</p>
+<p><a class="btn" href="#what">What it is</a>&nbsp;&nbsp;<a class="btn ghost" href="#pipeline">How it works</a>&nbsp;&nbsp;<a class="btn ghost" href="#evidence">What is actually proven</a></p>
 </div>
 <!-- The identifying animation (SHELL.md §8). It comes AFTER the h1 in source
      order and sits behind it, because the question comes first. It renders no
@@ -32,8 +32,39 @@
 
 {{PLATE}}
 
+<section id="what">
+<div class="eyebrow">What it is</div>
+<h2>Three verbs, one system, and Super around it.</h2>
+<p class="lede">The stack has converged on three parts that each own one thing. Press one.</p>
+<div class="stackline"><div><b>WRL</b><span>describes understanding</span></div><div><b>TRVM</b><span>reduces and derives understanding</span></div><div><b>Graphonomous</b><span>stores, connects, explores, tests and evolves understanding</span></div></div>
+{{STACK}}
+<p class="lede sm">{{BOUNDARY}} A normal graph database says: here are the relationships you stored. This one is heading toward: here is what I currently believe the relationships are, why I believe them, what observations produced them, what contradicts them, what depends on them, how they changed, and what experiment could tell us whether they are wrong.</p>
+</section>
+
+<section id="shape">
+<div class="eyebrow">Why it feels like a compiler</div>
+<h2>Compiler-shaped, but the thing compiled is understanding.</h2>
+<p class="lede">A compiler constructs a model of a program so that the program can be transformed. Graphonomous constructs a model of a system&rsquo;s understanding so that the understanding itself can be transformed. The semantic projection is the IR. The rows on the right are marked by what exists in the tree today; the last one is not ours by design.</p>
+{{SHAPE}}
+</section>
+
+<section id="loop">
+<div class="eyebrow">Where it is heading</div>
+<h2>A loop whose optimization target is understanding.</h2>
+<p class="lede">Observation becomes evidence, evidence becomes structure, structure yields dependency and contradiction. From there the loop is designed and not yet built: a hypothesis, the counterexample that would kill it, an experiment the factory runs, new evidence, and a reduction to the smallest explanatory structure that still preserves every observation. A compiler would call that optimization, a database normalization, a prover derivation, a scientist a theory. Graphonomous means to treat all four as one operation. Solid stages exist; dashed ones are designed.</p>
+{{LOOP}}
+<p class="lede sm">The one figure that already points that way: on the largest world, every derived fact is reachable by an explanation that is a traversal over stored records, checked by a second implementation that shares no logic with the first, and the {{ACCEPTANCE}} acceptance questions the lane holds itself to are answered the same way &mdash; never by prose.</p>
+</section>
+
+<section id="overlap">
+<div class="eyebrow">What it overlaps with, and goes past</div>
+<h2>Every existing category fits, and none of them holds.</h2>
+<p class="lede">The category we currently give it is an <strong>autonomous semantic evidence system</strong>, and the interesting word is autonomous. Compiler passes, interpreters, provers, query engines, dependency solvers, optimizers and eventually code generators can all become motors operating over the model; none of them is the model.</p>
+{{OVERLAP}}
+</section>
+
 <section id="pipeline">
-<div class="eyebrow">How it works</div>
+<div class="eyebrow">How it works today</div>
 <h2>From a pinned registry to a certificate, in six steps.</h2>
 <p class="lede">{{BOUNDARY}} Each step below is one command in the lane, refuses in its own vocabulary, and leaves behind an id the next step is held to. Press a step. The right-hand column of every panel is the largest projection&rsquo;s own id for that step, read from the tree and re-derived by the check.</p>
 {{PIPELINE}}

@@ -85,6 +85,8 @@ export function deriveLane(engine) {
     const tri = J(path.join(V2, "snapshots", "tri.json"));
     const triM = J(path.join(V2, "projections", LARGEST, "manifest.json"));
     const largest = worlds.find((w) => w.name === LARGEST);
+    const rules = J(path.join(V2, "rules", "g0.rules.json")).rules.length;
+    const evalM = J(path.join(V2, "projections", LARGEST, "derived", "manifest.json"));
     return {
         facts: {
             worlds_sealed: String(sealed),
@@ -95,6 +97,8 @@ export function deriveLane(engine) {
             faults: String(largest.faults),
             findings: String(largest.findings),
             super_pin: tri.sources.find((s) => s.namespace === "super").commit.slice(0, 7),
+            rules: String(rules),
+            derived_facts: String(evalM.count),
         },
         worlds,
         faults: triM.faults.by_code.map(([code, count]) => ({ code, count })),
@@ -104,6 +108,19 @@ export function deriveLane(engine) {
 }
 
 /** Everything derivable from WRL: the profile table, and the six refusals, run live. */
+/** The lane's own modules, imported: the consistency rulepack and the acceptance questions. */
+export async function deriveLaneModules(engine) {
+    const V2 = path.join(engine, "v2");
+    if (!existsSync(path.join(V2, "lib", "consistency.mjs"))) return null;
+    const c = await import(pathToFileURL(path.join(V2, "lib", "consistency.mjs")).href);
+    const a = await import(pathToFileURL(path.join(V2, "lib", "acceptance.mjs")).href);
+    return { facts: {
+        consistency_rules: String(c.RULES.length),
+        consistency_rejected: String(c.REJECTED.length),
+        acceptance_questions: String(a.QUESTIONS.length),
+    } };
+}
+
 export async function deriveWrl(wrl) {
     const mod = path.join(wrl, "relation-v2.js");
     if (!existsSync(mod)) return null;

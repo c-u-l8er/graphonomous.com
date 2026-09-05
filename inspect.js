@@ -21,6 +21,7 @@ btns[k].addEventListener("click", function (e) { show(e.currentTarget.getAttribu
 }
 show(btns[0].getAttribute(attr));
 }
+wire("#what", ".sblk", ".spanels > [data-s]", "data-s");
 wire("#pipeline", ".stage", ".panels > [data-stage]", "data-stage");
 wire("#refuse", ".rbtn", ".rpanels > [data-r]", "data-r");
 })();

@@ -2,18 +2,17 @@
    graphonomous.com site build.
 
    The page is GENERATED from the frozen records in records/, never hand
-   written. Every figure it prints comes out of records/witness.json, and every
-   entry in that file names the command that produced it and the exact commit
-   it was produced at. check.mjs re-derives the derivable ones against the real
-   world — the sibling engine checkout, the npm registry, the release assets —
-   and this build refuses to emit anything if a template asks for a figure that
-   has no witness.
+   written. Every figure it prints comes out of records/witness.json, where
+   measure.mjs wrote it by calling derive.mjs, and check.mjs re-derives each
+   derivable one against the sibling checkouts with that same module. This
+   build refuses to emit anything if a template asks for a figure that has no
+   witness, or if a witnessed figure reaches no page.
 
    That direction of dependency is the whole point (SHELL.md §4.1). The page
-   this replaces carried "455 tests" and "29 actions" in the present tense; the
-   suite reports 577 and the machine modules declare 31. Neither number was
-   wrong when it was typed. Both were wrong by the time anyone read them, and
-   nothing in the site could notice, because the page WAS the source.
+   before this one carried "455 tests" and "29 actions" in the present tense
+   while the suite reported 577 and the modules declared 31 — neither number
+   was wrong when it was typed, both were wrong by the time anyone read them,
+   and nothing in the site could notice, because the page WAS the source.
 
    Output goes to the repository root, because that is what the domain serves
    today. Do not change that without confirming the Pages output directory.
@@ -35,91 +34,46 @@ const RUNGS = ["spec", "in_tree", "live_local", "live_deployed", "external"];
 
 /* ---------- release identity: one version, or no build ---------- */
 if (pkg.version !== surface.version) {
-    throw new Error(
-        `release identity: package.json ${pkg.version} != records/surface.json ${surface.version}`
-    );
+    throw new Error(`release identity: package.json ${pkg.version} != records/surface.json ${surface.version}`);
 }
 if (surface.shell_revision !== "shell-r10") {
-    throw new Error(
-        `BUILD REFUSED — records/surface.json declares shell_revision ${surface.shell_revision}; this build emits shell-r10 markup.`
-    );
+    throw new Error(`BUILD REFUSED — records/surface.json declares shell_revision ${surface.shell_revision}; this build emits shell-r10 markup.`);
 }
-/* The artifact names the sources it was generated from. A stale index.html —
-   the one left behind when this file throws — carries the previous id, and
-   launch-gate.mjs refuses it. SHELL.md r6, hole 2. See stamp.mjs. */
 const BUILD = buildId(inputHashes(DIR));
 const STAMP = `GRAPHONOMOUS.COM v${surface.version} · SHELL ${surface.shell_revision} · RECORDS ${surface.verified_at} · BUILD ${BUILD}`;
 
-const esc = (s) =>
-    String(s)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;");
+const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
 /* ==========================================================================
-   THE FIGURE GATE
-   A template may not print a number. It asks for a witnessed fact by id, and
-   if that id is not in records/witness.json the build stops. There is no path
-   through this file by which a hand-typed figure reaches the artifact.
+   THE FIGURE GATE — a template may not print a number. It asks for a
+   witnessed fact by id, and if that id is not in records/witness.json the
+   build stops. There is no path through this file by which a hand-typed
+   figure reaches the artifact.
    ========================================================================== */
 const used = new Set();
 function f(id) {
     const fact = witness.facts[id];
-    if (!fact) {
-        throw new Error(`BUILD REFUSED — no witness for figure "${id}". Add it to records/witness.json with the command that produced it.`);
-    }
+    if (!fact) throw new Error(`BUILD REFUSED — no witness for figure "${id}". Add it to records/witness.json with the command that produced it.`);
     used.add(id);
     return fact.value;
 }
-
 /* Prose inside a record is still prose, and a figure typed into it is still a
-   hand-typed figure. So the records write `[[tests_total]]` and this resolves
-   it — there is no string anywhere in this repository, template or record,
-   into which a number can be typed and reach the artifact. */
+   hand-typed figure. So the records write `[[tests_total]]` and this resolves it. */
 const fig = (s) => String(s).replace(/\[\[(\w+)\]\]/g, (m, id) => f(id));
 
 /* ==========================================================================
-   SHELL FRAGMENTS — shared markup. Only the tokens in src/shell.css differ
-   between surfaces; everything below TOKENS-END is copied verbatim.
+   SHELL FRAGMENTS — shared markup, copied verbatim between surfaces.
    ========================================================================== */
-
-/* The chip renders the stored rung, and "?" when there is none. It never
-   defaults to a rung, because a defaulted rung is a fabricated status. */
 function rung(value) {
     const r = RUNGS.includes(value) ? value : "?";
     return `<span class="rung" data-rung="${r}" title="spec · in_tree · live_local · live_deployed · external">${r}</span>`;
 }
-
-/* The band states where you are, and what it may state depends on the TIER —
-   which is a record read out of amp-nav, not a choice made here. amp-nav files
-   graphonomous as place 2 with layer "memory", so this is the standard band
-   WITH the layer sentence. A place-4 surface would get the attribution variant
-   instead; gpscoord shipped the wrong one of these for months. SHELL.md §1.
-
-   THERE ARE THREE VARIANTS, NOT TWO (SHELL.md r6). amp-nav's renderPlacement()
-   gives the layer sentence to place 1 and 2 only; place 3 renders "X is a
-   specification in the ComputeDriven world" plus a link to the real spec.
-   Writing a layer sentence on a place-3 surface puts the band in direct
-   contradiction with the nav rendered immediately beneath it. This record
-   names no spec URL, so rather than emit the wrong one of three, tier 3 is
-   refused with the reason. */
 function band() {
-    if (![1, 2, 3, 4].includes(surface.tier)) {
-        throw new Error(`BUILD REFUSED — records/surface.json declares no tier, so the band cannot know what it may claim.`);
-    }
-    if (surface.tier === 3) {
-        throw new Error(
-            `BUILD REFUSED — tier 3 is the specification variant of the band: amp-nav renders "${surface.surface} is a specification in the ${surface.parent} world" plus a link to the spec, NOT a layer sentence. records/surface.json names no spec URL, so that band cannot be written from this record. SHELL.md r6.`
-        );
-    }
-    const where =
-        surface.tier === 4
-            ? `A <b>${esc(surface.parent)}</b> project`
-            : `${esc(surface.surface)} is the <b>${esc(surface.layer)}</b> layer of ${esc(surface.parent)}`;
+    if (![1, 2, 3, 4].includes(surface.tier)) throw new Error(`BUILD REFUSED — records/surface.json declares no tier, so the band cannot know what it may claim.`);
+    if (surface.tier === 3) throw new Error(`BUILD REFUSED — tier 3 is the specification variant of the band: amp-nav renders "${surface.surface} is a specification in the ${surface.parent} world" plus a link to the spec, NOT a layer sentence. records/surface.json names no spec URL, so that band cannot be written from this record. SHELL.md r6.`);
+    const where = surface.tier === 4 ? `A <b>${esc(surface.parent)}</b> project` : `${esc(surface.surface)} is the <b>${esc(surface.layer)}</b> layer of ${esc(surface.parent)}`;
     return `<div class="band" data-tier="${surface.tier}"><span class="where">${where}</span>${rung(surface.surface_rung)}<span class="covers">That rung covers ${esc(surface.surface_rung_covers)}.</span></div>`;
 }
-
 function statusBlock() {
     const s = surface.status;
     return `<dl class="status">
@@ -130,10 +84,6 @@ function statusBlock() {
 <div><dt>Next rung</dt><dd><strong>${esc(surface.advance.next_rung)}</strong> — ${esc(fig(surface.advance.requires))}</dd></div>
 </dl>`;
 }
-
-/* §0.7: the rung gates the call to action. Mechanical, so implemented
-   mechanically — a group declares its rung and may only use verbs that rung
-   has earned. Anything else throws and nothing is emitted. */
 const VERBS = {
     spec: ["Read", "Challenge", "Implement"],
     in_tree: ["Inspect the source", "Run the tests"],
@@ -141,168 +91,122 @@ const VERBS = {
     live_deployed: ["Use the deployed artifact"],
     external: ["See independent evidence", "Contribute another result"],
 };
-
 function cta(groupRung, label, actions) {
     const allowed = VERBS[groupRung];
     if (!allowed) throw new Error(`CTA group declares an unknown rung: ${groupRung}`);
-    for (const a of actions) {
-        if (!allowed.includes(a.verb)) {
-            throw new Error(
-                `BUILD REFUSED — CTA "${a.verb}" is not available at rung ${groupRung}. Allowed: ${allowed.join(", ")}`
-            );
-        }
-    }
+    for (const a of actions) if (!allowed.includes(a.verb)) throw new Error(`BUILD REFUSED — CTA "${a.verb}" is not available at rung ${groupRung}. Allowed: ${allowed.join(", ")}`);
     const cls = groupRung === "spec" ? "tag" : "tag ok";
     return `<div class="ctagroup"><div class="${cls}">${esc(groupRung)} &mdash; ${esc(label)}</div><div class="cta">${actions
-        .map(
-            (a) =>
-                `<a href="${a.href}"${a.href.startsWith("http") ? ' target="_blank" rel="noopener"' : ""}><span class="verb">${esc(a.verb)}</span><span class="what">${a.what}</span></a>`
-        )
-        .join("")}</div></div>`;
+        .map((a) => `<a href="${a.href}"${a.href.startsWith("http") ? ' target="_blank" rel="noopener"' : ""}><span class="verb">${esc(a.verb)}</span><span class="what">${a.what}</span></a>`).join("")}</div></div>`;
 }
 
 /* ==========================================================================
-   GENERATED CONTENT — every cell below reads a witnessed fact by id.
+   GENERATED CONTENT — every figure below is a witnessed fact by id, and every
+   table row comes from a witness table that check.mjs re-derives whole.
    ========================================================================== */
-
 function plate() {
     const cells = [
-        [f("machines"), "MCP machines"],
-        [f("actions"), "Actions across them"],
-        [f("tests_total"), `Tests, ${f("tests_failed")} failing`],
-        [`${f("install_targets_ok")} of ${f("install_targets_total")}`, "Platforms that install"],
-        [f("demos"), "Demos on this domain"],
+        [`${f("tests_pass")} of ${f("tests_total")}`, "Tests passing"],
+        [f("worlds_sealed"), "Projections sealed by WRL"],
+        [`${f("static_rows")} of ${f("profile_rows")}`, "WRL profile rows, ours"],
+        [f("pinned_sources"), "Repositories pinned"],
+        [f("nodes"), "Nodes, largest world"],
+        [f("relations"), "Relations, largest world"],
     ];
-    return `<div class="grid plate">${cells
-        .map(([n, l]) => `<div><div class="n">${esc(n)}</div><div class="l">${esc(l)}</div></div>`)
-        .join("")}</div>`;
+    return `<div class="grid plate">${cells.map(([n, l]) => `<div><div class="n">${esc(n)}</div><div class="l">${esc(l)}</div></div>`).join("")}</div>`;
 }
 
-/* The install block is markup, not a copy button. A control that does nothing
-   is worse than no control (SHELL.md §6), and a copy button on a static page
-   with no secure-context fallback is exactly that control. The command is
-   selectable text. */
-function install() {
-    const i = surface.install;
-    /* Hand-shaped rather than JSON.stringify(…,2): a client config is read, not
-       parsed by eye, and eleven lines of one-key-per-line pushed the whole
-       evidence section below a second fold for nothing. Still derived from the
-       record — the path and the db default are not typed here. */
-    const args = JSON.stringify(["-y", "graphonomous", "--db", i.db_default]);
-    const cfg = `{
-  "mcpServers": {
-    "graphonomous": { "command": "npx", "args": ${args} }
-  }
-}`;
-    return `<div class="pre"><code><i># 1. the published package — linux-x64 only, see the table below</i>
-<b>${esc(i.npm)}</b>
-
-<i># 2. ${esc(i.config_path)} , or your client's MCP settings</i>
-${esc(cfg)}
-
-<i># 3. restart the client. Node.js ${esc(i.node_min)} or newer; the graph is a</i>
-<i># SQLite file at ${esc(i.db_default)} and does not leave the machine.</i></code></div>`;
-}
-
-function installNote() {
-    const t = witness.install_targets;
-    return `Requested with <code>curl</code> against <code>${esc(t.release)}</code> on ${esc(witness.measured_at)}, one request per target, asset name <code>${esc(t.asset_pattern)}</code>. The status column is the HTTP code that came back.`;
-}
-
-function installTable() {
-    const rows = witness.install_targets.rows
-        .map(
-            (r) =>
-                `<tr><td class="place">${esc(r.target)}</td><td class="${r.http === 200 ? "num" : "bad"}">${r.http}</td><td class="${r.http === 200 ? "num" : "bad"}">${esc(r.result)}</td></tr>`
-        )
-        .join("");
-    const ok = witness.install_targets.rows.filter((r) => r.http === 200).length;
-    if (String(ok) !== f("install_targets_ok")) {
-        throw new Error(
-            `BUILD REFUSED — the install table has ${ok} working target(s) but witness.facts.install_targets_ok says ${f("install_targets_ok")}.`
-        );
+/* The pipeline: six stages, one button each, one panel each. The artifact
+   column of every panel is the LARGEST world's own ids, read from the worlds
+   table, so a panel never carries an id that the check does not re-derive. */
+function pipeline() {
+    const big = witness.worlds.rows.find((w) => w.name === witness.faults.world);
+    if (!big) throw new Error(`BUILD REFUSED — the worlds table has no row for ${witness.faults.world}`);
+    if (String(big.nodes) !== f("nodes") || String(big.relations) !== f("relations")) {
+        throw new Error(`BUILD REFUSED — the worlds table says ${big.name} has ${big.nodes} nodes / ${big.relations} relations but witness.facts says ${f("nodes")} / ${f("relations")}.`);
     }
-    if (String(witness.install_targets.rows.length) !== f("install_targets_total")) {
-        throw new Error(
-            `BUILD REFUSED — the install table has ${witness.install_targets.rows.length} rows but witness.facts.install_targets_total says ${f("install_targets_total")}.`
-        );
-    }
-    return `<div class="scroll"><table><thead><tr><th>Target</th><th>HTTP</th><th>Result of <code>npm i -g graphonomous</code></th></tr></thead><tbody>${rows}</tbody></table></div>`;
+    const art = { root: ["projection root", big.root], sem: ["world id, minted by WRL", big.sem], vclaim: ["verified claim, minted through TRVM", big.vclaim] };
+    const btns = surface.pipeline.map((s) => `<button class="stage" type="button" data-stage="${s.id}" aria-pressed="false"><span class="k">${esc(s.n)}</span><span class="t">${esc(s.title)}</span><span class="q">${esc(s.q)}</span></button>`).join("");
+    const panels = surface.pipeline.map((s) => {
+        const [artLabel, artVal] = art[s.art];
+        return `<div data-stage="${s.id}"><div><h3><span>${esc(s.n)}</span>${esc(s.title)} — ${esc(s.q)}</h3><p>${esc(fig(s.what))}</p></div>` +
+            `<div class="side"><b>Tool</b>${esc(s.tool)}<b>Refuses with</b><span class="x">${esc(s.refusal)}</span><b>${esc(artLabel)}, ${esc(big.name)}</b><span class="v">${esc(artVal)}</span></div></div>`;
+    }).join("");
+    return `<div class="stages">${btns}</div><div class="panels">${panels}</div>`;
 }
 
-/* The V2 section. The plate reads witnessed facts; the three columns are the
-   record's own sentences with their [[facts]] resolved. The links go to the
-   lane in the repository, the demo on this domain, and WRL's profile table —
-   the one page that can show the row Graphonomous declared. */
-function v2() {
-    const v = surface.v2;
-    const cells = [
-        [`${f("v2_tests_pass")} of ${f("v2_tests_total")}`, "V2 tests passing"],
-        [f("v2_worlds_sealed"), "Projections sealed by WRL"],
-        [`${f("wrl_static_rows")} of ${f("wrl_profile_rows")}`, "WRL profile rows, Graphonomous's"],
-        [f("tri_sources"), "Pinned repositories read"],
-        [f("tri_nodes"), "Nodes, tri projection"],
-        [f("tri_relations"), "Relations, tri projection"],
-    ];
-    const plate = `<div class="grid plate">${cells
-        .map(([n, l]) => `<div><div class="n">${esc(n)}</div><div class="l">${esc(l)}</div></div>`)
-        .join("")}</div>`;
-    const col = (h, body, needs) =>
-        `<div><div class="head"><h3>${esc(h)}</h3></div><p>${esc(fig(body))}</p><div class="needs">${needs}</div></div>`;
-    const cols = `<div class="grid">${col("Reads Super (CD) as evidence", v.super,
-            `<b>super/README.md</b> · <b>super/ampd/README.md</b> at <b>${esc(f("super_pin"))}</b>, pinned by blob`)}${col("Programmed with WRL", v.wrl,
-            `<b>profile_id</b> graphonomous.semantic.v2 · <b>ir_version</b> 2.0 · <a href="${esc(v.profiles_url)}" target="_blank" rel="noopener">the profile table</a>`)}${col("Certified through TRVM", v.trvm,
-            `<b>g0 certify</b> → <b>g0 check-cert</b>, exit 1 on REFUSED · ${esc(f("v2_tests_skipped"))} test skipped by design`)}</div>`;
-    return plate + cols;
+/* Worlds: SVG bars. Width is a fraction of the largest value in the column,
+   which makes the drawing a comparison and not a figure — the figure is the
+   number beside it, and that one has a witness row. */
+function worlds() {
+    const rows = witness.worlds.rows;
+    const max = (k) => Math.max(...rows.map((r) => Number(r[k]) || 0));
+    const bar = (cls, v, k) => `<svg class="${cls}" viewBox="0 0 100 9" preserveAspectRatio="none" aria-hidden="true"><rect width="${((Number(v) / max(k)) * 100).toFixed(1)}" height="9"/></svg>`;
+    return `<div class="worlds">${rows.map((r) =>
+        `<div class="wrow"><div><div class="name">${esc(r.name)}</div><span class="prof">${esc(r.profile)} · ${esc(r.adapters.join(" + "))}</span></div>` +
+        `<div class="bars">${bar("n", r.nodes, "nodes")}${bar("r", r.relations, "relations")}${bar("f", r.faults, "faults")}</div>` +
+        `<div class="nums"><span class="v">${esc(r.nodes)}</span> nodes<br><span class="v">${esc(r.relations)}</span> relations<br><span class="v">${esc(r.faults)}</span> faults · <span class="v">${esc(r.findings)}</span> findings</div>` +
+        `<div class="ids"><b>sem</b> ${esc(r.sem)}<br><b>root</b> ${esc(r.root)}<br><b>vclaim</b> ${esc(r.vclaim)}</div></div>`).join("")}</div>` +
+        `<div class="legend"><span class="n"><i></i>nodes</span><span class="r"><i></i>relations</span><span class="f"><i></i>typed faults</span></div>`;
 }
 
-function loop() {
-    return `<div class="loop">${surface.loop
-        .map(
-            (p) =>
-                `<div><div class="ph">${esc(p.phase)}</div><div class="q">&ldquo;${esc(p.q)}&rdquo;</div><div class="a">${esc(p.actions)}</div><div class="c">${p.actions.split("·").length} actions</div></div>`
-        )
-        .join("")}</div>`;
+function faults() {
+    const rows = witness.faults.rows;
+    const max = Math.max(...rows.map((r) => r.count));
+    const sum = rows.reduce((n, r) => n + r.count, 0);
+    if (String(sum) !== f("faults")) throw new Error(`BUILD REFUSED — the fault codes sum to ${sum} but witness.facts.faults says ${f("faults")}.`);
+    return `<div class="faults">${rows.map((r) => `<div class="frow"><span class="c">${esc(r.code)}</span><svg viewBox="0 0 100 8" preserveAspectRatio="none" aria-hidden="true"><rect width="${((r.count / max) * 100).toFixed(1)}" height="8"/></svg><span class="v">${r.count}</span></div>`).join("")}</div>`;
+}
+
+function refusals() {
+    const rows = witness.refusals.rows;
+    const btns = rows.map((r, i) => `<button class="rbtn" type="button" data-r="${i}" aria-pressed="false">${esc(r.edit)}</button>`).join("");
+    const panels = rows.map((r, i) => `<div data-r="${i}"><div class="edit">edit · <b>${esc(r.shown)}</b></div><div class="code">${esc(r.code)}</div><p class="msg">${esc(r.message)}</p></div>`).join("");
+    const worldJson = JSON.stringify(witness.refusals.world, null, 1);
+    return `<div class="rgrid"><div><div class="rbtns">${btns}</div><div class="rpanels">${panels}</div></div>` +
+        `<div class="pre"><code><i># the world every edit is made to — seals to</i>\n<i># ${esc(witness.refusals.world_sem)}</i>\n${esc(worldJson)}</code></div></div>`;
+}
+
+function sources() {
+    const rows = witness.sources.rows;
+    if (String(rows.length) !== f("pinned_sources")) throw new Error(`BUILD REFUSED — the sources table has ${rows.length} rows but witness.facts.pinned_sources says ${f("pinned_sources")}.`);
+    const why = {
+        super: "Super (CD): its README and the ampd runtime's README are authoritative sources, and the crosswalk's evidence records cite Super's release receipts. Read at this commit and held to it; no runtime coupling in either direction.",
+        "trvm-gov": "TRVM governance: the invariant grid, its receipts and spec releases — the third source family.",
+        trvm: "TRVM's evidence view, pinned separately from its governance tree; the consistency pass says why the two differ.",
+        r10: "The invariant frontier package and its handoffs.",
+        factory: "The invariant factory ledger, mosaic and receipts.",
+        computedriven: "The ComputeDriven edge stack: admission, authority and locus.",
+        wrl: "WallRiderLang's spine, pinned so the seal itself is a pinned dependency.",
+    };
+    return `<div class="srcs">${rows.map((r) => `<div class="src${r.namespace === "super" ? " hi" : ""}" data-source="${esc(r.namespace)}"><div class="ns">${esc(r.namespace)}</div><div class="cm">${esc(r.commit)}</div><div class="fl">${r.files} file${r.files === 1 ? "" : "s"} pinned by blob</div>${why[r.namespace] ? `<div class="why">${esc(why[r.namespace])}</div>` : ""}</div>`).join("")}</div>`;
 }
 
 function gates() {
-    return `<dl class="status">${Object.entries(surface.gates)
-        .filter(([k]) => !k.startsWith("_"))
-        .map(([, g]) => {
-            const tag = g.status === "approved" ? "tag ok" : "tag";
-            const detail =
-                g.status === "approved"
-                    ? `${esc(fig(g.description))} <strong>Evidence:</strong> <code>${esc(g.evidence)}</code>. <strong>Reviewer:</strong> ${esc(g.reviewer)}. <strong>Date:</strong> ${esc(g.date)}.`
-                    : esc(fig(g.description));
-            return `<div><dt>${esc(g.label)}</dt><dd><span class="${tag}">${esc(g.status)}</span> ${detail}</dd></div>`;
-        })
-        .join("")}</dl>`;
+    return `<dl class="status">${Object.entries(surface.gates).filter(([k]) => !k.startsWith("_")).map(([, g]) => {
+        const tag = g.status === "approved" ? "tag ok" : "tag";
+        const detail = g.status === "approved"
+            ? `${esc(fig(g.description))} <strong>Evidence:</strong> <code>${esc(g.evidence)}</code>. <strong>Reviewer:</strong> ${esc(g.reviewer)}. <strong>Date:</strong> ${esc(g.date)}.`
+            : esc(fig(g.description));
+        return `<div><dt>${esc(g.label)}</dt><dd><span class="${tag}">${esc(g.status)}</span> ${detail}</dd></div>`;
+    }).join("")}</dl>`;
 }
 
-/* The retraction paragraph is the ONE place the retracted strings are allowed
-   to appear — naming the wrong value is what a retraction is. The publication
-   gate refuses any other occurrence of them in the artifact, which makes the
-   retraction structural rather than a promise. SHELL.md §4.2. */
+/* The retraction paragraph is the ONE place the retracted strings may appear.
+   The publication gate refuses any other occurrence of them in the artifact,
+   which makes the retraction structural rather than a promise. SHELL.md §4.2. */
 function retraction() {
-    const items = surface.retracted
-        .map((r) => `<li><code>${esc(r.string)}</code> &mdash; ${esc(fig(r.why))}</li>`)
-        .join("");
+    const items = surface.retracted.map((r) => `<li><code>${esc(r.string)}</code> &mdash; ${esc(fig(r.why))}</li>`).join("");
     return `<div class="retract" data-retraction><h3>Retraction &mdash; ${surface.retracted.length} claims removed from this page</h3>
-<p>The revision this replaces was ${Math.round(witness.routes.rows[0].bytes / 1024)}&nbsp;KB and stated most of its figures in the present tense with nothing behind them. These came off:</p>
+<p>Two pages came before this one. The first was ${Math.round(witness.routes.rows[0].bytes / 1024)}&nbsp;KB and stated most of its figures in the present tense with nothing behind them. The second was generated and gated, and described an earlier Graphonomous &mdash; an MCP memory engine &mdash; whose page is now kept under <code>old_scrap/</code> and not served. These came off:</p>
 <ul>${items}</ul>
-<p>Only the first four were wrong at the time of writing; the rest were removed for want of a witness, which is a different and smaller charge. The install requirement is the one that mattered. A reader on a Mac was told the package supported their machine, typed the command, and watched the postinstall exit non-zero &mdash; and the page that sent them there was the project's best acquisition surface. <strong>A link that returns 200 can still be dead</strong>, and so can a package that resolves.</p>
 <p>The fix is structural rather than careful. This page is generated: every figure on it is emitted from <code>records/witness.json</code>, each entry names the command that produced it, and <code>launch-gate.mjs</code> refuses to publish an artifact that reinstates any string above outside this paragraph. A number can no longer be typed onto this site by hand.</p></div>`;
 }
 
-/* The correction form. A REAL form — action + method, so it posts with
-   scripting off — and the endpoint comes out of the record, never typed here.
-   SHELL.md r9; shape copied from computedriven.com, which is the reference. */
 function say() {
     const c = surface.contact;
     if (c.kind !== "formspree" || !/^https:\/\/formspree\.io\/f\/\w+$/.test(c.endpoint || "")) {
-        throw new Error(
-            `BUILD REFUSED — records/surface.json.contact declares kind "${c.kind}" with endpoint "${c.endpoint}". The correction form posts to a Formspree endpoint read from the record; it is not typed into the template.`
-        );
+        throw new Error(`BUILD REFUSED — records/surface.json.contact declares kind "${c.kind}" with endpoint "${c.endpoint}". The correction form posts to a Formspree endpoint read from the record; it is not typed into the template.`);
     }
     return `<form class="say" action="${esc(c.endpoint)}" method="POST" novalidate>
 <div class="say-row">
@@ -317,122 +221,47 @@ function say() {
 /* ==========================================================================
    EMIT
    ========================================================================== */
-/* The stylesheet ships stripped of comments and indentation. The source in
-   src/shell.css stays commented and readable; only the artifact is dense. */
-const CSS = read("./src/shell.css")
-    .replace(/\/\*[\s\S]*?\*\//g, "")
-    .replace(/\n\s*/g, "")
-    .replace(/;\}/g, "}")
-    .trim();
-
-/* The animation is emitted as its own artifact rather than inlined. Two
-   reasons, and the second is the point: the landing page's markup stays
-   content-only, so "the content is complete with JavaScript off" is something
-   a reader can verify by deleting one line; and the animation becomes a file
-   the publication gate can read constants out of and compare against the page.
-   NEWLINES ARE KEPT — joining JS lines the way the CSS is joined would be a
-   semicolon-insertion bug waiting to happen. */
-const dense = (p) =>
-    read(p)
-        .replace(/\/\*[\s\S]*?\*\//g, "")
-        .replace(/^[ \t]*\/\/.*$/gm, "")
-        .replace(/^[ \t]+/gm, "")
-        .replace(/[ \t]+$/gm, "")
-        .replace(/\n{2,}/g, "\n")
-        .trim();
+const CSS = read("./src/shell.css").replace(/\/\*[\s\S]*?\*\//g, "").replace(/\n\s*/g, "").replace(/;\}/g, "}").trim();
+const dense = (p) => read(p).replace(/\/\*[\s\S]*?\*\//g, "").replace(/^[ \t]*\/\/.*$/gm, "").replace(/^[ \t]+/gm, "").replace(/[ \t]+$/gm, "").replace(/\n{2,}/g, "\n").trim();
 const ANIM = dense("./src/memory.js");
 const SAYJS = dense("./src/contact.js");
-
+const INSPECT = dense("./src/inspect.js");
 const YEAR = new Date(surface.verified_at).getUTCFullYear();
 
 const landing = fill(read("./src/landing.html"), {
-    CSS,
-    BAND: band(),
-    STAMP,
-    ORIGIN: surface.origin,
-    REPO: surface.repo,
-    CONTACT: surface.contact.url,
-    QUESTION: esc(surface.question),
-    YEAR: String(YEAR),
-    PLATE: plate(),
-    INSTALL: install(),
-    INSTALL_NOTE: installNote(),
-    INSTALL_TABLE: installTable(),
-    LOOP: loop(),
-    V2: v2(),
-    V2_DEMO: surface.v2.demo,
-    V2_README: surface.repo + surface.v2.readme_path,
-    V2_DEFINITION: esc(surface.v2.definition),
-    V2_BOUNDARY: esc(surface.v2.boundary),
-    STATUS: statusBlock(),
-    GATES: gates(),
-    RETRACTION: retraction(),
-    SAY: say(),
-    ISSUES: surface.contact.issues,
-    CTA:
-        cta("live_deployed", "published, and it downloads", [
-            {
-                verb: "Use the deployed artifact",
-                href: "#install",
-                what: `<code>npm i -g graphonomous</code> pulls ${esc(f("published_version"))} from the registry, published ${esc(f("published_at"))}. On linux-x64 it lands a binary and answers on stdio. On the other three targets it exits 1 — the table says which.`,
-            },
-        ]) +
-        cta("in_tree", "V2 — in the tree, tested, unpublished", [
-            {
-                verb: "Inspect the source",
-                href: surface.repo + surface.v2.readme_path,
-                what: `<code>v2/</code> beside the v0.4 engine: adapters, the projector, the WRL world builder, the TRVM certificate. <code>handoff/STATUS.md</code> is the only file that says what is DESIGNED, IMPLEMENTED, TESTED or FROZEN.`,
-            },
-            {
-                verb: "Run the tests",
-                href: surface.repo + surface.v2.readme_path,
-                what: `<code>cd v2 &amp;&amp; npm run test:full-tree</code> against the pinned sibling checkouts. Expect ${esc(f("v2_tests_pass"))} of ${esc(f("v2_tests_total"))} with ${esc(f("v2_tests_skipped"))} skipped by design; a different number is the most useful thing anyone could send us.`,
-            },
-        ]) +
-        cta("in_tree", "readable, runnable, unpublished", [
-            {
-                verb: "Inspect the source",
-                href: surface.repo,
-                what: `The ${esc(f("machines"))} machine modules are one directory: <code>lib/graphonomous/mcp/machines/</code>. Each declares its own <code>@valid_actions</code>, and that list is what this page prints.`,
-            },
-            {
-                verb: "Run the tests",
-                href: surface.repo,
-                what: `Clone, <code>mix deps.get</code>, <code>mix test</code>. Needs Elixir ${esc(f("elixir_req"))}. If you get a number other than ${esc(f("tests_total"))}, that is the most useful thing anyone could send us.`,
-            },
-        ]),
+    CSS, BAND: band(), STAMP, ORIGIN: surface.origin, REPO: surface.repo, CONTACT: surface.contact.url,
+    QUESTION: esc(surface.question), YEAR: String(YEAR),
+    DEFINITION: esc(surface.definition), BOUNDARY: esc(surface.boundary),
+    DEMO: surface.demo, README_URL: surface.repo + surface.readme_path, PROFILES_URL: surface.profiles_url,
+    PLATE: plate(), PIPELINE: pipeline(), WORLDS: worlds(), FAULTS: faults(), REFUSALS: refusals(), SOURCES: sources(),
+    FINDINGS: esc(f("findings")), FAULTS_N: esc(f("faults")), ADAPTERS: esc(f("adapters")), SUPER_PIN: esc(f("super_pin")),
+    ROLES: esc(f("roles")), KINDS: esc(f("kinds")), PAIRS: esc(f("pairs")), WORLDS_N: esc(f("worlds_sealed")),
+    STATUS: statusBlock(), GATES: gates(), RETRACTION: retraction(), SAY: say(), ISSUES: surface.contact.issues,
+    CTA: cta("in_tree", "in the tree, tested, unpublished", [
+        { verb: "Inspect the source", href: surface.repo + surface.readme_path,
+          what: `<code>v2/</code> in the repository: the adapters, the projector, the WRL world builder, the TRVM certificate. <code>handoff/STATUS.md</code> is the only file that says what is DESIGNED, IMPLEMENTED, TESTED or FROZEN, and <code>handoff/DECISION_LOG.md</code> is every decision with its alternatives.` },
+        { verb: "Run the tests", href: surface.repo + surface.readme_path,
+          what: `<code>cd v2 &amp;&amp; npm run test:full-tree</code> in a checkout with the pinned sibling registries beside it. Expect ${esc(f("tests_pass"))} of ${esc(f("tests_total"))}, ${esc(f("tests_skipped"))} skipped by design. A different number is the most useful thing anyone could send us.` },
+    ]),
 });
 
 function fill(tpl, vars) {
-    return tpl.replace(/\{\{(\w+)\}\}/g, (m, k) => {
-        if (!(k in vars)) throw new Error(`template token {{${k}}} has no value`);
-        return vars[k];
-    });
+    return tpl.replace(/\{\{(\w+)\}\}/g, (m, k) => { if (!(k in vars)) throw new Error(`template token {{${k}}} has no value`); return vars[k]; });
 }
 
-/* Every witnessed fact should be on the page, or it is dead weight in the
-   record and will quietly rot. */
 const unused = Object.keys(witness.facts).filter((k) => !used.has(k));
-if (unused.length) {
-    throw new Error(
-        `BUILD REFUSED — witnessed but never printed: ${unused.join(", ")}. A measured fact that reaches no page is a fact nobody will re-measure, and it rots. Print it or delete it.`
-    );
-}
+if (unused.length) throw new Error(`BUILD REFUSED — witnessed but never printed: ${unused.join(", ")}. A measured fact that reaches no page is a fact nobody will re-measure, and it rots. Print it or delete it.`);
 
-const ANIM_OUT = ANIM + "\n";
-const SAY_OUT = SAYJS + "\n";
+const ANIM_OUT = ANIM + "\n", SAY_OUT = SAYJS + "\n", INSPECT_OUT = INSPECT + "\n";
 writeFileSync(new URL("./index.html", import.meta.url), landing);
 writeFileSync(new URL("./memory.js", import.meta.url), ANIM_OUT);
 writeFileSync(new URL("./contact.js", import.meta.url), SAY_OUT);
-
-/* Last, and only if everything above succeeded: record what was emitted and
-   what it was emitted from. If this line is never reached the stamp on disk
-   still describes the PREVIOUS build, and the gate will refuse the artifact
-   that survived. That is the whole point of it. */
-const stamp = writeStamp(DIR, { "index.html": landing, "memory.js": ANIM_OUT, "contact.js": SAY_OUT });
+writeFileSync(new URL("./inspect.js", import.meta.url), INSPECT_OUT);
+const stamp = writeStamp(DIR, { "index.html": landing, "memory.js": ANIM_OUT, "contact.js": SAY_OUT, "inspect.js": INSPECT_OUT });
 
 console.log(`figure gate: ${used.size} of ${Object.keys(witness.facts).length} witnessed facts printed, 0 hand-typed`);
 console.log(`build stamp: ${stamp.build_id} over ${Object.keys(stamp.inputs).length} source files`);
 console.log(`wrote index.html  ${landing.length.toLocaleString()} bytes  (was ${witness.routes.rows[0].bytes.toLocaleString()})`);
 console.log(`wrote memory.js   ${ANIM.length.toLocaleString()} bytes  (decoration; the page's content does not depend on it)`);
 console.log(`wrote contact.js  ${SAYJS.length.toLocaleString()} bytes  (upgrade only; the form posts without it)`);
+console.log(`wrote inspect.js  ${INSPECT.length.toLocaleString()} bytes  (which panel is in front; the page reads the same without it)`);

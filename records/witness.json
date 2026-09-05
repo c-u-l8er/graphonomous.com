@@ -1,174 +1,111 @@
 {
   "schema": "computedriven-witness-v1",
-  "_comment": "Every number that reaches a page comes from here, and every entry names the command that produced it and the exact world it was produced in. check.mjs re-derives each `derivable` entry against the real thing — the sibling checkout, the npm registry, the release assets — and exits non-zero on disagreement. build-site.mjs will not emit a page if any figure in the template has no entry here. A number cannot be typed onto this site by hand and survive.",
-  "measured_at": "2026-08-16",
-  "engine_commit": "5a9e00b2320415d341abdcee21be992b23bb192f",
+  "_comment": "Every number that reaches a page comes from here, and every entry names the command that produced it and the exact world it was produced in. measure.mjs WRITES the derivable entries by calling derive.mjs; check.mjs re-derives each `derivable` entry with the same module and exits non-zero on disagreement. build-site.mjs will not emit a page if any figure in the template has no entry here. A number cannot be typed onto this site by hand and survive.",
+  "measured_at": "2026-09-05",
+  "engine_commit": "824b9688b9ff168ac88022f626145bdcc450ae24",
   "engine_path": "../graphonomous",
-  "site_commit_at_measure": "0c0de2fbca546e7373aef62544b5c84faccadfcc",
+  "wrl_commit": "083ae6ba1a779f0ef95d4888be7aa2cffe0dc729",
+  "wrl_path": "../WRL",
+  "site_commit_at_measure": "d6ef499b023220b2a0b7ea742852af4714a3fcc8",
   "facts": {
-    "tree_version": {
-      "value": "0.4.3",
-      "label": "Version in the tree",
-      "command": "grep 'version:' ../graphonomous/mix.exs",
-      "derivable": "mix_version"
-    },
-    "published_version": {
-      "value": "0.4.2",
-      "label": "Version on npm",
-      "command": "curl -s https://registry.npmjs.org/graphonomous | jq -r '.\"dist-tags\".latest'",
-      "derivable": "npm_dist_tag"
-    },
-    "published_at": {
-      "value": "2026-04-11",
-      "label": "Published",
-      "command": "curl -s https://registry.npmjs.org/graphonomous | jq -r '.time[\"0.4.2\"]'",
-      "derivable": "npm_publish_date"
-    },
     "tests_total": {
-      "value": "577",
-      "label": "Tests",
-      "command": "cd ../graphonomous && mix test",
-      "raw": "577 tests, 0 failures — Finished in 13.1 seconds (1.2s async, 11.9s sync)",
-      "derivable": null,
-      "note": "Not re-derived by check.mjs: running the suite needs an Elixir toolchain and a compiled _build, which a Pages builder does not have. The raw line above is the whole output that established it, and the gate refuses if this figure and the page disagree."
-    },
-    "tests_failed": {
-      "value": "0",
-      "label": "Failures",
-      "command": "cd ../graphonomous && mix test",
-      "derivable": null
-    },
-    "machines": {
-      "value": "5",
-      "label": "MCP machines",
-      "command": "grep -c 'component(Graphonomous.MCP.Machines' ../graphonomous/lib/graphonomous/mcp/machines/server.ex",
-      "derivable": "machine_count"
-    },
-    "actions": {
-      "value": "31",
-      "label": "Actions across them",
-      "command": "for m in retrieve route act learn consolidate; do grep -oP '@valid_actions ~w\\(\\K[^)]+' ../graphonomous/lib/graphonomous/mcp/machines/$m.ex; done | wc -w",
-      "derivable": "action_count"
-    },
-    "demos": {
-      "value": "19",
-      "label": "Demo pages on this domain",
-      "command": "ls -d demo/*/ | wc -l",
-      "derivable": "demo_count"
-    },
-    "elixir_req": {
-      "value": "~> 1.17",
-      "label": "Elixir requirement",
-      "command": "grep 'elixir:' ../graphonomous/mix.exs",
-      "derivable": "elixir_req"
-    },
-    "install_targets_ok": {
-      "value": "1",
-      "label": "Platforms that install",
-      "command": "see install_targets below",
-      "derivable": "install_ok_count"
-    },
-    "install_targets_total": {
-      "value": "4",
-      "label": "Platforms advertised",
-      "command": "node -e \"console.log(Object.keys(require('../graphonomous/npm/scripts/resolve-platform').PLATFORM_MAP).length * Object.keys(require('../graphonomous/npm/scripts/resolve-platform').ARCH_MAP).length)\"",
-      "derivable": "install_total_count"
-    },
-    "v2_tests_total": {
       "value": "183",
-      "label": "V2 lane tests",
+      "label": "Tests in the suite",
       "command": "cd ../graphonomous/v2 && G0_TEST_CONCURRENCY=1 G0_TEST_HEAP_MB=2048 TMPDIR=$HOME/.cache/g0-probe/tmp npm run test:full-tree",
       "raw": "## suite  183 tests · 182 pass · 0 fail · 1 skipped — VERDICT: GREEN — 182 passing, 1 skipped with reasons, 0 failing (2026-09-05, graphonomous 824b9688)",
       "derivable": null,
       "note": "Not re-derived by check.mjs: the run needs the pinned sibling registries and about a minute; the raw verdict line is the whole output that established it."
     },
-    "v2_tests_pass": {
+    "tests_pass": {
       "value": "182",
-      "label": "V2 lane tests passing",
+      "label": "Tests passing",
       "command": "same run as v2_tests_total",
       "derivable": null
     },
-    "v2_tests_skipped": {
+    "tests_skipped": {
       "value": "1",
-      "label": "V2 lane tests skipped by design",
+      "label": "Tests skipped by design",
       "command": "same run as v2_tests_total; the skip is the developer staleness check, which prints the rebuild command instead of failing when ui/data is absent",
       "derivable": null
     },
-    "v2_worlds_sealed": {
+    "worlds_sealed": {
       "value": "5",
       "label": "Projections sealed as WRL worlds",
       "command": "ls ../graphonomous/v2/projections/*/world/SEM | wc -l",
-      "derivable": "v2_worlds_sealed"
+      "derivable": "worlds_sealed"
     },
-    "wrl_profile_rows": {
-      "value": "4",
-      "label": "Rows in WRL's profile table",
-      "command": "node -e \"import('../WRL/relation-v2.js').then(V=>console.log(V.V2_PROFILE_IDS.length))\"",
-      "derivable": "wrl_profile_rows"
-    },
-    "wrl_static_rows": {
-      "value": "3",
-      "label": "Static rows, all declared by Graphonomous",
-      "command": "node -e \"import('../WRL/relation-v2.js').then(V=>console.log(Object.values(V.V2_PROFILES).filter(r=>r.derivation==='static').length))\"",
-      "derivable": "wrl_static_rows"
-    },
-    "tri_sources": {
+    "pinned_sources": {
       "value": "7",
-      "label": "Pinned repositories in the three-family snapshot",
+      "label": "Repositories the largest snapshot pins",
       "command": "node -e \"console.log(require('../graphonomous/v2/snapshots/tri.json').sources.length)\"",
-      "derivable": "tri_sources"
+      "derivable": "pinned_sources"
     },
-    "tri_adapters": {
+    "adapters": {
       "value": "4",
       "label": "Adapters that read them",
       "command": "node -e \"console.log(require('../graphonomous/v2/snapshots/tri.json').params.adapters.length)\"",
-      "derivable": "tri_adapters"
+      "derivable": "adapters"
     },
-    "tri_nodes": {
+    "nodes": {
       "value": "1189",
       "label": "Nodes in the tri projection",
       "command": "grep -c '' ../graphonomous/v2/projections/tri/records/node.jsonl",
-      "derivable": "tri_nodes"
+      "derivable": "nodes"
     },
-    "tri_relations": {
+    "relations": {
       "value": "2494",
       "label": "Relations in the tri projection",
       "command": "grep -c '' ../graphonomous/v2/projections/tri/records/relation.jsonl",
-      "derivable": "tri_relations"
+      "derivable": "relations"
+    },
+    "faults": {
+      "value": "86",
+      "label": "Typed faults kept in the tri projection",
+      "command": "node -e \"console.log(require('../graphonomous/v2/projections/tri/manifest.json').faults.count)\"",
+      "derivable": "faults"
+    },
+    "findings": {
+      "value": "4",
+      "label": "Cross-registry findings on tri",
+      "command": "node -e \"console.log(require('../graphonomous/v2/projections/tri/consistency/manifest.json').count)\"",
+      "derivable": "findings"
     },
     "super_pin": {
       "value": "7651697",
       "label": "Super (CD) commit the snapshot pins",
       "command": "node -e \"console.log(require('../graphonomous/v2/snapshots/tri.json').sources.find(s=>s.namespace==='super').commit.slice(0,7))\"",
       "derivable": "super_pin"
+    },
+    "profile_rows": {
+      "value": "4",
+      "label": "Rows in WRL's profile table",
+      "command": "node -e \"import('../WRL/relation-v2.js').then(V=>console.log(V.V2_PROFILE_IDS.length))\"",
+      "derivable": "profile_rows"
+    },
+    "static_rows": {
+      "value": "3",
+      "label": "Static rows, all declared by Graphonomous",
+      "command": "node -e \"import('../WRL/relation-v2.js').then(V=>console.log(Object.values(V.V2_PROFILES).filter(r=>r.derivation==='static').length))\"",
+      "derivable": "static_rows"
+    },
+    "roles": {
+      "value": "24",
+      "label": "Roles graphonomous.semantic.v2 declares",
+      "command": "node -e \"import('../WRL/relation-v2.js').then(V=>console.log(Object.keys(V.V2_PROFILES['graphonomous.semantic.v2'].roles).length))\"",
+      "derivable": "roles"
+    },
+    "kinds": {
+      "value": "32",
+      "label": "Relation kinds graphonomous.semantic.v2 declares",
+      "command": "node -e \"import('../WRL/relation-v2.js').then(V=>console.log(Object.keys(V.V2_PROFILES['graphonomous.semantic.v2'].endpoints).length))\"",
+      "derivable": "kinds"
+    },
+    "pairs": {
+      "value": "103",
+      "label": "Endpoint pairs graphonomous.semantic.v2 admits",
+      "command": "node -e \"import('../WRL/relation-v2.js').then(V=>console.log(Object.values(V.V2_PROFILES['graphonomous.semantic.v2'].endpoints).reduce((n,p)=>n+p.length,0)))\"",
+      "derivable": "pairs"
     }
-  },
-  "install_targets": {
-    "_comment": "resolve-platform.js maps two platforms x two architectures, and postinstall.js exits non-zero when the asset it derives is missing. Each row was requested from the v0.4.2 release with curl on 2026-08-16. The status column is the HTTP code that came back, not an opinion about it.",
-    "release": "https://github.com/c-u-l8er/graphonomous/releases/download/v0.4.2/",
-    "asset_pattern": "graphonomous-v0.4.2-<target>.tar.gz",
-    "rows": [
-      {
-        "target": "linux-x64",
-        "http": 200,
-        "result": "installs"
-      },
-      {
-        "target": "linux-arm64",
-        "http": 404,
-        "result": "no asset — install exits 1"
-      },
-      {
-        "target": "darwin-x64",
-        "http": 404,
-        "result": "no asset — install exits 1"
-      },
-      {
-        "target": "darwin-arm64",
-        "http": 404,
-        "result": "no asset — install exits 1"
-      }
-    ]
   },
   "routes": {
     "_comment": "Checked on the served domain 2026-08-16, not by listing the local tree. graphonomous.com answers every path with the homepage, so a 200 proves nothing on its own — these rows are the ones whose body differs from the homepage's, which is what makes them real routes.",
@@ -195,7 +132,276 @@
       }
     ]
   },
-  "v2_measured_at": "2026-09-05",
-  "v2_commit_at_measure": "824b9688",
-  "wrl_commit_at_measure": "083ae6ba1a779f0ef95d4888be7aa2cffe0dc729"
+  "worlds": {
+    "_comment": "One row per shipped projection, read from its manifest, records, world/SEM, ROOT, certificate/VCLAIM and consistency/manifest.json by derive.mjs. check.mjs re-derives every row.",
+    "rows": [
+      {
+        "name": "baseline",
+        "profile": "graphonomous.semantic.v0",
+        "nodes": 289,
+        "relations": 588,
+        "assertions": 1272,
+        "faults": 64,
+        "findings": 7,
+        "adapters": [
+          "crosswalk"
+        ],
+        "sources": 6,
+        "sem": "sem-0f952f03804c73152b762e4a09570ce37adb35039203c5c4c501507bd0ab17be",
+        "root": "root-da4f3d7a534801e0aedbfee4853cba989e24e5107c28e02ad83507a044afef85",
+        "vclaim": "vclaim-6cf938ccbe9aed9c9ad828553dd3930c4de3d06f9d144ef31ce478f7dc9666da"
+      },
+      {
+        "name": "historical",
+        "profile": "graphonomous.semantic.v0",
+        "nodes": 278,
+        "relations": 566,
+        "assertions": 1210,
+        "faults": 64,
+        "findings": 7,
+        "adapters": [
+          "crosswalk"
+        ],
+        "sources": 6,
+        "sem": "sem-3ae051cf2a4ab35436eedeb1b15cae759bd3001652d55d67a3f29ae23f5d0e23",
+        "root": "root-c7f9c7595c3005b402f263bfe394d767a69adc8e338f7ed2640bfa015375bc87",
+        "vclaim": "vclaim-1c65435f28cd05d8e53c8eec9058fb2171f3dcf0d672b4a5e298f7264454ddee"
+      },
+      {
+        "name": "multi",
+        "profile": "graphonomous.semantic.v0",
+        "nodes": 778,
+        "relations": 1574,
+        "assertions": 3270,
+        "faults": 86,
+        "findings": 6,
+        "adapters": [
+          "crosswalk",
+          "factory"
+        ],
+        "sources": 6,
+        "sem": "sem-b8d828278e9ba411bc375da4b03754e87210b78cb106d25422fd94e8526622ea",
+        "root": "root-48ac3e32dfc56cd1450e43b92c7a38d83d71a95113da8b243951dfa305fd2213",
+        "vclaim": "vclaim-819bf2559c06589b8b0ec3ca91841f763edadda9891cd7b26e5f2aee7867706f"
+      },
+      {
+        "name": "multi-v1",
+        "profile": "graphonomous.semantic.v1",
+        "nodes": 932,
+        "relations": 2007,
+        "assertions": 3920,
+        "faults": 86,
+        "findings": 4,
+        "adapters": [
+          "crosswalk",
+          "factory",
+          "factory_mosaic"
+        ],
+        "sources": 6,
+        "sem": "sem-e186186ea55e9e9a9d10a7676dd31180e248837db54fb66e388d594ff5406e66",
+        "root": "root-44659ae753a5396fbec7f064cd4349811d577c1d3957703fd8b65fac20c5236d",
+        "vclaim": "vclaim-03bfb372d8268fa2b791ce5c1240db2081e677ce4ab7c7e9c1b779e4bdd35cd1"
+      },
+      {
+        "name": "tri",
+        "profile": "graphonomous.semantic.v2",
+        "nodes": 1189,
+        "relations": 2494,
+        "assertions": 4692,
+        "faults": 86,
+        "findings": 4,
+        "adapters": [
+          "crosswalk",
+          "factory",
+          "factory_mosaic",
+          "trvm"
+        ],
+        "sources": 7,
+        "sem": "sem-3a80601c6369346029f0519837eda47d88686987514371cbd57f5c4a2a55bae5",
+        "root": "root-ad27b735d86b51278fb6a0f5f61d117ff7f274e8b5716d49e1f43a40c7e03122",
+        "vclaim": "vclaim-332109b06101ed69951913425e445a9b06b10f93fcc86026554fcf9a33c64603"
+      }
+    ]
+  },
+  "faults": {
+    "_comment": "The tri projection's faults by code, from manifest.json faults.by_code. A fault is what an adapter could not normalize; it is typed and kept beside the records, never guessed away.",
+    "world": "tri",
+    "rows": [
+      {
+        "code": "AMBIGUOUS_IDENTIFIER",
+        "count": 1
+      },
+      {
+        "code": "DANGLING_WITNESS",
+        "count": 2
+      },
+      {
+        "code": "SETTLED_WITHOUT_WITNESS",
+        "count": 8
+      },
+      {
+        "code": "TRUNCATED_FIELD",
+        "count": 5
+      },
+      {
+        "code": "UNQUALIFIED_REFERENCE",
+        "count": 3
+      },
+      {
+        "code": "UNRESOLVED_LINK",
+        "count": 56
+      },
+      {
+        "code": "UNSUPPORTED_SOURCE_FORM",
+        "count": 11
+      }
+    ]
+  },
+  "sources": {
+    "_comment": "The repositories the largest snapshot pins, from snapshots/tri.json: namespace, commit and how many files are pinned by blob.",
+    "snapshot": "tri",
+    "rows": [
+      {
+        "namespace": "wrl",
+        "commit": "1f4c5fd4cf50",
+        "files": 1
+      },
+      {
+        "namespace": "super",
+        "commit": "76516978bfa8",
+        "files": 2
+      },
+      {
+        "namespace": "trvm-gov",
+        "commit": "8816e5905532",
+        "files": 66
+      },
+      {
+        "namespace": "r10",
+        "commit": "ba4e625871b7",
+        "files": 23
+      },
+      {
+        "namespace": "factory",
+        "commit": "d217ee29a332",
+        "files": 66
+      },
+      {
+        "namespace": "computedriven",
+        "commit": "efa8881a5d44",
+        "files": 6
+      },
+      {
+        "namespace": "trvm",
+        "commit": "fd0df4cdf6ea",
+        "files": 3
+      }
+    ]
+  },
+  "refusals": {
+    "_comment": "Six edits to a two-object world, each offered to WRL's seal at the WRL commit below. The code and message are WRL's own; derive.mjs runs the same edits again and check.mjs compares.",
+    "wrl_commit": "083ae6ba1a779f0ef95d4888be7aa2cffe0dc729",
+    "world": {
+      "ir_version": "2.0",
+      "profile_id": "graphonomous.semantic.v2",
+      "semantic_policies": {
+        "rulepack_id": "graphonomous.semantic.rules.v0"
+      },
+      "objects": [
+        {
+          "object_id": "receipt_3Asha256_3Aabc",
+          "role": "RECEIPT",
+          "static_config": {
+            "lid": "receipt:sha256:abc",
+            "attrs": {}
+          },
+          "ports": [
+            "node"
+          ]
+        },
+        {
+          "object_id": "claim_3Acrosswalk_3AE_2D48",
+          "role": "CLAIM",
+          "static_config": {
+            "lid": "claim:crosswalk:E-48",
+            "attrs": {}
+          },
+          "ports": [
+            "node"
+          ]
+        }
+      ],
+      "relations": [
+        {
+          "identity_seed": {
+            "variant": "named-initial",
+            "relation_name": "rel:WITNESSES:receipt:sha256:abc:claim:crosswalk:E-48"
+          },
+          "revision": {
+            "domain": "semantic",
+            "kind": "WITNESSES",
+            "orientation": "directed",
+            "texture": "solid",
+            "endpoints": [
+              {
+                "role": "source",
+                "terminal": {
+                  "object_id": "receipt_3Asha256_3Aabc",
+                  "port": "node"
+                }
+              },
+              {
+                "role": "target",
+                "terminal": {
+                  "object_id": "claim_3Acrosswalk_3AE_2D48",
+                  "port": "node"
+                }
+              }
+            ],
+            "attributes": {},
+            "policy": "graphonomous.semantic.rules.v0"
+          }
+        }
+      ]
+    },
+    "world_sem": "sem-e717109f49233a79fd29b34d8521096a66dc05cd2bdcbca22a91b285649c8ee3",
+    "rows": [
+      {
+        "edit": "an undeclared role",
+        "shown": "objects[0].role = \"OPINION\"",
+        "code": "WRL_UNDECLARED_ROLE",
+        "message": "[WRL_UNDECLARED_ROLE] object 'receipt_3Asha256_3Aabc' has role 'OPINION', and profile 'graphonomous.semantic.v2' declares OBLIGATION, ENFORCEMENT_PROPERTY, CLAIM, LAW, MECHANISM, DEFINITION, REPRESENTATION, PROFILE, ASSUMPTION, WITNESS, FALSIFIER, FINDING, EXPERIMENT, RECEIPT, ARTIFACT, ADJUDICATION, EVIDENCE_STATE_TRANSITION, ROUND, CELL, REGISTRY, SOURCE_LOCATION, ARGUMENT, DEFEATER, INSTRUMENT"
+      },
+      {
+        "edit": "an undeclared relation kind",
+        "shown": "relations[0].revision.kind = \"LIKES\"",
+        "code": "WRL_UNDECLARED_KIND",
+        "message": "[WRL_UNDECLARED_KIND] relations[0] has kind 'LIKES', and profile 'graphonomous.semantic.v2' declares STATES, IMPLEMENTS, DERIVES_FROM, REDUCES_TO, REFINES, SPLIT_FROM, SUPERSEDES, RETRACTS, REQUIRES, WITNESSES, SUPPORTS, FALSIFIES, ATTACKS, TESTED_UNDER, SCOPED_BY, ASSUMES, CLOSES, OPENS, PRODUCED_BY, ADJUDICATED_BY, LOCATED_IN, MEMBER_OF, BINDS, CITES, INDEPENDENT_OF, CONFLICTS_WITH, EQUIVALENT_TO, DEFINES, REPRESENTS, CROSS_CUTS, STATE_TRANSITION_OF, DISCHARGED_BY"
+      },
+      {
+        "edit": "a pair the kind does not admit",
+        "shown": "endpoints reversed: CLAIM → RECEIPT under WITNESSES",
+        "code": "WRL_UNDECLARED_ENDPOINT_PAIR",
+        "message": "[WRL_UNDECLARED_ENDPOINT_PAIR] relations[0] joins (CLAIM -> RECEIPT) under kind 'WITNESSES', which profile 'graphonomous.semantic.v2' admits only as (WITNESS -> CLAIM), (WITNESS -> OBLIGATION), (WITNESS -> EVIDENCE_STATE_TRANSITION), (RECEIPT -> CLAIM), (RECEIPT -> OBLIGATION), (RECEIPT -> EVIDENCE_STATE_TRANSITION), (WITNESS -> ARGUMENT)"
+      },
+      {
+        "edit": "a policy outside the profile's vocabulary",
+        "shown": "relations[0].revision.policy = \"anything.at.all\"",
+        "code": "WRL_UNDECLARED_POLICY",
+        "message": "[WRL_UNDECLARED_POLICY] relations[0] carries policy \"anything.at.all\", and profile 'graphonomous.semantic.v2' declares 'graphonomous.semantic.rules.v0'. The policy is sealed into this relation's revision identity, so one the profile never declared would be an undeclared rulepack minted into a rev- under a profile that admits it nowhere else"
+      },
+      {
+        "edit": "a runtime claim in a static world",
+        "shown": "semantic_policies.film_schema = \"film.v0.7\"",
+        "code": "WRL_V2_WORLD_MISMATCH",
+        "message": "[WRL_V2_WORLD_MISMATCH] this artifact states semantic_policies = {\"film_schema\":\"film.v0.7\",\"rulepack_id\":\"graphonomous.semantic.rules.v0\"}, and the world it encodes derives {\"rulepack_id\":\"graphonomous.semantic.rules.v0\"}. These fields are functions of the profile and the objects -- a stated copy that disagrees is a second source of truth, and the stated one is the one a reader believes; a key the profile does not derive at all is a claim about a runtime the profile never made"
+      },
+      {
+        "edit": "a profile id the table has no row for",
+        "shown": "profile_id = \"graphonomous.semantic.v9\"",
+        "code": "WRL_UNSUPPORTED_PROFILE",
+        "message": "[WRL_UNSUPPORTED_PROFILE] profile \"graphonomous.semantic.v9\" is not one this encoder declares (forge.world.core.v1, graphonomous.semantic.v0, graphonomous.semantic.v1, graphonomous.semantic.v2)"
+      }
+    ]
+  }
 }

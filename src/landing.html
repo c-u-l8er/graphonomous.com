@@ -1,6 +1,6 @@
 <!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Can what a system understands be made queryable, falsifiable and provenance-linked? — Graphonomous</title>
-<meta name="description" content="Graphonomous V2 is a derived semantic/evidence graph over the registries that hold a system's truth — ComputeDriven, TRVM, the invariant factory and Super (CD) — sealed as a WallRiderLang world under a profile Graphonomous declares as data and certified through TRVM. The v0.4 MCP memory engine still ships. Every number here is generated from a frozen record.">
+<meta name="description" content="Graphonomous is a derived semantic/evidence graph over the registries that hold a system's truth — ComputeDriven, TRVM, the invariant factory and Super (CD) — read at pinned commits, sealed as a WallRiderLang world under a profile Graphonomous declares as data, and certified through TRVM. Every number here is generated from a frozen record and re-derived from the tree.">
 <meta name="falsifiable-question" content="{{QUESTION}}">
 <link rel="canonical" href="{{ORIGIN}}/">
 <meta name="theme-color" content="#07090e">
@@ -13,14 +13,14 @@
 <div class="wrap">
 
 <div class="top"><a class="logo" href="/">graph<span>onomous</span></a>
-<nav><a href="#install">Install</a><a href="#loop">The loop</a><a href="#evidence">Evidence</a><a href="#say">Correct us</a><a class="btn" href="{{REPO}}">Source</a></nav></div>
+<nav><a href="#pipeline">Pipeline</a><a href="#worlds">Worlds</a><a href="#evidence">Evidence</a><a href="#say">Correct us</a><a class="btn" href="{{REPO}}">Source</a></nav></div>
 
 <section class="hero">
 <div class="front">
 <div class="eyebrow">The question this site exists to answer</div>
 <h1>Can what a system understands be made <em>queryable, falsifiable and provenance-linked?</em></h1>
-<p class="lede">That is the V2 question, and it is a different question from the one this page used to ask. Graphonomous began as an MCP memory whose graph changes shape from outcomes; that engine still ships, below, on one platform. <strong>Graphonomous V2 is a derived semantic/evidence graph</strong> over the registries that already hold the stack&rsquo;s truth &mdash; ComputeDriven, TRVM, the invariant factory, and Super&nbsp;(CD) &mdash; read at pinned commits, projected into content-addressed records, <strong>sealed as a WallRiderLang world</strong> under a profile Graphonomous declares as data, and certified through TRVM. Every id is minted by the kernel that owns it. Nothing in it is a model&rsquo;s opinion. Whether the graph earns its keep is the open question; what is settled is that it seals, verifies, and can be read.</p>
-<p><a class="btn" href="#v2">What V2 is</a>&nbsp;&nbsp;<a class="btn ghost" href="{{V2_DEMO}}">Programmed with WRL</a>&nbsp;&nbsp;<a class="btn ghost" href="#evidence">What is actually proven</a></p>
+<p class="lede">{{DEFINITION}} It reads the registries that already hold the stack&rsquo;s truth &mdash; ComputeDriven, TRVM, the invariant factory, and Super&nbsp;(CD) &mdash; at pinned commits, projects them into content-addressed records, <strong>seals the result as a WallRiderLang world</strong> under a vocabulary it declares as data, and certifies the projection through TRVM. Every id is minted by the kernel that owns it. Nothing in it is a model&rsquo;s opinion. Whether the graph earns its keep is the open question; what is settled is that it seals, verifies, and can be read.</p>
+<p><a class="btn" href="#pipeline">How it works</a>&nbsp;&nbsp;<a class="btn ghost" href="{{DEMO}}">Programmed with WRL</a>&nbsp;&nbsp;<a class="btn ghost" href="#evidence">What is actually proven</a></p>
 </div>
 <!-- The identifying animation (SHELL.md §8). It comes AFTER the h1 in source
      order and sits behind it, because the question comes first. It renders no
@@ -32,37 +32,42 @@
 
 {{PLATE}}
 
-<section id="v2">
-<div class="eyebrow">The direction &mdash; Graphonomous V2</div>
-<h2>A graph of what the stack knows, sealed by the language the stack is written in.</h2>
-<p class="lede">{{V2_DEFINITION}} {{V2_BOUNDARY}} Concretely: an adapter reads a registry at a pinned commit and emits nodes, relations, assertions and source locations; the projector folds them into a content-addressed root; the semantic world is submitted to WallRiderLang as a Semantic IR 2.0 artifact and comes back with a real world id and a kernel-minted id for every relation and every revision; a certificate is minted over the claim and its chain of code identities through TRVM, and a checker that writes nothing re-derives every plane. A second registry is a second adapter. A wider vocabulary is a new profile row, not a new encoding.</p>
-{{V2}}
-<p class="lede sm">Three claims a reader can hold this section to. <strong>Super is read, not integrated with:</strong> the snapshot pins Super&rsquo;s files by blob and the graph can be held to them; there is no runtime coupling in either direction, and the page says so rather than implying one. <strong>WRL is the program:</strong> the vocabulary lives in WRL&rsquo;s profile table, WRL refuses by name what the profile does not declare, and the demo on this domain shows the artifact, the seal and the refusals with real bytes &mdash; <a href="{{V2_DEMO}}">Programming Graphonomous with WRL</a>. <strong>Nothing V2 is installable:</strong> it lives at <a href="{{V2_README}}">v2/ in the repository</a>, beside the v0.4 engine, and the ledger below keeps the two apart.</p>
+<section id="pipeline">
+<div class="eyebrow">How it works</div>
+<h2>From a pinned registry to a certificate, in six steps.</h2>
+<p class="lede">{{BOUNDARY}} Each step below is one command in the lane, refuses in its own vocabulary, and leaves behind an id the next step is held to. Press a step. The right-hand column of every panel is the largest projection&rsquo;s own id for that step, read from the tree and re-derived by the check.</p>
+{{PIPELINE}}
 </section>
 
-<section id="install">
-<div class="eyebrow">What ships today &mdash; the v0.4 memory engine</div>
-<h2>One command &mdash; on one platform.</h2>
-<p class="lede">The registry has it, the binary downloads, and the server answers on stdio. It is also the honest version: the installer advertises four targets and <strong>only one of them has ever been built.</strong> If you are on a Mac, this will fail, and it will fail during <code>npm i</code> rather than later.</p>
-{{INSTALL}}
-<h3 class="mt">Every target the installer will try to fetch</h3>
-<p class="lede sm">{{INSTALL_NOTE}}</p>
-{{INSTALL_TABLE}}
-<p class="lede sm">The gap is not a mystery and it is not hard: <code>npm/scripts/resolve-platform.js</code> maps two platforms by two architectures, and the release workflow has only ever produced one of the four archives. Until the other three exist, the reachable audience for this package is Linux on x86-64. That is the single largest thing standing between this project and someone outside it trying it.</p>
+<section id="worlds">
+<div class="eyebrow">What has been sealed</div>
+<h2>{{WORLDS_N}} projections, each a WallRiderLang world with a certificate.</h2>
+<p class="lede">One row per shipped projection. Bars compare nodes, relations and typed faults across the rows; the numbers beside them, and the three ids beneath, are read from each projection&rsquo;s own directory. Two rows share statements: the revision id of a statement is the same in every world it appears in, and its allocation id never is &mdash; what a statement <em>is</em> does not depend on the world, where it is <em>allocated</em> does.</p>
+{{WORLDS}}
+<h3 class="mt">Faults are kept, not guessed away</h3>
+<p class="lede sm">What an adapter cannot normalize becomes a typed fault beside the records &mdash; {{FAULTS_N}} of them in the largest projection, by code. A fault is a fact about a source; a finding, {{FINDINGS}} of them on the same world, is what two normalized sources disagree about. Neither is repaired silently and neither is hidden.</p>
+{{FAULTS}}
 </section>
 
-<section id="loop">
-<div class="eyebrow">The architecture, in the only shape that matters</div>
-<h2>Five machines, because tool choice degrades before capability does.</h2>
-<p class="lede">The engine exposes one tool per phase of the loop rather than one tool per capability. Each machine dispatches on an <code>action</code> parameter, so a client sees a short menu of verbs and the long menu lives underneath. The phases are the same five PULSE names every loop in this portfolio declares.</p>
-{{LOOP}}
-<p class="lede sm">Every action above is read out of the <code>@valid_actions</code> list in its machine module at build time. When a machine gains one, this page gains one; when this page and the modules disagree, the build stops. That is how the previously published table came to be short by two — <code>retrieve/replay</code> and <code>act/store_trace</code> both existed in the code and neither was on the page.</p>
+<section id="refuse">
+<div class="eyebrow">Programmed with WallRiderLang</div>
+<h2>The program is a vocabulary, and the encoder refuses what it does not declare.</h2>
+<p class="lede">Graphonomous has no query language of its own. Its vocabulary &mdash; {{ROLES}} roles, {{KINDS}} relation kinds, {{PAIRS}} admissible (source role, target role) pairs &mdash; is a static row in <a href="{{PROFILES_URL}}">WallRiderLang&rsquo;s profile table</a>, and the graph is submitted to WRL as a Semantic IR 2.0 artifact. The two-object world on the right seals. Each button applies one edit to a fresh copy and shows what WRL answered, in WRL&rsquo;s own words: the code and message were produced by running the encoder, and the check runs the same six edits again.</p>
+{{REFUSALS}}
+<p class="lede sm">The whole submission, the seal with kernel-minted ids, and the six refusals with real artifact bytes: <a href="{{DEMO}}">Programming Graphonomous with WRL</a>.</p>
+</section>
+
+<section id="sources">
+<div class="eyebrow">What it reads</div>
+<h2>Seven repositories, pinned by blob, and one of them is Super.</h2>
+<p class="lede">The largest snapshot names every file it reads by commit, tree and blob, and {{ADAPTERS}} adapters read those bytes and nothing else. Super&nbsp;(CD) is one of the repositories, at <code>{{SUPER_PIN}}</code>: the graph reads Super&rsquo;s evidence at that commit and can be held to it. That is the whole of the integration, and it is stated rather than implied &mdash; Graphonomous does not run inside Super, and Super does not call Graphonomous.</p>
+{{SOURCES}}
 </section>
 
 <section id="evidence">
 <div class="eyebrow">How this was checked</div>
 <h2>The suite is green on code you cannot install.</h2>
-<p class="lede">Those two halves belong in one sentence, and separating them is how a page starts lying. The engine's own suite passes. The engine's own suite runs against the tree in this repository, and the tree is a version ahead of anything the registry serves.</p>
+<p class="lede">Those two halves belong in one sentence, and separating them is how a page starts lying. The lane&rsquo;s own suite passes, every shipped projection re-verifies from its own bytes, and none of it is in any published package. The status block says which is which.</p>
 
 <h3 class="mt">Status of this surface</h3>
 {{STATUS}}
@@ -76,26 +81,27 @@
 
 <section id="do">
 <div class="eyebrow">What you can do here</div>
-<h2>Two rungs, two different invitations.</h2>
-<p class="lede">A page may only ask you to do what its evidence has earned. There is a deployed artifact, so this page may ask you to use it &mdash; on the one platform it exists for. The version being described is only in the tree, so about that, it may ask you to read and to run the tests, and nothing more.</p>
+<h2>One rung, and the two things it has earned.</h2>
+<p class="lede">A page may only ask you to do what its evidence has earned. This one is in the tree and tested, so it may ask you to read and to run the tests, and nothing more.</p>
 {{CTA}}
 </section>
 
 <section id="say">
 <div class="eyebrow">Tell us we are wrong</div>
 <h2>The correction channel, and the specific job it has here.</h2>
-<p class="lede">This page publishes an install table in which three of the four advertised platforms return 404, and a ledger in which nobody has yet installed the published package on a clean machine and spoken MCP to the result. <strong>A reader telling us the linux-x64 tarball did, or did not, work for them is the shortest path this domain has to the <code>external</code> rung</strong> &mdash; the one rung nobody here can award themselves. A result, a stack trace, or a figure on this page you think is wrong: same channel, all three welcome.</p>
+<p class="lede">Every figure on this page was measured on one machine by the people who built the thing. <strong>A reader who runs the suite elsewhere and reports the verdict &mdash; the same or different &mdash; is the shortest path this domain has to the next rung</strong>, the one nobody here can award themselves. A result, a stack trace, or a figure on this page you think is wrong: same channel, all three welcome.</p>
 {{SAY}}
-<p class="lede sm">It is a real <code>&lt;form&gt;</code> with an <code>action</code> and <code>method="POST"</code>, so it submits with JavaScript disabled; <code>/contact.js</code> only upgrades it to an inline reply, and that reply prints <em>sent</em> only when the endpoint actually answers 2xx. A form that says thank-you on submit and drops the message is the exact failure this site is about. There is still no email address here, deliberately. Anything better filed as a bug goes to <a href="{{ISSUES}}">the issue tracker</a>.</p>
+<p class="lede sm">It is a real <code>&lt;form&gt;</code> with an <code>action</code> and <code>method="POST"</code>, so it submits with JavaScript disabled; <code>/contact.js</code> only upgrades it to an inline reply, and that reply prints <em>sent</em> only when the endpoint actually answers 2xx. There is still no email address here, deliberately. Anything better filed as a bug goes to <a href="{{ISSUES}}">the issue tracker</a>.</p>
 </section>
 
 </div>
 <footer><div class="in">
 <div>&copy; {{YEAR}} Graphonomous&ensp;·&ensp;<a href="/">{{QUESTION}}</a></div>
-<div class="links"><a href="/demo/">Demos</a><a href="/benchmarks/">Benchmarks</a><a href="{{REPO}}">Source</a><a href="{{CONTACT}}">Challenge a claim</a><a href="https://ampersandboxdesign.com">[&amp;]</a></div>
+<div class="links"><a href="/demo/">Demo</a><a href="{{README_URL}}">The lane</a><a href="{{REPO}}">Source</a><a href="{{CONTACT}}">Challenge a claim</a><a href="https://wrl.traaviis.com/">WallRiderLang</a><a href="https://ampersandboxdesign.com">[&amp;]</a></div>
 </div>
-<p class="attrib"><span class="stamp">{{STAMP}}</span>&ensp;·&ensp;Decoration only: the graph above draws nothing that is measured and nothing that is claimed. Its node and link counts were chosen so that they are not any figure on this page, and the publication gate refuses the build if one of them ever becomes one. Every number here is emitted from <code>records/witness.json</code> at build time, and each entry in that file names the command that produced it. The whole content of this page renders with JavaScript disabled &mdash; two deferred external files, the portfolio nav and the animation, add nothing the content depends on. Corrections go to the issue tracker; there is no email address on this site, deliberately.</p>
+<p class="attrib"><span class="stamp">{{STAMP}}</span>&ensp;·&ensp;Decoration only: the graph above draws nothing that is measured and nothing that is claimed. Its node and link counts were chosen so that they are not any figure on this page, and the publication gate refuses the build if one of them ever becomes one. Every number here is emitted from <code>records/witness.json</code> at build time, each entry names the command that produced it, and <code>check.mjs</code> re-derives it from the tree. The whole content of this page renders with JavaScript disabled &mdash; three deferred external files, the portfolio nav, the animation and the panel switcher, add nothing the content depends on. Corrections go to the issue tracker; there is no email address on this site, deliberately.</p>
 </footer>
 <script src="/memory.js" defer></script>
 <script src="/contact.js" defer></script>
+<script src="/inspect.js" defer></script>
 </body></html>

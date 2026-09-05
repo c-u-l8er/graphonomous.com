@@ -1,21 +1,23 @@
 {
   "_comment": "Written by build-site.mjs. launch-gate.mjs refuses if any input has changed since, if an artifact does not hash to what was emitted, or if index.html does not carry this build_id. See stamp.mjs.",
-  "build_id": "bd01c918268c4",
+  "build_id": "ba1240c823a40",
   "built_at": "2026-09-05",
   "inputs": {
-    "build-site.mjs": "f2a0242fe8a164375bc24aa168f76233da6a0e7f821f72ec2fa17c6fb12902b8",
-    "package.json": "35a349b77dc81bb053bf8663173e9dcd8448d65cab05148742580bf60b3ce43a",
-    "records/surface.json": "224eecd95a4e3412e12a950138bb57932c5d5746e7a338558d84090e3cf385cc",
-    "records/witness.json": "e2273900aa229bd53e2b7d39b431f542feea0882c162f854de23b431aedf1803",
+    "build-site.mjs": "ea36b4a232ac08dc6c38fc2e934b9effcfbc0031a1480173e108be4f440cdc36",
+    "package.json": "6be50da95fd302673315ca0e639801552ce15fc85d9aaf611258d4611195fec2",
+    "records/surface.json": "d62bc92a36ae66c24736eb37046ced63c100ae5f7c160480264133ff7a20e426",
+    "records/witness.json": "dfc4a72df0874e89a40c41c4e018078d5a43f2b1a1ced6797db183722add193a",
     "src/contact.js": "9f4bd32e82a639a24d060e529a1077d58531f73590ce14d67509fb4360b3a9c5",
-    "src/landing.html": "d369893e99101b473642f23e453ec718b45e96973f7111fe7879d878fb5a84f2",
+    "src/inspect.js": "962e6798bf9c17176890cb317f969ace338c828752be0f3e30a695234fe8c8e8",
+    "src/landing.html": "13c5998ebbb31a59f66bd5464840cbe58871a6960561c72fd9184af56886e603",
     "src/memory.js": "87361be0845b14ab782226091278559ce5898dea23f48152c72761e072afe080",
-    "src/shell.css": "47cc07d3a382ff92cfadf407d1f5ebf0c2ba0bffc9bbf570d6c4005d3b595c33",
-    "stamp.mjs": "84f4aa1e07ceae8633a0414485b979629feee0076b2e208a012a0a90379bb0df"
+    "src/shell.css": "98114fffc2c151af258e4fc7e5d3a8cfc7258a671660b1287946f0a0e0e926b4",
+    "stamp.mjs": "85210cefa992e279211f94fe342454446c88168258d22a5821a3e6011e983195"
   },
   "artifacts": {
-    "index.html": "21a39b791510c49244226210a3dd896ef4f95a7b1706014c776e590296ccb65a",
+    "index.html": "89d518ddc4bd907f7286fa1d1ce587ca4a6d32bfa6ebb486d797c349b5fbee75",
     "memory.js": "8eeb5f76cc697c710075579582d8a7fd2340e43fb2b62fb669fa42d841ed9cac",
-    "contact.js": "0e677758d8ed4606d889c53b7534e2bf4e01ad8e65442394f98c4870b3b61e15"
+    "contact.js": "0e677758d8ed4606d889c53b7534e2bf4e01ad8e65442394f98c4870b3b61e15",
+    "inspect.js": "a4afd0900ad048419eef94e2626420de0854f3add6d5d4f82e912f4a55ed9e41"
   }
 }

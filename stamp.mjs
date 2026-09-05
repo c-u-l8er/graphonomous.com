@@ -31,7 +31,7 @@ import { readFileSync, writeFileSync, readdirSync, existsSync, statSync } from "
 import path from "path";
 
 export const STAMP_FILE = "build-stamp.json";
-export const ARTIFACTS = ["index.html", "memory.js", "contact.js"];
+export const ARTIFACTS = ["index.html", "memory.js", "contact.js", "inspect.js"];
 
 const sha = (buf) => createHash("sha256").update(buf).digest("hex");
 

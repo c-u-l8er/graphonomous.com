@@ -17,10 +17,9 @@ longer true.
 
 Do not look for tools or specs here. Use the codebase instead:
 
-- **MCP tools:** `../graphonomous/` (Elixir/OTP engine, 5 loop-phase machines)
-- **Agent instructions:** `../graphonomous/AGENTS.md`
-- **Skills pack:** `../graphonomous/docs/skills/SKILLS.md`
-- **Spec:** `../graphonomous/docs/spec/README.md`
+- **The lane this page describes:** `../graphonomous/v2/` — read `handoff/STATUS.md` first
+- **Its spec:** `../graphonomous/v2/handoff/G0_G1_SPEC.md`; decisions in `handoff/DECISION_LOG.md`
+- **The earlier MCP memory engine** (not described here): `../graphonomous/` root, `docs/spec/README.md`
 
 ## Before publishing anything from here
 
@@ -31,8 +30,8 @@ node prove-gate.mjs   # 59 deliberate breaks, each of which must be refused BY
                       # gate must NOT object to
 ```
 
-No claim on the landing page may be typed by hand. Add it to
-`records/witness.json` with the command that produced it, or it does not ship.
+No claim on the landing page may be typed by hand. `node measure.mjs` derives every
+figure and table into `records/witness.json`; a figure that is not derived does not ship.
 
 Corrections come in through the form in `#say`, which posts to the Formspree
 endpoint recorded in `records/surface.json.contact` (Travis's ruling,

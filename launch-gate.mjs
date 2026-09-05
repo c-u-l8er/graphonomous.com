@@ -16,7 +16,7 @@
    Every check below has been made to refuse on purpose. The results are in
    the commit message. A gate nobody has seen fail is an opinion.
    ========================================================================== */
-import { readFileSync } from "fs";
+import { readFileSync, existsSync } from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { ARTIFACTS, artifactHashes, buildId, inputHashes, readStamp } from "./stamp.mjs";
@@ -25,6 +25,7 @@ const DIR = path.dirname(fileURLToPath(import.meta.url));
 const HTML = readFileSync(new URL("./index.html", import.meta.url), "utf8");
 const ANIM = readFileSync(new URL("./memory.js", import.meta.url), "utf8");
 const SAYJS = readFileSync(new URL("./contact.js", import.meta.url), "utf8");
+const INSPECT = existsSync(path.join(DIR, "inspect.js")) ? readFileSync(path.join(DIR, "inspect.js"), "utf8") : "";
 const SURFACE = JSON.parse(readFileSync(new URL("./records/surface.json", import.meta.url), "utf8"));
 const WITNESS = JSON.parse(readFileSync(new URL("./records/witness.json", import.meta.url), "utf8"));
 const PKG = JSON.parse(readFileSync(new URL("./package.json", import.meta.url), "utf8"));
@@ -357,30 +358,35 @@ T("the witness record names a command for every fact",
 T("the witness record names the commit it was measured at",
   /^[0-9a-f]{40}$/.test(WITNESS.engine_commit), WITNESS.engine_commit.slice(0, 7));
 
-/* ---------- 11. the install table is the one that was probed ---------- */
-const tableTargets = [...HTML.matchAll(/<td class="place">([^<]*)<\/td><td class="(?:num|bad)">(\d+)<\/td>/g)]
-    .map((m) => ({ target: decode(m[1]).trim(), http: +m[2] }));
-T("every probed target is on the artifact",
-  WITNESS.install_targets.rows.every((r) => tableTargets.some((t) => t.target === r.target && t.http === r.http)),
-  `${tableTargets.length} rows`);
-T("no target is on the artifact that was never probed",
-  tableTargets.every((t) => WITNESS.install_targets.rows.some((r) => r.target === t.target)));
-/* The defect in one line: the page may not claim a platform whose asset 404s.
-   The old page said "macOS or Linux · x64 or arm64" while three of the four
-   were missing. A link that returns 200 can still be dead, and so can a
-   package that resolves. SITES.md §0.5. */
-const broken = WITNESS.install_targets.rows.filter((r) => r.http !== 200);
-for (const r of broken) {
-    const os = r.target.startsWith("darwin") ? /\bmacOS\b/i : null;
-    if (os) T(`the page does not advertise ${r.target}`, !os.test(TEXT_OUTSIDE) || /fail/i.test(TEXT));
-}
-T("the page states how many targets actually install",
-  new RegExp(`${WITNESS.facts.install_targets_ok.value}\\s*of\\s*${WITNESS.facts.install_targets_total.value}`).test(TEXT));
+/* ---------- 11. the tables on the page are the ones that were measured ----------
+   Sources, worlds and refusals are witness TABLES, re-derived whole by
+   check.mjs. The gate holds the artifact to them: every pinned repository is
+   on the page with its commit, nothing is on the page that was never pinned,
+   every sealed world is there with its own three ids, and every refusal shows
+   the code WRL actually answered. The install table this replaced was the
+   check that found "macOS or Linux" advertised while three of four assets
+   404'd; the shape is kept because the defect class is the same — a page
+   naming something the measurement never saw. */
+const pageSources = [...HTML.matchAll(/data-source="([^"]+)"/g)].map((m) => m[1]);
+T("every pinned source is on the artifact, with its commit",
+  WITNESS.sources.rows.every((r) => pageSources.includes(r.namespace) && HTML.includes(r.commit)),
+  `${pageSources.length} cards`);
+T("no source is on the artifact that was never pinned",
+  pageSources.every((s) => WITNESS.sources.rows.some((r) => r.namespace === s)));
+T("every sealed world is on the artifact with its sem, root and vclaim",
+  WITNESS.worlds.rows.every((w) => HTML.includes(w.sem) && HTML.includes(w.root) && HTML.includes(w.vclaim)),
+  `${WITNESS.worlds.rows.length} worlds`);
+T("every refusal on the artifact is the code WRL answered",
+  WITNESS.refusals.rows.every((r) => new RegExp(`<div class="code">${r.code}</div>`).test(HTML)) &&
+      [...HTML.matchAll(/<div class="code">([^<]+)<\/div>/g)].every((m) => WITNESS.refusals.rows.some((r) => r.code === m[1])),
+  `${WITNESS.refusals.rows.length} refusals`);
+T("the page states how many tests pass",
+  new RegExp(`${WITNESS.facts.tests_pass.value}\\s*of\\s*${WITNESS.facts.tests_total.value}`).test(TEXT));
 
 /* ---------- 12. §8 — the identifying animation ---------- */
 T("the landing page carries a data-identity-animation element", /data-identity-animation/.test(HTML));
 T("the animation is above the fold, before any section boundary",
-  HTML.indexOf("data-identity-animation") < HTML.indexOf('<section id="install"'));
+  HTML.indexOf("data-identity-animation") < HTML.indexOf('<section id="pipeline"'));
 /* THE GUARDS ARE CHECKED BY SHAPE, NOT BY SUBSTRING. The first draft of the
    hidden-tab check was `/document\.hidden/.test(ANIM)`, and a deliberate break
    sailed straight through it: the identifier also appears in the
@@ -427,12 +433,40 @@ for (const wire of ["textContent", "innerHTML", "innerText", "dataset", "dispatc
    rather than declares. It catches the class of defect that actually shipped. */
 const animInts = [...new Set([...ANIM.matchAll(/(?<![\w.#])(\d+)(?![\w.])/g)].map((m) => +m[1]).filter((n) => n >= 4))];
 const textNums = new Set([...TEXT.matchAll(/(?<![\w.-])(\d[\d,]*)(?![\w.-])/g)].map((m) => m[1].replace(/,/g, "")));
-const leaked = animInts.filter((n) => textNums.has(String(n)));
-T("no constant in the animation appears as a number on the page",
-  leaked.length === 0, leaked.length ? `LEAKED: ${leaked.join(", ")}` : `${animInts.length} constants, none on the page`);
-const recordNums = new Set(Object.values(WITNESS.facts).map((f) => String(f.value)).filter((v) => /^\d+$/.test(v)));
-T("no constant in the animation appears in a frozen record",
-  !animInts.some((n) => recordNums.has(String(n))));
+/* EVERY NUMBER ON THE PAGE HAS A WITNESS. The plate rule above, extended to the
+   whole visible text now that the page carries tables. A number is allowed if
+   it is a fact value, a numeric leaf of a witness table (worlds, faults,
+   sources, refusals), or a figure the build derives from the record itself
+   (a stage ordinal, the retraction's own count, the replaced page's size,
+   the year). Anything else is a typed number and is refused by value. */
+const numericLeaves = (v, out) => {
+    if (typeof v === "number") out.add(String(v));
+    else if (typeof v === "string") for (const m of v.matchAll(/(?<![\w.-])(\d[\d,]*)(?![\w.-])/g)) out.add(m[1].replace(/,/g, ""));
+    else if (Array.isArray(v)) v.forEach((x) => numericLeaves(x, out));
+    else if (v && typeof v === "object") Object.values(v).forEach((x) => numericLeaves(x, out));
+    return out;
+};
+const allowedNums = new Set();
+for (const f of Object.values(WITNESS.facts)) for (const part of String(f.value).split(/\s+of\s+/)) allowedNums.add(part);
+for (const tbl of ["worlds", "faults", "sources", "refusals"]) if (WITNESS[tbl]) numericLeaves(WITNESS[tbl].rows, allowedNums);
+for (const s of SURFACE.pipeline || []) { allowedNums.add(String(s.n)); allowedNums.add(String(Number(s.n))); }
+allowedNums.add(String(SURFACE.retracted.length));
+/* a retraction NAMES the wrong values it removes — those numbers are the record's own quotation of the past */
+for (const r of SURFACE.retracted) for (const m of `${r.string} ${r.why}`.matchAll(/(?<![\w.-])(\d[\d,]*)(?![\w.-])/g)) allowedNums.add(m[1].replace(/,/g, ""));
+allowedNums.add(String(Math.round(WITNESS.routes.rows[0].bytes / 1024)));
+allowedNums.add(String(new Date(SURFACE.verified_at).getUTCFullYear()));
+const typed = [...textNums].filter((n) => !allowedNums.has(n));
+T("every number in the page's visible text has a witness",
+  typed.length === 0, typed.length ? `TYPED: ${typed.slice(0, 8).join(", ")}` : `${textNums.size} distinct numbers, all witnessed`);
+/* §8.5, the 12-Active-Pathfinders check, mechanised: gpscoord published a
+   canvas loop bound as a live user metric for months. With the rule above,
+   an animation constant that coincides with a witnessed figure is a
+   coincidence the animation cannot exploit — it is proved above never to
+   write into the page — so what is refused is a constant on the page WITHOUT
+   a witness, which is exactly the shipped defect. */
+const leaked = animInts.filter((n) => textNums.has(String(n)) && !allowedNums.has(String(n)));
+T("no constant in the animation appears as a number on the page without a witness",
+  leaked.length === 0, leaked.length ? `LEAKED: ${leaked.join(", ")}` : `${animInts.length} constants, none unwitnessed on the page`);
 
 /* ---------- 13. density (SHELL.md §5) ---------- */
 const KB = (n) => (n / 1024).toFixed(1) + " KB";
@@ -451,6 +485,13 @@ T("the content does not depend on JavaScript",
    text must be identical, character for character. r9 made this load-bearing —
    the correction form has to submit with scripting off. */
 const TEXT_NOJS = visibleText(HTML.replace(/<script[\s\S]*?<\/script>/gi, " ").replace(/<script[^>]*>/gi, " "));
+/* The panel switcher may decide what is in front and nothing else. A script
+   that could write text into the page would make "the content renders with
+   JavaScript off" a claim about a different page. */
+T("the interactive layer is present", INSPECT.length > 0);
+for (const wire of ["textContent", "innerHTML", "innerText", "insertAdjacentHTML", "document.write", "fetch(", "XMLHttpRequest", "createElement"]) {
+    T(`the interactive layer never uses ${wire}`, !INSPECT.includes(wire));
+}
 T("the page's visible text is unchanged with every script tag removed",
   TEXT_NOJS === TEXT, `${TEXT.length} chars either way`);
 

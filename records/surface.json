@@ -2,7 +2,7 @@
   "schema": "computedriven-surface-v1",
   "_comment": "The frozen record this site is generated from. Nothing on a generated page may state a rung, a status or a count that is not here or in witness.json. build-site.mjs reads it; launch-gate.mjs refuses to publish when the artifact and this file disagree.",
   "shell_revision": "shell-r10",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "origin": "https://graphonomous.com",
   "repo": "https://github.com/c-u-l8er/graphonomous",
   "surface": "Graphonomous",
@@ -11,10 +11,10 @@
   "tier": 2,
   "_tier_comment": "ampersand-nav/src/amp-nav.js records `graphonomous: { name: \"Graphonomous\", place: 2, layer: \"memory\", rung: \"live_deployed\" }`, and graphonomous.com IS in sync-nav.sh's target list (line 33). place 2 is inside the story, so this surface takes the STANDARD band with the layer sentence, not the tier-4 attribution variant reserved for place 4. Read, not assumed — SHELL.md §1.",
   "question": "Can what a system understands be made queryable, falsifiable and provenance-linked?",
-  "rung_witness": "install_matrix",
-  "_rung_witness_comment": "SHELL.md r5.2. GPSCoord's rule \"any pending gate blocks live_deployed\" is too blunt: independent_use is pending FOREVER by construction, so no surface could ever advance. So the record names WHICH gate witnesses the rung it claims, and the others stay pending without blocking it. install_matrix is the right one here: it probed every release asset the installer can ask for and found the linux-x64 archive at 200, which is exactly what live_deployed claims and all it claims. test_suite is approved too, but it witnesses the TREE, not the deployment.",
-  "nav_breakpoint_px": 600,
-  "_nav_breakpoint_comment": "SHELL.md r6: the breakpoint belongs to the surface, not the shell, and it has to be MEASURED rather than computed. r5 published 430px, measured on a four-item nav. THIS NUMBER MOVED ONCE DURING THE SAME SESSION AND THE WAY IT MOVED IS THE POINT: it was first set to 560 from an arithmetic estimate (logo 114 + items and gaps 364 + .top gap 16 + .wrap padding 44 = 538, stack 22px above it), and then the r9 work renamed one nav item from Demos to Correct us. That widened the nav by 22px and pushed the real wrap point to 576, past the 560 set for it, so every width from 561 to 575 rendered an UNSTACKED header with a two-row nav — the exact defect the rule exists to prevent, reintroduced by a five-character label change. The estimate was wrong in the first place because flex-wrap distributes inside the nav element own allotted width rather than against the sum. Bisected in Chrome 2026-08-17: one row at 576, two rows at 575, so the breakpoint is 600 and stacks 24px before it. ANY CHANGE TO A NAV LABEL INVALIDATES THIS NUMBER AND IT MUST BE RE-BISECTED. Verified over 390/500/545/560/561/570/575/576/585/600/601/700/790/800/815/1000/1280/1600.",
+  "rung_witness": "test_suite",
+  "_rung_witness_comment": "SHELL.md r5.2. The rung is in_tree: the lane exists, is tested, and nothing from it has been published. test_suite witnesses exactly that — the suite was run to completion on this machine against the pinned sibling registries — and it claims nothing about deployment, which is right, because there is none.",
+  "nav_breakpoint_px": 580,
+  "_nav_breakpoint_comment": "SHELL.md r6/r11: the breakpoint belongs to the surface and is BISECTED, never computed. RE-BISECTED 2026-09-05 in Chromium (agent-browser set viewport, the stacking rule overridden in the page so the unstacked nav could be measured) after the header nav was rewritten to Pipeline · Worlds · Evidence · Correct us · Source: the unstacked nav is two rows at 551px and one row from 552px, so the header stacks at 580px, 28px before the wrap. The previous nav (Install · The loop · Evidence · Correct us · Source) wrapped at 576 and stacked at 600. ANY CHANGE TO A NAV LABEL INVALIDATES THIS NUMBER AND IT MUST BE RE-BISECTED — the gate binds the labels to this record and stops the build when they differ.",
   "ink_box_headroom_px": {
     "h1": 9.5,
     "h2": 8.0,
@@ -24,8 +24,8 @@
   },
   "_ink_box_comment": "SHELL.md r7, second item: a line-height set against the em size can be smaller than the font's actual ink, and consecutive lines then overlap — agentromatic's Syne h1 overlapped by 11.8px and a descender collided with the cap-height beneath it. MEASURED here rather than assumed, 2026-08-17 in Chrome at 1280, by rendering each element's own text in its own computed font to a canvas and comparing actualBoundingBoxAscent+actualBoundingBoxDescent against the computed line box. Space Grotesk 600 at 57.6px inks 51.0px inside a 60.5px box. Every value above is headroom in pixels and every one is positive, so nothing here needed changing. Re-measured at 390/700/1280/1600 for the h1: +4.1 / +5.2 / +9.5 / +9.5. THE PUBLICATION GATE CANNOT CHECK THIS — it has no font engine and no browser — so it is a recorded measurement, not an enforced law, and it is said that way on purpose.",
   "nav_labels_at_measure": [
-    "Install",
-    "The loop",
+    "Pipeline",
+    "Worlds",
     "Evidence",
     "Correct us",
     "Source"
@@ -33,68 +33,98 @@
   "_nav_labels_comment": "The exact header nav, as it was when nav_breakpoint_px was bisected. The breakpoint is a function of these strings and nothing else, and a five-character rename is what invalidated it the first time — so the gate compares the artifact's nav against this list and refuses when they differ, which turns \"re-bisect after touching a nav label\" from a comment into a stop.",
   "cited_specs": {},
   "_cited_specs_comment": "SHELL.md r5.3: every §N in the page's VISIBLE text must resolve to a real heading in the spec it cites. This page cites none — every § on this surface is in a source comment, and comments are not text a reader reads. The map is empty and the gate reports 0 citations rather than passing silently; the day a citation is written, the record has to name the file it points into or the build stops.",
-  "surface_rung": "live_deployed",
-  "surface_rung_covers": "one artifact — one npm package and one binary — graphonomous@0.4.2, and the single linux-x64 archive its install downloads",
+  "surface_rung": "in_tree",
+  "surface_rung_covers": "the graphonomous/v2 lane in the repository — its adapters, projector, WRL world builder and TRVM certificate, its sealed projections, and its test suite run on this machine. Nothing from it has been published anywhere",
   "verified_at": "2026-09-05",
+  "definition": "Graphonomous is the persistent semantic/evidence graph that makes what a system understands queryable, falsifiable, provenance-linked and reducible.",
+  "boundary": "It is a derived projection over registries that already hold the truth. It may derive, relate, rank, challenge, detect inconsistency and propose. It never promotes evidence: that stays with the owning registry, factory or adjudication.",
   "status": {
-    "statement": "graphonomous@[[published_version]] is on the public npm registry and installs on linux-x64. The engine in this repository is [[tree_version]], and it has never been published. The installer advertises [[install_targets_total]] platforms; [[install_targets_ok]] of them has a release asset. Graphonomous V2 — the semantic/evidence graph — is a second lane in the same repository, at v2/: [[v2_tests_pass]] of [[v2_tests_total]] tests pass, [[v2_worlds_sealed]] projections seal as WRL worlds, and none of it is in any published package.",
-    "source": "mix test at graphonomous commit 5a9e00b; registry.npmjs.org/graphonomous dist-tags; an HTTP probe of every one of the [[install_targets_total]] release assets v[[published_version]] declares. Every figure on this page is emitted from records/witness.json, and check.mjs re-derives each one against the tree and the registry.",
-    "limit": "The test count was measured on the [[tree_version]] tree in this repository, which is NOT the artifact npm serves — so [[tests_total]] passing is evidence about code you cannot install. The V2 lane's [[v2_tests_total]] tests were run on this machine against sibling checkouts pinned by commit; nothing here establishes that anyone else has reproduced them, and no V2 artifact exists to install at all. Nothing here establishes that the published [[published_version]] binary passes those tests, that either engine is correct rather than merely green, or that anyone outside this machine has ever run it. The demo and benchmark pages elsewhere on this domain were not audited by this pass and are not covered by the rung above."
+    "statement": "The lane at v2/ in the repository passes [[tests_pass]] of [[tests_total]] tests, with [[tests_skipped]] skipped by design, and seals [[worlds_sealed]] projections as WallRiderLang worlds, each with a TRVM certificate that re-verifies from its own directory. Nothing from it is in any published package.",
+    "source": "npm run test:full-tree in graphonomous/v2 at the commit witness.json names, against sibling checkouts pinned by commit; g0 verify, verify-eval, check-cert and consistency over every shipped projection in the same run. Every figure on this page is emitted from records/witness.json, and check.mjs re-derives each derivable one from the lane and from WRL's own module.",
+    "limit": "Everything above was run on one machine, by the people who wrote it, against registries they also maintain. Nothing here establishes that anyone else has reproduced the [[tests_total]] tests, that the graph is useful rather than merely sound, or that a reader can install anything — there is no published artifact, and the package under this name on the npm registry is an earlier engine this page does not describe. The demo on this domain was generated from the same tree and is not independent evidence."
   },
   "advance": {
-    "next_rung": "external",
-    "requires": "Someone who is not us installs it and reports a result — a filed issue, a benchmark run, or a fork. That is the only rung nobody here can award themselves. Publishing [[tree_version]], and building the missing platform binaries, is what would make it possible for most people to try."
+    "next_rung": "live_local",
+    "requires": "A packaged lane a reader can run locally — a released bundle that carries the pinned registries it needs — and then the same verdict, [[tests_pass]] of [[tests_total]], from a machine that is not this one."
   },
-  "install": {
-    "npm": "npm i -g graphonomous",
-    "tag_source": "https://registry.npmjs.org/graphonomous",
-    "config_path": "~/.mcp.json",
-    "db_default": "~/.graphonomous/knowledge.db",
-    "node_min": "18"
-  },
-  "loop": [
+  "pipeline": [
     {
-      "phase": "retrieve",
-      "q": "What do I know?",
-      "actions": "context · episodic · procedural · coverage · trace_evidence · frontier · replay"
+      "id": "pin",
+      "n": "01",
+      "title": "Pin",
+      "q": "Which bytes?",
+      "what": "A snapshot names every repository it reads by commit, tree and blob — [[pinned_sources]] of them for the largest one, Super (CD) at [[super_pin]] among them. A blob that has moved is refused, never re-read.",
+      "tool": "g0 snapshot",
+      "refusal": "SOURCE_MOVED",
+      "art": "root"
     },
     {
-      "phase": "route",
-      "q": "What should I do?",
-      "actions": "topology · deliberate · attention_survey · attention_cycle · review_goal"
+      "id": "ingest",
+      "n": "02",
+      "title": "Ingest",
+      "q": "What does it say?",
+      "what": "[[adapters]] adapters read those bytes and emit nodes, relations, assertions and source locations. What an adapter cannot normalize becomes a typed fault beside the records — [[faults]] of them in the largest projection — not a guess.",
+      "tool": "g0 project",
+      "refusal": "UNSUPPORTED_SOURCE_FORM · UNRESOLVED_LINK · …",
+      "art": "root"
     },
     {
-      "phase": "act",
-      "q": "Do it.",
-      "actions": "store_node · store_edge · store_trace · delete_node · manage_edge · manage_goal · belief_revise · forget_node · forget_policy · gdpr_erase"
+      "id": "project",
+      "n": "03",
+      "title": "Project",
+      "q": "Is it the same twice?",
+      "what": "The records fold into one content-addressed root. Shuffle the inputs, reverse the adapters, build again: the same root, and a Python twin re-derives it from the manifest alone.",
+      "tool": "g0 verify",
+      "refusal": "a root that does not re-derive",
+      "art": "root"
     },
     {
-      "phase": "learn",
-      "q": "Did it work?",
-      "actions": "from_outcome · from_feedback · detect_novelty · from_interaction · contradictions"
+      "id": "seal",
+      "n": "04",
+      "title": "Seal",
+      "q": "What is it, exactly?",
+      "what": "The semantic world is submitted to WallRiderLang as a Semantic IR 2.0 artifact under a profile Graphonomous declared as data — [[roles]] roles, [[kinds]] kinds, [[pairs]] admissible pairs. WRL's kernel mints the world id and every relation and revision id. Graphonomous submits; it never mints.",
+      "tool": "g0 world",
+      "refusal": "WRL_UNDECLARED_ROLE · WRL_UNDECLARED_KIND · WRL_UNDECLARED_ENDPOINT_PAIR · …",
+      "art": "sem"
     },
     {
-      "phase": "consolidate",
-      "q": "Clean up.",
-      "actions": "run · stats · query · traverse"
+      "id": "certify",
+      "n": "05",
+      "title": "Certify",
+      "q": "Under which code?",
+      "what": "A certificate is minted through TRVM over the claim, its aggregate and the chain of code identities that produced it. It says under which verifier coordinates the projection reconstructs — never that it is \"still valid\".",
+      "tool": "g0 certify",
+      "refusal": "gproj-chain-id-mismatch · gproj-certificate-stale",
+      "art": "vclaim"
+    },
+    {
+      "id": "check",
+      "n": "06",
+      "title": "Check",
+      "q": "Does it hold?",
+      "what": "A checker re-derives every plane from the directory and writes nothing. Across families, a consistency pass names what two normalized sources disagree about — [[findings]] findings on the largest world, the sharpest being one file read at two different blobs.",
+      "tool": "g0 check-cert · g0 consistency",
+      "refusal": "REFERENCE_TARGET_DRIFT · SOURCE_PIN_DIVERGENCE · …",
+      "art": "vclaim"
     }
   ],
   "retracted": [
     {
       "string": "455 tests",
-      "why": "The suite reports [[tests_total]]. 455 was the count at some earlier commit and had been sitting in the present tense."
+      "why": "A test count for the earlier engine at some earlier commit, published in the present tense. That engine's page is gone from this domain and its figures were never re-measured here."
     },
     {
       "string": "29 actions",
-      "why": "The [[machines]] machine modules declare [[actions]] valid actions between them. The published table also omitted retrieve/replay and act/store_trace, so it was internally short by the same two."
+      "why": "The earlier engine's machine modules declared more actions than its page printed, and two of them were missing from the table entirely. Neither the table nor the engine is on this page."
     },
     {
       "string": "29 individual tools",
-      "why": "Same stale denominator, in the sentence that argues why the machines exist."
+      "why": "Same stale denominator, in the sentence that argued why that engine's machines existed."
     },
     {
       "string": "29 MCP tools",
-      "why": "Same stale denominator, attached to a 100% pass-rate claim."
+      "why": "Same stale denominator, attached to a pass-rate claim about that engine."
     },
     {
       "string": "macOS or Linux",
@@ -107,6 +137,18 @@
     {
       "string": "96.6",
       "why": "A retrieval-accuracy figure attributed to a third-party system with no citation, in a comparison table this site cannot witness."
+    },
+    {
+      "string": "Can a memory get sharper from being used?",
+      "why": "The question this page asked until 2026-09-05. It described an earlier Graphonomous, an MCP memory engine whose graph changed shape from outcomes. That engine is not what this page describes; its pages are kept under old_scrap/ and not served."
+    },
+    {
+      "string": "npm i -g graphonomous",
+      "why": "An install command for that earlier engine. The package of that name on the npm registry still resolves and still installs on one platform; nothing described on this page is in it, and this page does not ask you to run it."
+    },
+    {
+      "string": "five loop-phase machines",
+      "why": "The earlier engine's architecture, printed as the page's central claim. Not a claim about what this page describes."
     }
   ],
   "contact": {
@@ -120,33 +162,25 @@
   "gates": {
     "_comment": "Same shape as toolboxhvac.com/review-status.json. A gate may not read approved without its evidence, reviewer and date fields, and launch-gate.mjs enforces that.",
     "test_suite": {
-      "label": "The engine's own suite passes on the tree",
+      "label": "The lane's own suite passes on the tree",
       "status": "approved",
-      "description": "mix test run to completion in graphonomous/ at commit 5a9e00b, clean working tree.",
+      "description": "npm run test:full-tree in graphonomous/v2 at the commit witness.json names, one worker, a 2 GB heap, temp files off the tmpfs: [[tests_pass]] of [[tests_total]] pass, [[tests_skipped]] skipped by design.",
       "evidence": "records/witness.json#tests_total",
-      "reviewer": "mix test (Elixir 1.19.4 / OTP 28)",
-      "date": "2026-08-16"
+      "reviewer": "node --test through tools/test_repro.mjs (Node 25.2.1)",
+      "date": "2026-09-05"
     },
-    "install_matrix": {
-      "label": "Every platform the installer advertises was probed",
+    "projections_verify": {
+      "label": "Every shipped projection re-verifies from its own bytes",
       "status": "approved",
-      "description": "All [[install_targets_total]] targets resolve-platform.js can produce were requested from the v[[published_version]] GitHub release; [[install_targets_ok]] is present.",
-      "evidence": "records/witness.json#install_targets",
-      "reviewer": "HTTP probe of github.com/c-u-l8er/graphonomous/releases/download/v0.4.2/",
-      "date": "2026-08-16"
+      "description": "g0 verify, verify-eval, check-cert (v0 and v1) and consistency over all [[worlds_sealed]] shipped projections in the same run; the Python twin of the canonical encoder passes its self-test.",
+      "evidence": "records/witness.json#worlds_sealed",
+      "reviewer": "bin/g0.mjs, driven by tools/test_repro.mjs",
+      "date": "2026-09-05"
     },
-    "published_release_parity": {
-      "label": "The published artifact is the tree this page describes",
+    "published_artifact": {
+      "label": "A reader can obtain and run what this page describes",
       "status": "pending",
-      "description": "npm serves [[published_version]] (published [[published_at]]). The tree is [[tree_version]]. Until they agree, the test count on this page describes code nobody can install, and the page says so rather than blurring it.",
-      "evidence": null,
-      "reviewer": null,
-      "date": null
-    },
-    "binary_smoke_test": {
-      "label": "The published binary starts and answers an MCP handshake",
-      "status": "pending",
-      "description": "Nobody here has run `npm i -g graphonomous` from the registry into a clean machine and spoken MCP to the result. The suite proves the source; it does not prove the tarball.",
+      "description": "No artifact has been published. The package under this name on the npm registry is an earlier engine and is not what this page describes. Until a bundle exists that carries the pinned registries it needs, the only way to run this is a full checkout.",
       "evidence": null,
       "reviewer": null,
       "date": null
@@ -154,21 +188,13 @@
     "independent_use": {
       "label": "Someone who is not us produced a result with it",
       "status": "pending",
-      "description": "The only rung nobody here can award themselves. A filed issue, a reported benchmark, or a fork that runs the suite.",
+      "description": "The only rung nobody here can award themselves. A reproduced verdict from another machine, a filed issue, or a fork that runs the suite.",
       "evidence": null,
       "reviewer": null,
       "date": null
     }
   },
-  "v2": {
-    "_comment": "The V2 direction, stated from the lane's own STATUS.md and DECISION_LOG.md at the commit named in witness.json. Every figure is a [[fact]]; the prose is the claim the figures are asked to carry.",
-    "definition": "Graphonomous is the persistent semantic/evidence graph that makes what a system understands queryable, falsifiable, provenance-linked and reducible.",
-    "boundary": "It is a derived projection over registries that already hold the truth. It may derive, relate, rank, challenge, detect inconsistency and propose. It never promotes evidence: that stays with the owning registry, factory or adjudication.",
-    "super": "Super (CD) is one of the [[tri_sources]] repositories the three-family snapshot pins, at commit [[super_pin]]: its README and the ampd runtime's README are read as authoritative sources, and the crosswalk's evidence records cite Super's release receipts. That is the whole integration today. Graphonomous does not run inside Super and Super does not call Graphonomous; the graph reads Super's evidence at a pinned commit and can be held to it.",
-    "wrl": "The semantic world is a WallRiderLang Semantic IR 2.0 artifact. Graphonomous declared its vocabulary — roles, relation kinds, admissible endpoint pairs — as a static profile row, and WRL admitted it: [[wrl_static_rows]] of the [[wrl_profile_rows]] rows in WRL's profile table are Graphonomous's, one lineage (v0, v1, v2). Programming Graphonomous means writing that declaration; WRL refuses a world that steps outside it by name, and WRL's kernel mints every world, relation and revision id. Graphonomous submits; it never mints.",
-    "trvm": "Each projection carries a certificate whose verified-claim id is minted by TRVM over the claim, its aggregate and the chain of code identities that produced it. A checker re-derives every plane from the directory and writes nothing. The [[tri_nodes]] nodes and [[tri_relations]] relations of the tri projection come from [[tri_adapters]] adapters over three source families, with every fault typed and kept beside the records rather than guessed away.",
-    "demo": "/demo/wrl-programming/",
-    "readme_path": "/tree/main/v2",
-    "profiles_url": "https://wrl.traaviis.com/reference#profiles"
-  }
+  "demo": "/demo/wrl-programming/",
+  "readme_path": "/tree/main/v2",
+  "profiles_url": "https://wrl.traaviis.com/reference#profiles"
 }

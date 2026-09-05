@@ -1,12 +1,13 @@
 {
   "name": "graphonomous-com",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "private": true,
   "type": "module",
-  "description": "graphonomous.com — generated from frozen records, with a publication gate that reads the artifact and refuses. Zero runtime dependencies, zero build dependencies.",
+  "description": "graphonomous.com \u2014 generated from frozen records, with a publication gate that reads the artifact and refuses. Zero runtime dependencies, zero build dependencies.",
   "scripts": {
     "build": "node build-site.mjs",
     "check": "node check.mjs",
-    "test:launch": "node build-site.mjs && node check.mjs && node launch-gate.mjs"
+    "test:launch": "node build-site.mjs && node check.mjs && node launch-gate.mjs",
+    "measure": "node measure.mjs"
   }
 }

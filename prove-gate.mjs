@@ -41,16 +41,16 @@ import { fileURLToPath } from "url";
 import { artifactHashes } from "./stamp.mjs";
 
 const SRC = path.dirname(fileURLToPath(import.meta.url));
-const COPY = ["build-site.mjs", "launch-gate.mjs", "stamp.mjs", "package.json", "index.html", "memory.js", "contact.js", "build-stamp.json", "CLAUDE.md"];
+const COPY = ["build-site.mjs", "launch-gate.mjs", "stamp.mjs", "package.json", "index.html", "memory.js", "contact.js", "inspect.js", "build-stamp.json", "CLAUDE.md"];
 
 /* [name, stage, mutation, the check that must be the one to fire] */
 const BREAKS = [
-    ["a figure with no witness", "build", (d) => edit(d, "build-site.mjs", 'f("machines")', 'f("machines_v2")'),
+    ["a figure with no witness", "build", (d) => edit(d, "build-site.mjs", 'f("nodes")', 'f("nodes_v9")'),
      "no witness for figure"],
-    ["a witnessed fact that reaches no page", "build", (d) => edit(d, "build-site.mjs", '[f("demos"), "Demos on this domain"],', ""),
+    ["a witnessed fact that reaches no page", "build", (d) => edit(d, "build-site.mjs", '[`${f("static_rows")} of ${f("profile_rows")}`, "WRL profile rows, ours"],', ""),
      "witnessed but never printed"],
-    ["the install table disagreeing with the count", "build", (d) => editJSON(d, "records/witness.json", (j) => { j.facts.install_targets_ok.value = "3"; }),
-     "working target"],
+    ["the worlds table disagreeing with the plate figure", "build", (d) => editJSON(d, "records/witness.json", (j) => { j.facts.nodes.value = "3"; }),
+     "the worlds table says"],
     ["a CTA verb the rung has not earned", "build", (d) => edit(d, "build-site.mjs", 'verb: "Inspect the source"', 'verb: "Use it"'),
      "is not available at rung"],
     ["a band claiming a tier the record does not hold", "build", (d) => editJSON(d, "records/surface.json", (j) => { delete j.tier; }),
@@ -72,34 +72,38 @@ const BREAKS = [
      "approved WITH evidence, reviewer and date"],
     ["a rung whose named witness has never been approved", "rebuild", (d) => editJSON(d, "records/surface.json", (j) => { j.rung_witness = "independent_use"; }),
      "is approved, with evidence, reviewer and date"],
-    ["the nav stacking breakpoint moved without the record", "rebuild", (d) => edit(d, "src/shell.css", "@media(max-width:600px){.top{flex-direction:column", "@media(max-width:430px){.top{flex-direction:column"),
+    ["the nav stacking breakpoint moved without the record", "rebuild", (d) => edit(d, "src/shell.css", "@media(max-width:580px){.top{flex-direction:column", "@media(max-width:430px){.top{flex-direction:column"),
      "stacks .top at exactly that breakpoint"],
     ["a nav label changed without the breakpoint being re-measured", "gate", (d) => edit(d, "index.html", '<a href="#evidence">Evidence</a>', '<a href="#evidence">The evidence ledger</a>'),
      "the one the breakpoint was bisected against"],
-    ["a §N citation that points at nothing", "gate", (d) => edit(d, "index.html", "<h2>Five machines", "<h2>See §99. Five machines"),
+    ["a §N citation that points at nothing", "gate", (d) => edit(d, "index.html", "<h2>From a pinned registry", "<h2>See §99. From a pinned registry"),
      "§99 names the spec it cites"],
 
     ["an unrendered {{TOKEN}} in the artifact", "gate", (d) => edit(d, "index.html", "<h2>", "<h2>{{LEFTOVER}} "),
      "no unrendered {{TOKEN}}"],
     ["a mailto: anywhere on the page", "gate", (d) => edit(d, "index.html", 'href="/demo/"', 'href="mailto:x@example.com"'),
      "advertises a mailto:"],
-    ["a fabricated rung on a chip", "gate", (d) => edit(d, "index.html", 'data-rung="live_deployed"', 'data-rung="shipped"'),
+    ["a fabricated rung on a chip", "gate", (d) => edit(d, "index.html", 'data-rung="in_tree"', 'data-rung="shipped"'),
      "every rung is one of the five"],
-    ["a chip whose text disagrees with its stored rung", "gate", (d) => edit(d, "index.html", ">live_deployed</span>", ">external</span>"),
+    ["a chip whose text disagrees with its stored rung", "gate", (d) => edit(d, "index.html", ">in_tree</span>", ">external</span>"),
      "every chip's text equals its stored rung"],
     /* Text and attribute changed together, so ONLY the null-rung check can
        fire — a break that trips three checks proves less than one that trips
        the check it was written for. */
-    ["a null rung", "gate", (d) => edit(d, "index.html", 'data-rung="live_deployed" title="spec · in_tree · live_local · live_deployed · external">live_deployed<', 'data-rung="null" title="spec · in_tree · live_local · live_deployed · external">null<'),
+    ["a null rung", "gate", (d) => edit(d, "index.html", 'data-rung="in_tree" title="spec · in_tree · live_local · live_deployed · external">in_tree<', 'data-rung="null" title="spec · in_tree · live_local · live_deployed · external">null<'),
      "no empty / undefined / null rung"],
     ["the covers span removed from the band", "gate", (d) => edit(d, "index.html", 'class="covers"', 'class="gone"'),
      "the band carries a covers span"],
     ["the LIMIT row removed", "gate", (d) => edit(d, "index.html", "<dt>Limit</dt>", "<dt>Caveat</dt>"),
      "status block has the Limit row"],
-    ["a plate figure with no witness", "gate", (d) => edit(d, "index.html", '<div class="n">577</div>', '<div class="n">9001</div>'),
+    ["a plate figure with no witness", "gate", (d) => edit(d, "index.html", '<div class="n">1189</div>', '<div class="n">9001</div>'),
      'plate figure "9001" is witnessed'],
-    ["an install target the page never probed", "gate", (d) => edit(d, "index.html", '<td class="place">linux-x64</td>', '<td class="place">windows-x64</td>'),
-     "never probed"],
+    ["a source card for a repository the snapshot never pinned", "gate", (d) => edit(d, "index.html", 'data-source="super"', 'data-source="windows"'),
+     "never pinned"],
+    ["a refusal code the encoder never answered", "gate", (d) => edit(d, "index.html", '<div class="code">WRL_UNDECLARED_ROLE</div>', '<div class="code">WRL_LOOKS_FINE</div>'),
+     "the code WRL answered"],
+    ["the panel switcher writing text into the page", "gate", (d) => edit(d, "inspect.js", "root.classList.add(\"js\");", "root.classList.add(\"js\");\nroot.textContent = \"\";"),
+     "never uses textContent"],
 
     /* ---- the retraction, both halves of SHELL.md r6 hole 1 ---- */
     ["a retracted claim reinstated elsewhere on the page", "gate", (d) => edit(d, "index.html", "<h2>The suite is green", "<h2>Runs on macOS or Linux. The suite is green"),
@@ -132,7 +136,7 @@ const BREAKS = [
     /* ---- SHELL.md r6 hole 2: the artifact must come from THIS build ---- */
     /* The exact accident: build-site.mjs throws, yesterday's index.html is
        still on disk, and every other check in the gate reads it happily. */
-    ["a source edited and the build never re-run — a stale artifact", "stale", (d) => edit(d, "src/landing.html", "<h2>Five machines", "<h2>Six machines"),
+    ["a source edited and the build never re-run — a stale artifact", "stale", (d) => edit(d, "src/landing.html", "<h2>From a pinned registry", "<h2>From a pinned notebook"),
      "unchanged since that build"],
     ["the artifact hand-edited after the build", "stale", (d) => edit(d, "index.html", "</footer>", "</footer> "),
      "hashes to the string the build emitted"],
@@ -148,7 +152,7 @@ const BREAKS = [
      "never writes textContent"],
     ["the animation inserting its sprite into the document", "gate", (d) => edit(d, "memory.js", "return c;", "document.body.append(c);\nreturn c;"),
      "never writes append"],
-    ["an animation constant published as a number", "gate", (d) => edit(d, "index.html", "<h2>Five machines", "<h2>Now with 16 of them. Five machines"),
+    ["an animation constant published as a number", "gate", (d) => edit(d, "index.html", "<h2>From a pinned registry", "<h2>Now with 16 of them. From a pinned registry"),
      "appears as a number on the page"],
     ["prefers-reduced-motion dropped", "gate", (d) => edit(d, "memory.js", '"(prefers-reduced-motion: reduce)"', '"all"'),
      "reads prefers-reduced-motion"],

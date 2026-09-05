@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Programming Graphonomous with WRL — a profile row, a submission, a seal, six refusals</title>
-<meta name="description" content="How Graphonomous V2 is programmed with WallRiderLang: the vocabulary is a static profile row in WRL's table, the semantic world is a Semantic IR 2.0 artifact, WRL's kernel mints every id, and WRL refuses by name anything the profile does not declare. Every byte on this page was read from the repository on 2026-09-05.">
+<meta name="description" content="How Graphonomous is programmed with WallRiderLang: the vocabulary is a static profile row in WRL's table, the semantic world is a Semantic IR 2.0 artifact, WRL's kernel mints every id, and WRL refuses by name anything the profile does not declare. Every byte on this page was read from the repository on 2026-09-05.">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -29,7 +29,7 @@ tr.hi td{background:rgba(74,245,198,.07)}td.mono{color:var(--accent-2)}td.dim,.d
 <a href="../" class="back">&larr; Back to the demos</a>
 <span class="badge"><span class="dot"></span>Every byte below read from the repository on 2026-09-05 &middot; graphonomous 824b9688 &middot; WRL 083ae6b</span>
 <h1>Programming Graphonomous with WRL</h1>
-<p class="lead">Graphonomous V2 does not have a query language of its own and does not want one. Its <b>program is a vocabulary</b> &mdash; which kinds of thing exist, which relations may join which of them &mdash; and that vocabulary is a row in WallRiderLang&rsquo;s profile table. The graph is submitted to WRL as a Semantic IR 2.0 artifact, WRL&rsquo;s kernel mints every identity, and WRL refuses, by name, anything the row does not declare. This page shows each of those steps with the real bytes.</p>
+<p class="lead">Graphonomous does not have a query language of its own and does not want one. Its <b>program is a vocabulary</b> &mdash; which kinds of thing exist, which relations may join which of them &mdash; and that vocabulary is a row in WallRiderLang&rsquo;s profile table. The graph is submitted to WRL as a Semantic IR 2.0 artifact, WRL&rsquo;s kernel mints every identity, and WRL refuses, by name, anything the row does not declare. This page shows each of those steps with the real bytes.</p>
 
 <h2><span>01</span>The program is a profile row</h2>
 <p>WRL&rsquo;s encoder holds <code>V2_PROFILES</code>, frozen data keyed by profile id. Graphonomous declared its vocabulary and WRL admitted it as a <b>static</b> row: no runtime, no film schema, no admit policy &mdash; roles, kinds and admissible (source role, target role) pairs, and nothing else. The current row, <code>graphonomous.semantic.v2</code>, declares <b>24 roles</b>, <b>32 relation kinds</b> and <b>103 endpoint pairs</b>. It is v1 spread plus exactly one pair, <code>SUPERSEDES [LAW, LAW]</code>; v1 is v0 spread plus three roles, one kind and ten pairs. A frozen row is never edited &mdash; a wider vocabulary is a new row, and every world sealed under an earlier row keeps its id.</p>

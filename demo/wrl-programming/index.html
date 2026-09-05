@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Programming Graphonomous with WRL — a profile row, a submission, a seal, six refusals</title>
+<meta name="description" content="How Graphonomous V2 is programmed with WallRiderLang: the vocabulary is a static profile row in WRL's table, the semantic world is a Semantic IR 2.0 artifact, WRL's kernel mints every id, and WRL refuses by name anything the profile does not declare. Every byte on this page was read from the repository on 2026-09-05.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0a0b0f;--surface:#11141c;--surface-2:#171b26;--line:#252b3b;--text:#e9ecf4;--dim:#8a92a7;--good:#38d39f;--accent:#7b8cff;--accent-2:#4af5c6;--warn:#ffc46b;--rose:#ff6b8a}
+*{box-sizing:border-box}html,body{margin:0;padding:0;min-height:100vh;background:radial-gradient(1200px 800px at 85% -20%,rgba(123,140,255,.11),transparent 60%),radial-gradient(1000px 700px at -10% 120%,rgba(74,245,198,.08),transparent 55%),var(--bg);color:var(--text);font-family:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;line-height:1.6}
+a{color:var(--accent-2);text-decoration:none}a:hover{color:var(--text)}
+.wrap{max-width:960px;margin:0 auto;padding:40px 22px}
+.back{display:inline-block;color:var(--dim);font-size:13px;margin-bottom:24px}
+.badge{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 12px;font-size:12px;color:var(--dim);margin-bottom:18px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--good);box-shadow:0 0 10px var(--good)}
+h1{font-size:30px;line-height:1.2;margin:0 0 12px;letter-spacing:-.01em}h2{font-size:18px;margin:44px 0 10px;color:var(--accent-2)}h2 span{color:var(--dim);font-weight:400;margin-right:8px}
+p{color:var(--dim);font-size:14px}p b,p strong{color:var(--text);font-weight:600}
+.lead{font-size:15px;color:var(--text)}
+pre{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px 18px;font-size:12.5px;line-height:1.55;overflow:auto;margin:14px 0;color:#d7dcea}
+pre .k{color:var(--accent)}pre .s{color:var(--accent-2)}pre .c{color:var(--dim)}
+.kv{display:grid;grid-template-columns:150px 1fr;gap:8px 14px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 18px;font-size:12.5px;margin:14px 0;overflow-wrap:anywhere}
+.kv .k{color:var(--dim)}.kv .v{color:var(--text)}
+table{width:100%;border-collapse:collapse;font-size:12.5px;margin:14px 0;background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}th{color:var(--dim);font-weight:500;font-size:11px;letter-spacing:.08em;text-transform:uppercase}
+tr.hi td{background:rgba(74,245,198,.07)}td.mono{color:var(--accent-2)}td.dim,.dim{color:var(--dim)}
+.refuse td:first-child{color:var(--text)}.code{color:var(--rose);font-weight:600;white-space:nowrap}
+.scroll{overflow-x:auto}
+.footer{margin-top:44px;text-align:center;color:var(--dim);font-size:12px;line-height:1.6}
+</style></head><body><div class="wrap">
+<a href="../" class="back">&larr; Back to the demos</a>
+<span class="badge"><span class="dot"></span>Every byte below read from the repository on 2026-09-05 &middot; graphonomous 824b9688 &middot; WRL 083ae6b</span>
+<h1>Programming Graphonomous with WRL</h1>
+<p class="lead">Graphonomous V2 does not have a query language of its own and does not want one. Its <b>program is a vocabulary</b> &mdash; which kinds of thing exist, which relations may join which of them &mdash; and that vocabulary is a row in WallRiderLang&rsquo;s profile table. The graph is submitted to WRL as a Semantic IR 2.0 artifact, WRL&rsquo;s kernel mints every identity, and WRL refuses, by name, anything the row does not declare. This page shows each of those steps with the real bytes.</p>
+
+<h2><span>01</span>The program is a profile row</h2>
+<p>WRL&rsquo;s encoder holds <code>V2_PROFILES</code>, frozen data keyed by profile id. Graphonomous declared its vocabulary and WRL admitted it as a <b>static</b> row: no runtime, no film schema, no admit policy &mdash; roles, kinds and admissible (source role, target role) pairs, and nothing else. The current row, <code>graphonomous.semantic.v2</code>, declares <b>24 roles</b>, <b>32 relation kinds</b> and <b>103 endpoint pairs</b>. It is v1 spread plus exactly one pair, <code>SUPERSEDES [LAW, LAW]</code>; v1 is v0 spread plus three roles, one kind and ten pairs. A frozen row is never edited &mdash; a wider vocabulary is a new row, and every world sealed under an earlier row keeps its id.</p>
+<pre><span class="c">// WRL/relation-v2.js — the row, as data (excerpt)</span>
+<span class="k">roles</span>      OBLIGATION ENFORCEMENT_PROPERTY CLAIM LAW MECHANISM DEFINITION REPRESENTATION PROFILE ASSUMPTION WITNESS FALSIFIER FINDING EXPERIMENT RECEIPT ARTIFACT ADJUDICATION EVIDENCE_STATE_TRANSITION ROUND CELL REGISTRY SOURCE_LOCATION ARGUMENT DEFEATER INSTRUMENT
+<span class="k">domain</span>     semantic      <span class="k">signature</span>  directed · solid · arity 2 · [source, target]
+<span class="k">rulepack</span>   graphonomous.semantic.rules.v0
+<span class="k">endpoints</span>  WITNESSES   [["WITNESS","CLAIM"],["WITNESS","OBLIGATION"],["WITNESS","EVIDENCE_STATE_TRANSITION"],["RECEIPT","CLAIM"],["RECEIPT","OBLIGATION"],["RECEIPT","EVIDENCE_STATE_TRANSITION"],["WITNESS","ARGUMENT"]]
+           SUPERSEDES  [["CLAIM","CLAIM"],["ROUND","ROUND"],["EVIDENCE_STATE_TRANSITION","EVIDENCE_STATE_TRANSITION"],["LAW","LAW"]]
+           ATTACKS     [["FALSIFIER","CLAIM"],["FALSIFIER","MECHANISM"],["DEFEATER","CLAIM"],["DEFEATER","ARGUMENT"],["DEFEATER","ASSUMPTION"],["DEFEATER","INSTRUMENT"],["DEFEATER","RECEIPT"]]
+           LOCATED_IN  [["*","SOURCE_LOCATION"]]   <span class="c">// * = any role</span></pre>
+<p>The full table, with every count read out of the module by WRL&rsquo;s own conformance suite: <a href="https://wrl.traaviis.com/reference#profiles">wrl.traaviis.com/reference#profiles</a>. The rule is <a href="https://wrl.traaviis.com/spec#d8-profiles">Core Part II §D8.20</a>.</p>
+
+<h2><span>02</span>The submission is an artifact, not a query</h2>
+<p><code>lib/wrl_world.mjs</code> builds the world from a projection: every node and every source location becomes an object with the profile&rsquo;s one port, every statement becomes a named relation whose <b>name is the statement&rsquo;s logical id</b>. Nothing in that module sorts, de-duplicates or hashes &mdash; WRL decides object order, seed order, duplicate seeds, endpoint pairs, the policy vocabulary and the bytes. This is the baseline projection&rsquo;s world, first two objects and first relation, exactly as submitted (1080 objects and 588 relations in full):</p>
+<pre>{
+ "ir_version": "2.0",
+ "profile_id": "graphonomous.semantic.v0",
+ "semantic_policies": {
+  "rulepack_id": "graphonomous.semantic.rules.v0"
+ },
+ "objects": [
+  {
+   "object_id": "adjudication_3Agpt_3Aexec_2Dv2_3As4",
+   "ports": [
+    "node"
+   ],
+   "role": "ADJUDICATION",
+   "static_config": {
+    "attrs": {
+     "adjudicator": "GPT-5.6",
+     "authority": "advisory",
+     "document": "package-v2.7/inputs/R10PRE_EXECUTION_V2_GPT56_ADJUDICATION.md",
+     "line": 277,
+     "section": "4"
+    },
+    "lid": "adjudication:gpt:exec-v2:s4"
+   }
+  },
+  {
+   "object_id": "adjudication_3Agpt_3Aexec_2Dv3_3Aclosures",
+   "ports": [
+    "node"
+   ],
+   "role": "ADJUDICATION",
+   "static_config": {
+    "attrs": {
+     "adjudicator": "GPT-5.6",
+     "authority": "advisory",
+     "document": "package-v2.7/inputs/R10PRE_EXECUTION_V3_GPT56_ADJUDICATION.md",
+     "section": "1-8"
+    },
+    "lid": "adjudication:gpt:exec-v3:closures"
+   }
+  }
+ ],
+ "relations": [
+  {
+   "identity_seed": {
+    "relation_name": "rel:g0:ADJUDICATED_BY:claim:crosswalk:E-13b:adjudication:gpt:exec-v4:s1",
+    "variant": "named-initial"
+   },
+   "revision": {
+    "attributes": {},
+    "domain": "semantic",
+    "endpoints": [
+     {
+      "role": "source",
+      "terminal": {
+       "object_id": "claim_3Acrosswalk_3AE_2D13b",
+       "port": "node"
+      }
+     },
+     {
+      "role": "target",
+      "terminal": {
+       "object_id": "adjudication_3Agpt_3Aexec_2Dv4_3As1",
+       "port": "node"
+      }
+     }
+    ],
+    "kind": "ADJUDICATED_BY",
+    "orientation": "directed",
+    "policy": "graphonomous.semantic.rules.v0",
+    "texture": "solid"
+   }
+  }
+ ]
+}</pre>
+
+<h2><span>03</span>The seal, and who minted what</h2>
+<p>WRL canonicalises, serialises and hashes; the world id is a real <code>sem-</code> and every relation gets the kernel&rsquo;s <code>rel-</code> (allocation, world-scoped) and <code>rev-</code> (revision, world-independent). Graphonomous records them and records <b>who minted them</b>. Across worlds that share statements, the <code>rev-</code> of a statement is the same and its <code>rel-</code> is not &mdash; what a statement <i>is</i> does not depend on the world; where it is <i>allocated</i> does.</p>
+<div class="kv">
+<div class="k">world</div><div class="v">sem-0f952f03804c73152b762e4a09570ce37adb35039203c5c4c501507bd0ab17be</div>
+<div class="k">profile</div><div class="v">graphonomous.semantic.v0</div>
+<div class="k">objects · relations</div><div class="v">1080 · 588</div>
+<div class="k">first relation</div><div class="v">rel:g0:ADJUDICATED_BY:claim:crosswalk:E-13b:adjudication:gpt:exec-v4:s1</div>
+<div class="k">rel-</div><div class="v">rel-fd541d41d2c31ab95c9f6bb3e22a1fde2c0f49059f35b0cd217fe7171535570e</div>
+<div class="k">rev-</div><div class="v">rev-60b8332e2f9e5f8bcc46ae68a09c30b1d4a02f3c1ee27e94bd13861e17ffaede</div>
+<div class="k">minted by</div><div class="v">wrl-kernel@6a8304c</div>
+</div>
+
+<h2><span>04</span>What WRL refuses, by name</h2>
+<p>A two-object world in the same shape &mdash; a RECEIPT that WITNESSES a CLAIM &mdash; seals under the row to <code>sem-e717109f49233a79fd29b34d8521096a66dc05cd2bdcbca22a91b285649c8ee3</code> (re-sealed twice while this page was generated: same id both times; its one relation is <code>rel-6854a7e61b938004744c&hellip;</code>). Each of the six edits below was then made to a fresh copy and offered to the same seal. None of them minted an id. The code is the refusal&rsquo;s name; the message is WRL&rsquo;s own.</p>
+<div class="scroll"><table class="refuse"><thead><tr><th>Edit</th><th>Code</th><th>WRL says</th></tr></thead><tbody>
+<tr><td>an undeclared role</td><td class="code">WRL_UNDECLARED_ROLE</td><td class="dim">[WRL_UNDECLARED_ROLE] object 'receipt_3Asha256_3Aabc' has role 'OPINION', and profile 'graphonomous.semantic.v2' declares OBLIGATION, ENFORCEMENT_PROPERTY, CLAIM, LAW, MECHANISM, DEFINITION, REPRESENTATION, PROFILE, ASSUMPTION, WITNESS, FALSIFIER, FINDING, EXPERIMENT, RECEIPT, ARTIFACT, ADJUDICATION, EVIDENCE_STATE_TRANSITION, ROUND, CELL, REGISTRY, SOURCE_LOCATION, ARGUMENT, DEFEATER, INSTRUMENT</td></tr>
+<tr><td>an undeclared relation kind</td><td class="code">WRL_UNDECLARED_KIND</td><td class="dim">[WRL_UNDECLARED_KIND] relations[0] has kind 'LIKES', and profile 'graphonomous.semantic.v2' declares STATES, IMPLEMENTS, DERIVES_FROM, REDUCES_TO, REFINES, SPLIT_FROM, SUPERSEDES, RETRACTS, REQUIRES, WITNESSES, SUPPORTS, FALSIFIES, ATTACKS, TESTED_UNDER, SCOPED_BY, ASSUMES, CLOSES, OPENS, PRODUCED_BY, ADJUDICATED_BY, LOCATED_IN, MEMBER_OF, BINDS, CITES, INDEPENDENT_OF, CONFLICTS_WITH, EQUIVALENT_TO, DEFINES, REPRESENTS, CROSS_CUTS, STATE_TRANSITION_OF, DISCHARGED_BY</td></tr>
+<tr><td>a pair the kind does not admit (CLAIM → RECEIPT under WITNESSES)</td><td class="code">WRL_UNDECLARED_ENDPOINT_PAIR</td><td class="dim">[WRL_UNDECLARED_ENDPOINT_PAIR] relations[0] joins (CLAIM -&gt; RECEIPT) under kind 'WITNESSES', which profile 'graphonomous.semantic.v2' admits only as (WITNESS -&gt; CLAIM), (WITNESS -&gt; OBLIGATION), (WITNESS -&gt; EVIDENCE_STATE_TRANSITION), (RECEIPT -&gt; CLAIM), (RECEIPT -&gt; OBLIGATION), (RECEIPT -&gt; EVIDENCE_STATE_TRANSITION), (WITNESS -&gt; ARGUMENT)</td></tr>
+<tr><td>a policy outside the profile's vocabulary</td><td class="code">WRL_UNDECLARED_POLICY</td><td class="dim">[WRL_UNDECLARED_POLICY] relations[0] carries policy "anything.at.all", and profile 'graphonomous.semantic.v2' declares 'graphonomous.semantic.rules.v0'. The policy is sealed into this relation's revision identity, so one the profile never declared would be an undeclared rulepack minted into a rev- under a profile that admits it nowhere else</td></tr>
+<tr><td>a runtime claim (a film schema) in a static world</td><td class="code">WRL_V2_WORLD_MISMATCH</td><td class="dim">[WRL_V2_WORLD_MISMATCH] this artifact states semantic_policies = {"film_schema":"film.v0.7","rulepack_id":"graphonomous.semantic.rules.v0"}, and the world it encodes derives {"rulepack_id":"graphonomous.semantic.rules.v0"}. These fields are functions of the profile and the objects -- a stated copy that disagrees is a second source of truth, and the stated one is the one a reader believes; a key the profile does not derive at all is a claim about a runtime the profile never made</td></tr>
+<tr><td>a profile id the table has no row for</td><td class="code">WRL_UNSUPPORTED_PROFILE</td><td class="dim">[WRL_UNSUPPORTED_PROFILE] profile "graphonomous.semantic.v9" is not one this encoder declares (forge.world.core.v1, graphonomous.semantic.v0, graphonomous.semantic.v1, graphonomous.semantic.v2)</td></tr>
+</tbody></table></div>
+<p>The Graphonomous side runs a courtesy pre-check that names the WRL code the same input would draw, with the offending logical id in the message &mdash; and then submits anyway. WRL is the authority once an artifact exists; a test in the lane exists precisely to catch Graphonomous shadowing a WRL code with one of its own.</p>
+
+<h2><span>05</span>Where Super (CD) comes in</h2>
+<p>The three-family snapshot pins <b>7 repositories</b> by commit, tree and blob, and the adapters read those bytes and nothing else. Super is one of them: its README and the ampd runtime&rsquo;s README are authoritative sources, and the crosswalk&rsquo;s evidence records cite Super&rsquo;s release receipts. That is the integration as it stands &mdash; <b>Graphonomous reads Super&rsquo;s evidence at a pinned commit and can be held to it</b>. Graphonomous does not run inside Super, and Super does not call Graphonomous. A moved blob is refused (<code>SOURCE_MOVED</code>), not silently re-read.</p>
+<div class="scroll"><table><thead><tr><th>Namespace</th><th>Commit</th><th>Files pinned</th><th>Examples</th></tr></thead><tbody>
+<tr><td>wrl</td><td class="mono">1f4c5fd4cf50</td><td>1</td><td class="dim">wrl.js</td></tr>
+<tr class="hi"><td>super</td><td class="mono">76516978bfa8</td><td>2</td><td class="dim">ampd/README.md · README.md</td></tr>
+<tr><td>trvm-gov</td><td class="mono">8816e5905532</td><td>66</td><td class="dim">docs/spec/proof-wire/SPEC-RELEASE.json · docs/spec/proof-wire/releases/srel-f5720a3d0ee9dbb95670c9cd66672bf70c7dbe353df0c114a18c8a982f203629.json · …</td></tr>
+<tr><td>r10</td><td class="mono">ba4e625871b7</td><td>23</td><td class="dim">package-v2.7/INV_FRONTIER_R10_PRE.md · package-v2.7/witnesses/liveness_l1.py · …</td></tr>
+<tr><td>factory</td><td class="mono">d217ee29a332</td><td>66</td><td class="dim">mosaic/evidence.json · scripts/check-federation-invariants.mjs · …</td></tr>
+<tr><td>computedriven</td><td class="mono">efa8881a5d44</td><td>6</td><td class="dim">docs/admission-model.md · receipts/R0.7.md · …</td></tr>
+<tr><td>trvm</td><td class="mono">fd0df4cdf6ea</td><td>3</td><td class="dim">WRL_CORE_0.2.md · governance/invariant-grid.json · …</td></tr>
+</tbody></table></div>
+
+<h2><span>06</span>Run it yourself</h2>
+<pre><span class="c"># in a ProjectAmp2 checkout with WRL/ and TRVM/ beside graphonomous/</span>
+cd graphonomous/v2
+node bin/g0.mjs verify     --dir projections/baseline    <span class="c"># the projection root re-derives</span>
+node bin/g0.mjs world      --dir projections/baseline    <span class="c"># seals through WRL; prints the sem-</span>
+node bin/g0.mjs check-cert --dir projections/baseline    <span class="c"># TRVM certificate; exit 1 on REFUSED</span>
+G0_TEST_CONCURRENCY=1 npm run test:full-tree             <span class="c"># 183 tests · 182 pass · 1 skipped by design</span></pre>
+<p>What this page does not claim: that anyone outside this machine has reproduced these numbers, that the graph is <i>useful</i> rather than merely sound, or that Super and Graphonomous are coupled at runtime. The ids above are real and will move the day a projection is re-minted; the page says which commit they were read at and a reader can re-read them there.</p>
+
+<p class="footer"><a href="../">All demos</a> &middot; <a href="../../">graphonomous.com</a> &middot; <a href="https://wrl.traaviis.com/">WallRiderLang</a> &middot; <a href="https://super.computedriven.com">Super (CD)</a></p>
+</div></body></html>

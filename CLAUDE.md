@@ -53,7 +53,7 @@ in the present tense — the suite reports 577 and the machine modules declare 3
 three of the four release assets return 404.
 
 `launch-gate.mjs` reads the **artifact**, not the source, and refuses on any of
-162 checks. `records/surface.json.retracted` is a blocklist: a removed claim
+171 checks. `records/surface.json.retracted` is a blocklist: a removed claim
 may appear **exactly once**, inside the retraction paragraph that quotes it,
 and **nowhere** in markup, an attribute or a comment. **The bound is a
 constant in `launch-gate.mjs`, not a record field** — a record may lower the

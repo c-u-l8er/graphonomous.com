@@ -1,12 +1,10 @@
 {
   "schema": "computedriven-witness-v1",
   "_comment": "Every number that reaches a page comes from here, and every entry names the command that produced it and the exact world it was produced in. check.mjs re-derives each `derivable` entry against the real thing — the sibling checkout, the npm registry, the release assets — and exits non-zero on disagreement. build-site.mjs will not emit a page if any figure in the template has no entry here. A number cannot be typed onto this site by hand and survive.",
-
   "measured_at": "2026-08-16",
   "engine_commit": "5a9e00b2320415d341abdcee21be992b23bb192f",
   "engine_path": "../graphonomous",
   "site_commit_at_measure": "0c0de2fbca546e7373aef62544b5c84faccadfcc",
-
   "facts": {
     "tree_version": {
       "value": "0.4.3",
@@ -53,7 +51,7 @@
       "derivable": "action_count"
     },
     "demos": {
-      "value": "18",
+      "value": "19",
       "label": "Demo pages on this domain",
       "command": "ls -d demo/*/ | wc -l",
       "derivable": "demo_count"
@@ -75,28 +73,129 @@
       "label": "Platforms advertised",
       "command": "node -e \"console.log(Object.keys(require('../graphonomous/npm/scripts/resolve-platform').PLATFORM_MAP).length * Object.keys(require('../graphonomous/npm/scripts/resolve-platform').ARCH_MAP).length)\"",
       "derivable": "install_total_count"
+    },
+    "v2_tests_total": {
+      "value": "183",
+      "label": "V2 lane tests",
+      "command": "cd ../graphonomous/v2 && G0_TEST_CONCURRENCY=1 G0_TEST_HEAP_MB=2048 TMPDIR=$HOME/.cache/g0-probe/tmp npm run test:full-tree",
+      "raw": "## suite  183 tests · 182 pass · 0 fail · 1 skipped — VERDICT: GREEN — 182 passing, 1 skipped with reasons, 0 failing (2026-09-05, graphonomous 824b9688)",
+      "derivable": null,
+      "note": "Not re-derived by check.mjs: the run needs the pinned sibling registries and about a minute; the raw verdict line is the whole output that established it."
+    },
+    "v2_tests_pass": {
+      "value": "182",
+      "label": "V2 lane tests passing",
+      "command": "same run as v2_tests_total",
+      "derivable": null
+    },
+    "v2_tests_skipped": {
+      "value": "1",
+      "label": "V2 lane tests skipped by design",
+      "command": "same run as v2_tests_total; the skip is the developer staleness check, which prints the rebuild command instead of failing when ui/data is absent",
+      "derivable": null
+    },
+    "v2_worlds_sealed": {
+      "value": "5",
+      "label": "Projections sealed as WRL worlds",
+      "command": "ls ../graphonomous/v2/projections/*/world/SEM | wc -l",
+      "derivable": "v2_worlds_sealed"
+    },
+    "wrl_profile_rows": {
+      "value": "4",
+      "label": "Rows in WRL's profile table",
+      "command": "node -e \"import('../WRL/relation-v2.js').then(V=>console.log(V.V2_PROFILE_IDS.length))\"",
+      "derivable": "wrl_profile_rows"
+    },
+    "wrl_static_rows": {
+      "value": "3",
+      "label": "Static rows, all declared by Graphonomous",
+      "command": "node -e \"import('../WRL/relation-v2.js').then(V=>console.log(Object.values(V.V2_PROFILES).filter(r=>r.derivation==='static').length))\"",
+      "derivable": "wrl_static_rows"
+    },
+    "tri_sources": {
+      "value": "7",
+      "label": "Pinned repositories in the three-family snapshot",
+      "command": "node -e \"console.log(require('../graphonomous/v2/snapshots/tri.json').sources.length)\"",
+      "derivable": "tri_sources"
+    },
+    "tri_adapters": {
+      "value": "4",
+      "label": "Adapters that read them",
+      "command": "node -e \"console.log(require('../graphonomous/v2/snapshots/tri.json').params.adapters.length)\"",
+      "derivable": "tri_adapters"
+    },
+    "tri_nodes": {
+      "value": "1189",
+      "label": "Nodes in the tri projection",
+      "command": "grep -c '' ../graphonomous/v2/projections/tri/records/node.jsonl",
+      "derivable": "tri_nodes"
+    },
+    "tri_relations": {
+      "value": "2494",
+      "label": "Relations in the tri projection",
+      "command": "grep -c '' ../graphonomous/v2/projections/tri/records/relation.jsonl",
+      "derivable": "tri_relations"
+    },
+    "super_pin": {
+      "value": "7651697",
+      "label": "Super (CD) commit the snapshot pins",
+      "command": "node -e \"console.log(require('../graphonomous/v2/snapshots/tri.json').sources.find(s=>s.namespace==='super').commit.slice(0,7))\"",
+      "derivable": "super_pin"
     }
   },
-
   "install_targets": {
     "_comment": "resolve-platform.js maps two platforms x two architectures, and postinstall.js exits non-zero when the asset it derives is missing. Each row was requested from the v0.4.2 release with curl on 2026-08-16. The status column is the HTTP code that came back, not an opinion about it.",
     "release": "https://github.com/c-u-l8er/graphonomous/releases/download/v0.4.2/",
     "asset_pattern": "graphonomous-v0.4.2-<target>.tar.gz",
     "rows": [
-      { "target": "linux-x64", "http": 200, "result": "installs" },
-      { "target": "linux-arm64", "http": 404, "result": "no asset — install exits 1" },
-      { "target": "darwin-x64", "http": 404, "result": "no asset — install exits 1" },
-      { "target": "darwin-arm64", "http": 404, "result": "no asset — install exits 1" }
+      {
+        "target": "linux-x64",
+        "http": 200,
+        "result": "installs"
+      },
+      {
+        "target": "linux-arm64",
+        "http": 404,
+        "result": "no asset — install exits 1"
+      },
+      {
+        "target": "darwin-x64",
+        "http": 404,
+        "result": "no asset — install exits 1"
+      },
+      {
+        "target": "darwin-arm64",
+        "http": 404,
+        "result": "no asset — install exits 1"
+      }
     ]
   },
-
   "routes": {
     "_comment": "Checked on the served domain 2026-08-16, not by listing the local tree. graphonomous.com answers every path with the homepage, so a 200 proves nothing on its own — these rows are the ones whose body differs from the homepage's, which is what makes them real routes.",
     "rows": [
-      { "path": "/", "bytes": 220137, "distinct": true },
-      { "path": "/demo/", "bytes": 34274, "distinct": true },
-      { "path": "/benchmarks/", "bytes": 21827, "distinct": true },
-      { "path": "/nonexistent-abc123/", "bytes": 220137, "distinct": false }
+      {
+        "path": "/",
+        "bytes": 220137,
+        "distinct": true
+      },
+      {
+        "path": "/demo/",
+        "bytes": 34274,
+        "distinct": true
+      },
+      {
+        "path": "/benchmarks/",
+        "bytes": 21827,
+        "distinct": true
+      },
+      {
+        "path": "/nonexistent-abc123/",
+        "bytes": 220137,
+        "distinct": false
+      }
     ]
-  }
+  },
+  "v2_measured_at": "2026-09-05",
+  "v2_commit_at_measure": "824b9688",
+  "wrl_commit_at_measure": "083ae6ba1a779f0ef95d4888be7aa2cffe0dc729"
 }

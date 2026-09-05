@@ -230,6 +230,32 @@ function installTable() {
     return `<div class="scroll"><table><thead><tr><th>Target</th><th>HTTP</th><th>Result of <code>npm i -g graphonomous</code></th></tr></thead><tbody>${rows}</tbody></table></div>`;
 }
 
+/* The V2 section. The plate reads witnessed facts; the three columns are the
+   record's own sentences with their [[facts]] resolved. The links go to the
+   lane in the repository, the demo on this domain, and WRL's profile table —
+   the one page that can show the row Graphonomous declared. */
+function v2() {
+    const v = surface.v2;
+    const cells = [
+        [`${f("v2_tests_pass")} of ${f("v2_tests_total")}`, "V2 tests passing"],
+        [f("v2_worlds_sealed"), "Projections sealed by WRL"],
+        [`${f("wrl_static_rows")} of ${f("wrl_profile_rows")}`, "WRL profile rows, Graphonomous's"],
+        [f("tri_sources"), "Pinned repositories read"],
+        [f("tri_nodes"), "Nodes, tri projection"],
+        [f("tri_relations"), "Relations, tri projection"],
+    ];
+    const plate = `<div class="grid plate">${cells
+        .map(([n, l]) => `<div><div class="n">${esc(n)}</div><div class="l">${esc(l)}</div></div>`)
+        .join("")}</div>`;
+    const col = (h, body, needs) =>
+        `<div><div class="head"><h3>${esc(h)}</h3></div><p>${esc(fig(body))}</p><div class="needs">${needs}</div></div>`;
+    const cols = `<div class="grid">${col("Reads Super (CD) as evidence", v.super,
+            `<b>super/README.md</b> · <b>super/ampd/README.md</b> at <b>${esc(f("super_pin"))}</b>, pinned by blob`)}${col("Programmed with WRL", v.wrl,
+            `<b>profile_id</b> graphonomous.semantic.v2 · <b>ir_version</b> 2.0 · <a href="${esc(v.profiles_url)}" target="_blank" rel="noopener">the profile table</a>`)}${col("Certified through TRVM", v.trvm,
+            `<b>g0 certify</b> → <b>g0 check-cert</b>, exit 1 on REFUSED · ${esc(f("v2_tests_skipped"))} test skipped by design`)}</div>`;
+    return plate + cols;
+}
+
 function loop() {
     return `<div class="loop">${surface.loop
         .map(
@@ -333,6 +359,11 @@ const landing = fill(read("./src/landing.html"), {
     INSTALL_NOTE: installNote(),
     INSTALL_TABLE: installTable(),
     LOOP: loop(),
+    V2: v2(),
+    V2_DEMO: surface.v2.demo,
+    V2_README: surface.repo + surface.v2.readme_path,
+    V2_DEFINITION: esc(surface.v2.definition),
+    V2_BOUNDARY: esc(surface.v2.boundary),
     STATUS: statusBlock(),
     GATES: gates(),
     RETRACTION: retraction(),
@@ -344,6 +375,18 @@ const landing = fill(read("./src/landing.html"), {
                 verb: "Use the deployed artifact",
                 href: "#install",
                 what: `<code>npm i -g graphonomous</code> pulls ${esc(f("published_version"))} from the registry, published ${esc(f("published_at"))}. On linux-x64 it lands a binary and answers on stdio. On the other three targets it exits 1 — the table says which.`,
+            },
+        ]) +
+        cta("in_tree", "V2 — in the tree, tested, unpublished", [
+            {
+                verb: "Inspect the source",
+                href: surface.repo + surface.v2.readme_path,
+                what: `<code>v2/</code> beside the v0.4 engine: adapters, the projector, the WRL world builder, the TRVM certificate. <code>handoff/STATUS.md</code> is the only file that says what is DESIGNED, IMPLEMENTED, TESTED or FROZEN.`,
+            },
+            {
+                verb: "Run the tests",
+                href: surface.repo + surface.v2.readme_path,
+                what: `<code>cd v2 &amp;&amp; npm run test:full-tree</code> against the pinned sibling checkouts. Expect ${esc(f("v2_tests_pass"))} of ${esc(f("v2_tests_total"))} with ${esc(f("v2_tests_skipped"))} skipped by design; a different number is the most useful thing anyone could send us.`,
             },
         ]) +
         cta("in_tree", "readable, runnable, unpublished", [

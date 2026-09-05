@@ -19,7 +19,7 @@
    check that quietly skips is worse than a check that reports it skipped.
    ========================================================================== */
 import { readFileSync, existsSync, readdirSync } from "fs";
-import { fileURLToPath } from "url";
+import { fileURLToPath, pathToFileURL } from "url";
 import path from "path";
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
@@ -99,6 +99,34 @@ if (!existsSync(ENGINE)) {
 
     T("npm package version matches the tree",
       JSON.parse(eng("npm/package.json")).version, F("tree_version"));
+}
+
+/* ---------- 1b. the V2 lane, and the WRL profile table it seals under ----------
+   V2 is a second lane in the same checkout (graphonomous/v2). Its figures are read
+   from the projections and snapshots on disk, and the profile counts from WRL's own
+   module, imported — not from anything this site wrote down. */
+const V2DIR = path.join(ENGINE, "v2");
+if (!existsSync(V2DIR)) {
+    S("v2_worlds_sealed / tri_sources / tri_adapters / tri_nodes / tri_relations / super_pin", `no V2 lane at ${V2DIR}`);
+} else {
+    const worlds = readdirSync(path.join(V2DIR, "projections"), { withFileTypes: true })
+        .filter((d) => d.isDirectory() && existsSync(path.join(V2DIR, "projections", d.name, "world", "SEM"))).length;
+    T("v2_worlds_sealed", worlds, F("v2_worlds_sealed"));
+    const tri = JSON.parse(readFileSync(path.join(V2DIR, "snapshots", "tri.json"), "utf8"));
+    T("tri_sources", tri.sources.length, F("tri_sources"));
+    T("tri_adapters", tri.params.adapters.length, F("tri_adapters"));
+    T("super_pin", tri.sources.find((s) => s.namespace === "super").commit.slice(0, 7), F("super_pin"));
+    const lines = (p) => readFileSync(p, "utf8").split("\n").filter(Boolean).length;
+    T("tri_nodes", lines(path.join(V2DIR, "projections", "tri", "records", "node.jsonl")), F("tri_nodes"));
+    T("tri_relations", lines(path.join(V2DIR, "projections", "tri", "records", "relation.jsonl")), F("tri_relations"));
+}
+const WRLJS = path.resolve(HERE, "..", "WRL", "relation-v2.js");
+if (!existsSync(WRLJS)) {
+    S("wrl_profile_rows / wrl_static_rows", `no WRL checkout at ${WRLJS}`);
+} else {
+    const V2 = await import(pathToFileURL(WRLJS).href);
+    T("wrl_profile_rows", V2.V2_PROFILE_IDS.length, F("wrl_profile_rows"));
+    T("wrl_static_rows", Object.values(V2.V2_PROFILES).filter((r) => r.derivation === "static").length, F("wrl_static_rows"));
 }
 
 /* ---------- 2. this repository ---------- */

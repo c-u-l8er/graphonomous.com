@@ -1,6 +1,6 @@
 <!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Can a memory get sharper from being used? — Graphonomous</title>
-<meta name="description" content="Graphonomous is an MCP memory server whose graph changes shape from outcomes: five loop-phase machines, confidence that moves when an action succeeds or fails, and a published install that currently works on exactly one platform. Every number here is generated from a frozen record.">
+<title>Can what a system understands be made queryable, falsifiable and provenance-linked? — Graphonomous</title>
+<meta name="description" content="Graphonomous V2 is a derived semantic/evidence graph over the registries that hold a system's truth — ComputeDriven, TRVM, the invariant factory and Super (CD) — sealed as a WallRiderLang world under a profile Graphonomous declares as data and certified through TRVM. The v0.4 MCP memory engine still ships. Every number here is generated from a frozen record.">
 <meta name="falsifiable-question" content="{{QUESTION}}">
 <link rel="canonical" href="{{ORIGIN}}/">
 <meta name="theme-color" content="#07090e">
@@ -18,9 +18,9 @@
 <section class="hero">
 <div class="front">
 <div class="eyebrow">The question this site exists to answer</div>
-<h1>Can a memory get sharper from <em>being used?</em></h1>
-<p class="lede">Most agent memory is a key-value store with embeddings: what you put in is what you get back, forever, at the same rank. Graphonomous is a loop instead. An action reports its outcome, the confidence on the nodes that informed it moves, the topology of that neighbourhood changes, and the <strong>next retrieval ranks differently</strong> — with no model retrained and no weights touched. Whether that actually makes an agent better is the open question. What is settled is that the mechanism exists, runs, and can be read.</p>
-<p><a class="btn" href="#install">Install it</a>&nbsp;&nbsp;<a class="btn ghost" href="#evidence">What is actually proven</a></p>
+<h1>Can what a system understands be made <em>queryable, falsifiable and provenance-linked?</em></h1>
+<p class="lede">That is the V2 question, and it is a different question from the one this page used to ask. Graphonomous began as an MCP memory whose graph changes shape from outcomes; that engine still ships, below, on one platform. <strong>Graphonomous V2 is a derived semantic/evidence graph</strong> over the registries that already hold the stack&rsquo;s truth &mdash; ComputeDriven, TRVM, the invariant factory, and Super&nbsp;(CD) &mdash; read at pinned commits, projected into content-addressed records, <strong>sealed as a WallRiderLang world</strong> under a profile Graphonomous declares as data, and certified through TRVM. Every id is minted by the kernel that owns it. Nothing in it is a model&rsquo;s opinion. Whether the graph earns its keep is the open question; what is settled is that it seals, verifies, and can be read.</p>
+<p><a class="btn" href="#v2">What V2 is</a>&nbsp;&nbsp;<a class="btn ghost" href="{{V2_DEMO}}">Programmed with WRL</a>&nbsp;&nbsp;<a class="btn ghost" href="#evidence">What is actually proven</a></p>
 </div>
 <!-- The identifying animation (SHELL.md §8). It comes AFTER the h1 in source
      order and sits behind it, because the question comes first. It renders no
@@ -32,8 +32,16 @@
 
 {{PLATE}}
 
+<section id="v2">
+<div class="eyebrow">The direction &mdash; Graphonomous V2</div>
+<h2>A graph of what the stack knows, sealed by the language the stack is written in.</h2>
+<p class="lede">{{V2_DEFINITION}} {{V2_BOUNDARY}} Concretely: an adapter reads a registry at a pinned commit and emits nodes, relations, assertions and source locations; the projector folds them into a content-addressed root; the semantic world is submitted to WallRiderLang as a Semantic IR 2.0 artifact and comes back with a real world id and a kernel-minted id for every relation and every revision; a certificate is minted over the claim and its chain of code identities through TRVM, and a checker that writes nothing re-derives every plane. A second registry is a second adapter. A wider vocabulary is a new profile row, not a new encoding.</p>
+{{V2}}
+<p class="lede sm">Three claims a reader can hold this section to. <strong>Super is read, not integrated with:</strong> the snapshot pins Super&rsquo;s files by blob and the graph can be held to them; there is no runtime coupling in either direction, and the page says so rather than implying one. <strong>WRL is the program:</strong> the vocabulary lives in WRL&rsquo;s profile table, WRL refuses by name what the profile does not declare, and the demo on this domain shows the artifact, the seal and the refusals with real bytes &mdash; <a href="{{V2_DEMO}}">Programming Graphonomous with WRL</a>. <strong>Nothing V2 is installable:</strong> it lives at <a href="{{V2_README}}">v2/ in the repository</a>, beside the v0.4 engine, and the ledger below keeps the two apart.</p>
+</section>
+
 <section id="install">
-<div class="eyebrow">Install, and the part most pages leave out</div>
+<div class="eyebrow">What ships today &mdash; the v0.4 memory engine</div>
 <h2>One command &mdash; on one platform.</h2>
 <p class="lede">The registry has it, the binary downloads, and the server answers on stdio. It is also the honest version: the installer advertises four targets and <strong>only one of them has ever been built.</strong> If you are on a Mac, this will fail, and it will fail during <code>npm i</code> rather than later.</p>
 {{INSTALL}}
